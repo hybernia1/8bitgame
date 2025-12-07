@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8-Bit Demo Level</title>
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+  <main class="layout">
+    <section class="game-shell">
+      <header class="hud">
+        <div class="title">Level 0: Demo Facility</div>
+        <div class="subtitle">Move with WASD or Arrow Keys</div>
+      </header>
+      <canvas id="game" width="640" height="480" aria-label="Demo level canvas"></canvas>
+      <footer class="hud hud-row">
+        <div>❤ 12 / 12</div>
+        <div>Keys: 0</div>
+        <div>Objectives: 0 / 1</div>
+      </footer>
+    </section>
+    <aside class="panel">
+      <h1>8-bit Top-Down Demo</h1>
+      <p>
+        This prototype demonstrates the basic feel of the game: a top-down 8-bit
+        view where the player can walk around a compact level. Obstacles block
+        the character, letting you test collision, camera, and movement speed.
+      </p>
+      <ul>
+        <li>WASD or Arrow Keys to move</li>
+        <li>Bump into walls to feel collision</li>
+        <li>Escape closes this overlay</li>
+      </ul>
+    </aside>
+  </main>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
