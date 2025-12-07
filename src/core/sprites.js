@@ -131,6 +131,9 @@ export async function loadSpriteSheet() {
 
   try {
     image = await loadImage(CUSTOM_SPRITE_SHEET);
+    if (!image.naturalWidth || !image.naturalHeight) {
+      throw new Error(`Sprite sheet ${CUSTOM_SPRITE_SHEET} is empty.`);
+    }
     // eslint-disable-next-line no-console
     console.info(`Loaded external sprite sheet from ${CUSTOM_SPRITE_SHEET}.`);
   } catch (error) {
