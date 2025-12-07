@@ -1,0 +1,56 @@
+import { TILE } from '../core/constants.js';
+
+export const demoLevel = {
+  name: 'Demo Facility',
+  map: [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  ],
+  actors: {
+    playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
+    monsters: [],
+    props: [],
+  },
+  pickups: [
+    {
+      id: 'battery-cell',
+      name: 'Battery Cell',
+      icon: '⚡',
+      x: TILE * 9 + TILE / 2,
+      y: TILE * 6 + TILE / 2,
+      tint: '#f2d45c',
+      description: 'A humming power source for the lab lights.',
+    },
+    {
+      id: 'wrench',
+      name: 'Service Wrench',
+      icon: '🔧',
+      x: TILE * 13 + TILE / 2,
+      y: TILE * 9 + TILE / 2,
+      tint: '#8ce0ff',
+      description: 'Useful for tightening mech armor plating.',
+    },
+    {
+      id: 'keycard',
+      name: 'Keycard Fragment',
+      icon: '🗝️',
+      x: TILE * 5 + TILE / 2,
+      y: TILE * 11 + TILE / 2,
+      tint: '#c66bff',
+      description: 'One part of an access card. Collect the rest later.',
+    },
+  ],
+};
