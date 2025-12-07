@@ -23,6 +23,15 @@ export const demoLevel = {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
     monsters: [],
     props: [],
+    npcs: [
+      {
+        id: 'caretaker',
+        name: 'Správce Laboratoře',
+        tx: 10,
+        ty: 4,
+        dialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
+      },
+    ],
   },
   pickups: [
     {
@@ -38,7 +47,7 @@ export const demoLevel = {
       id: 'wrench',
       name: 'Service Wrench',
       icon: '🔧',
-      x: TILE * 13 + TILE / 2,
+      x: TILE * 12 + TILE / 2,
       y: TILE * 9 + TILE / 2,
       tint: '#8ce0ff',
       description: 'Useful for tightening mech armor plating.',
@@ -48,7 +57,7 @@ export const demoLevel = {
       name: 'Keycard Fragment',
       icon: '🗝️',
       x: TILE * 5 + TILE / 2,
-      y: TILE * 11 + TILE / 2,
+      y: TILE * 12 + TILE / 2,
       tint: '#c66bff',
       description: 'One part of an access card. Collect the rest later.',
     },

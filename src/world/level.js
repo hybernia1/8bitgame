@@ -28,13 +28,20 @@ export function drawGrid(ctx, canvas) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-export function drawLevel(ctx, camera) {
+export function drawLevel(ctx, camera, spriteSheet) {
+  const useSprites = Boolean(spriteSheet?.animations?.floor && spriteSheet?.animations?.wall);
+  const floorSprite = spriteSheet?.animations?.floor;
+  const wallSprite = spriteSheet?.animations?.wall;
   for (let y = 0; y < WORLD.height; y++) {
     for (let x = 0; x < WORLD.width; x++) {
       const tile = level[y * WORLD.width + x];
       const screenX = x * TILE - camera.x;
       const screenY = y * TILE - camera.y;
-      if (tile === 1) {
+      if (tile === 1 && wallSprite && useSprites) {
+        wallSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
+      } else if (useSprites && floorSprite) {
+        floorSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
+      } else if (tile === 1) {
         ctx.fillStyle = COLORS.wall;
         ctx.fillRect(screenX, screenY, TILE, TILE);
         ctx.fillStyle = COLORS.wallInner;
