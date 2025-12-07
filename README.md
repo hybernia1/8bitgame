@@ -18,3 +18,6 @@ python -m http.server 8000
 ```
 
 Then visit `http://localhost:8000`.
+
+## Customizing sprites
+The game ships with generated placeholder sprites. To use your own pixel art, add a PNG sprite sheet at `assets/spritesheet.png` (relative to `index.html`). Each tile should be **32x32** pixels and ordered left-to-right, top-to-bottom as: floor, wall, player, pickup, NPC, monster, prop. If the file is missing or invalid, the generated set will be used instead.
