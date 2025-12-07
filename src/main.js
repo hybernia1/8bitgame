@@ -1,5 +1,7 @@
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+import { init, GameLoop, initKeys, keyPressed } from 'https://cdn.jsdelivr.net/npm/kontra@9.0.0/kontra.mjs';
+
+const { canvas, context: ctx } = init('game');
+initKeys();
 
 const TILE = 32;
 const WORLD = {
@@ -33,7 +35,6 @@ const player = {
   color: '#5cf2cc',
 };
 
-const keys = new Set();
 const camera = { x: 0, y: 0 };
 
 function tileAt(x, y) {
@@ -59,10 +60,10 @@ function canMove(nx, ny) {
 function update(dt) {
   let dx = 0;
   let dy = 0;
-  if (keys.has('ArrowUp') || keys.has('w')) dy -= 1;
-  if (keys.has('ArrowDown') || keys.has('s')) dy += 1;
-  if (keys.has('ArrowLeft') || keys.has('a')) dx -= 1;
-  if (keys.has('ArrowRight') || keys.has('d')) dx += 1;
+  if (keyPressed('up') || keyPressed('w')) dy -= 1;
+  if (keyPressed('down') || keyPressed('s')) dy += 1;
+  if (keyPressed('left') || keyPressed('a')) dx -= 1;
+  if (keyPressed('right') || keyPressed('d')) dx += 1;
 
   if (dx !== 0 || dy !== 0) {
     const len = Math.hypot(dx, dy) || 1;
@@ -117,26 +118,19 @@ function drawPlayer() {
   ctx.fillRect(px - half, py + half - 4, player.size, 4);
 }
 
-let last = 0;
-function loop(timestamp) {
-  const delta = (timestamp - last) / 1000;
-  last = timestamp;
-  update(delta);
-  drawGrid();
-  drawLevel();
-  drawPlayer();
-  requestAnimationFrame(loop);
-}
+const loop = GameLoop({
+  update,
+  render() {
+    drawGrid();
+    drawLevel();
+    drawPlayer();
+  },
+});
 
 window.addEventListener('keydown', (event) => {
-  keys.add(event.key);
   if (event.key === 'Escape') {
     document.querySelector('.panel').classList.toggle('hidden');
   }
 });
 
-window.addEventListener('keyup', (event) => {
-  keys.delete(event.key);
-});
-
-requestAnimationFrame(loop);
+loop.start();
