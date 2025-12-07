@@ -19,6 +19,13 @@
         <div>Keys: 0</div>
         <div>Objectives: 0 / 1</div>
       </footer>
+      <section class="inventory" aria-label="Inventory with six slots">
+        <div class="inventory-header">
+          <div class="title">Inventory</div>
+          <div class="inventory-note">Collect items to fill your kit.</div>
+        </div>
+        <div class="inventory-grid" role="list"></div>
+      </section>
     </section>
     <aside class="panel">
       <h1>8-bit Top-Down Demo</h1>
@@ -29,11 +36,14 @@
       </p>
       <p>
         Input handling and the fixed-step loop are powered by the lightweight
-        <strong>Kontra.js</strong> game toolkit to keep the demo level stable.
+        <strong>Kontra.js</strong> game toolkit that now ships from the local
+        <code>src</code> folder. The demo level also includes simple pickups and
+        a six-slot inventory UI to test item collection.
       </p>
       <ul>
         <li>WASD or Arrow Keys to move</li>
         <li>Bump into walls to feel collision</li>
+        <li>Walk over glowing diamonds to collect items</li>
         <li>Escape closes this overlay</li>
       </ul>
     </aside>

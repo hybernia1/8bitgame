@@ -82,6 +82,67 @@ canvas {
   letter-spacing: 0.5px;
 }
 
+.inventory {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid #23232e;
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.inventory-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inventory-note {
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.inventory-slot {
+  border: 1px dashed #2c2c38;
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 10, 16, 0.6);
+  transition: border-color 0.2s ease, transform 0.1s ease;
+}
+
+.inventory-slot:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.inventory-empty {
+  opacity: 0.55;
+}
+
+.inventory-icon {
+  font-size: 16px;
+  text-align: center;
+  width: 22px;
+}
+
+.inventory-label {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+}
+
 .title {
   font-size: 16px;
   color: var(--accent);
