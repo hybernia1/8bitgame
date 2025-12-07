@@ -15,17 +15,15 @@ export function createPickups() {
   }));
 }
 
-export function drawPickups(ctx, camera, pickups, spriteSheet) {
-  const pickupSprite = spriteSheet?.animations?.pickup;
+export function drawPickups(ctx, camera, pickups) {
   pickups.forEach((pickup) => {
     if (pickup.collected) return;
     const px = pickup.x - camera.x;
     const py = pickup.y - camera.y;
     ctx.save();
     ctx.translate(px, py);
-    if (pickupSprite) {
-      pickupSprite.render({ context: ctx, x: -TILE / 2 + 2, y: -TILE / 2 + 2, width: TILE - 4, height: TILE - 4 });
-    }
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(-8, 2, 16, 6);
     ctx.fillStyle = pickup.tint || '#f2d45c';
     ctx.beginPath();
     ctx.moveTo(0, -10);

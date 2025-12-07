@@ -18,7 +18,7 @@ export function createPlayer() {
     x: playerStart.x,
     y: playerStart.y,
     speed: 120,
-    size: 22,
+    size: 18,
     color: '#5cf2cc',
   };
 }
@@ -37,20 +37,14 @@ export function updatePlayer(player, dt, collision) {
   if (collision.canMove(player.size, player.x, ny)) player.y = ny;
 }
 
-export function drawPlayer(ctx, camera, player, spriteSheet) {
+export function drawPlayer(ctx, camera, player) {
   const px = player.x - camera.x;
   const py = player.y - camera.y;
   const half = player.size / 2;
-  const playerSprite = spriteSheet?.animations?.player;
-
-  if (playerSprite) {
-    playerSprite.render({ context: ctx, x: px - half, y: py - half, width: player.size, height: player.size });
-  } else {
-    ctx.fillStyle = COLORS.gridBorder;
-    ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
-    ctx.fillStyle = player.color;
-    ctx.fillRect(px - half, py - half, player.size, player.size);
-    ctx.fillStyle = '#183e35';
-    ctx.fillRect(px - half, py + half - 4, player.size, 4);
-  }
+  ctx.fillStyle = COLORS.gridBorder;
+  ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
+  ctx.fillStyle = player.color;
+  ctx.fillRect(px - half, py - half, player.size, player.size);
+  ctx.fillStyle = '#183e35';
+  ctx.fillRect(px - half, py + half - 4, player.size, 4);
 }
