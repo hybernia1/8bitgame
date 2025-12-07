@@ -33,16 +33,6 @@ function makeCanvas(frames) {
   return canvas;
 }
 
-async function canvasToImage(canvas) {
-  const image = new Image();
-  const loadPromise = new Promise((resolve) => {
-    image.onload = resolve;
-  });
-  image.src = canvas.toDataURL('image/png');
-  await loadPromise;
-  return image;
-}
-
 function drawFloor(ctx) {
   ctx.fillStyle = COLORS.floor;
   ctx.fillRect(0, 0, TILE, TILE);
@@ -127,7 +117,8 @@ function drawProp(ctx) {
 
 export async function loadSpriteSheet() {
   const frames = [drawFloor, drawWall, drawPlayer, drawPickup, drawNpc, drawMonster, drawProp];
-  let image;
+  const generatedCanvas = makeCanvas(frames);
+  let image = generatedCanvas;
 
   try {
     image = await loadImage(CUSTOM_SPRITE_SHEET);
@@ -142,7 +133,7 @@ export async function loadSpriteSheet() {
       `Could not load ${CUSTOM_SPRITE_SHEET}; falling back to built-in generator.`,
       error,
     );
-    image = await canvasToImage(makeCanvas(frames));
+    image = generatedCanvas;
   }
 
   return SpriteSheet({
