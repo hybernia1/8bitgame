@@ -23,10 +23,18 @@ const sealedTiles = [
   [17, 12],
 ];
 
-const levelTiles = [...demoLevel.map];
-levelTiles[gate.ty * WORLD.width + gate.tx] = DOOR_TILE;
-sealedTiles.forEach(([tx, ty]) => {
-  levelTiles[ty * WORLD.width + tx] = 1;
+// Preserve the raw map for tooling such as the editor so we can return tiles to
+// their intended values after temporarily locking areas during the tutorial.
+const baseTiles = [...demoLevel.map];
+const levelTiles = [...baseTiles];
+const gateIndex = gate.ty * WORLD.width + gate.tx;
+const gateOpenTile = 0;
+const sealedTileIndices = sealedTiles.map(([tx, ty]) => ty * WORLD.width + tx);
+const sealedTileOriginals = sealedTileIndices.map((index) => baseTiles[index]);
+
+levelTiles[gateIndex] = DOOR_TILE;
+sealedTileIndices.forEach((index) => {
+  levelTiles[index] = 1;
 });
 
 export function tileAt(x, y) {
@@ -132,8 +140,8 @@ export function getGateState() {
 export function unlockGateToNewMap() {
   if (!gate.locked) return;
   gate.locked = false;
-  levelTiles[gate.ty * WORLD.width + gate.tx] = 0;
-  sealedTiles.forEach(([tx, ty]) => {
-    levelTiles[ty * WORLD.width + tx] = 0;
+  levelTiles[gateIndex] = gateOpenTile;
+  sealedTileIndices.forEach((index, i) => {
+    levelTiles[index] = sealedTileOriginals[i] ?? 0;
   });
 }
