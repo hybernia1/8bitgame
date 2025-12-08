@@ -11,14 +11,13 @@ import {
   drawGrid,
   drawLevel,
   getLevelName,
-  getTextureTheme,
   canMove,
   getActorPlacements,
   getGateState,
   unlockGateToNewMap,
 } from './world/level.js';
 
-const spriteSheet = await loadSpriteSheet(getTextureTheme());
+const spriteSheet = await loadSpriteSheet();
 const { canvas, context: ctx } = init('game');
 initKeys();
 
