@@ -1,14 +1,20 @@
 # 8bitgame
 
-A minimal HTML5 canvas demo for a top-down 8-bit style game. Move the character
-around the enclosed level to test camera follow, collision, and basic feel
-before adding enemies or objectives. Input and the main loop are powered by
-the Kontra.js micro-library to keep the demo predictable without extra setup.
+A minimal HTML5 demo for a top-down 8-bit style game. The prototype now runs on
+Phaser 3 from the CDN so you can drop the folder on any static server and move
+the character around the enclosed level to test camera follow, collision, and
+basic feel before adding enemies or objectives.
 
 ## Structure
-- `index.html` – shell that loads the canvas and instructions.
+- `index.html` – shell that loads the canvas, HUD, and interaction overlay.
 - `src/style.css` – retro-inspired framing and HUD styling.
-- `src/main.js` – canvas rendering, tile map, movement, and collision logic.
+- `src/main.js` – Phaser scene that handles rendering, tile map, movement, and
+  collision logic.
+- `src/core` – shared constants and helper functions for Phaser sprite
+  generation and level composition.
+- `src/entities` – small helpers for spawning Phaser sprites for the player,
+  NPCs, and pickups.
+- `src/ui` – DOM rendering for the inventory and interaction overlay.
 
 ## Running locally
 Open `index.html` in a browser. For a quick local server, run:
@@ -20,4 +26,6 @@ python -m http.server 8000
 Then visit `http://localhost:8000`.
 
 ## Customizing sprites
-The game ships with generated placeholder sprites. To use your own pixel art, add a PNG sprite sheet at `assets/spritesheet.png` (relative to `index.html`). Each tile should be **32x32** pixels and ordered left-to-right, top-to-bottom as: floor, wall, player, pickup, NPC, monster, prop. If the file is missing or invalid, the generated set will be used instead.
+The game ships with generated placeholder sprites drawn at runtime by Phaser.
+If you want to experiment with custom art, swap the drawing functions in
+`src/core/sprites.js` to paint your own textures before the level is created.

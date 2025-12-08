@@ -1,74 +1,54 @@
 import { COLORS, TILE, WORLD } from '../core/constants.js';
 import { demoLevel } from '../data/demoLevel.js';
 
-const level = demoLevel.map;
-
-export function tileAt(x, y) {
-  const tx = Math.floor(x / TILE);
-  const ty = Math.floor(y / TILE);
-  if (tx < 0 || ty < 0 || tx >= WORLD.width || ty >= WORLD.height) {
-    return 1;
-  }
-  return level[ty * WORLD.width + tx];
+export const levelGrid = [];
+for (let row = 0; row < WORLD.height; row += 1) {
+  const start = row * WORLD.width;
+  levelGrid.push(demoLevel.map.slice(start, start + WORLD.width));
 }
 
-export function canMove(size, nx, ny) {
-  const half = size / 2;
-  const corners = [
-    [nx - half, ny - half],
-    [nx + half, ny - half],
-    [nx - half, ny + half],
-    [nx + half, ny + half],
-  ];
-  return corners.every(([x, y]) => tileAt(x, y) === 0);
-}
+export function createLevel(scene) {
+  const walls = scene.physics.add.staticGroup();
+  const rt = scene.add.renderTexture(0, 0, WORLD.width * TILE, WORLD.height * TILE);
+  rt.setOrigin(0, 0);
 
-export function drawGrid(ctx, canvas) {
-  ctx.fillStyle = COLORS.gridBackground;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-export function drawLevel(ctx, camera, spriteSheet) {
-  const useSprites = Boolean(spriteSheet?.animations?.floor && spriteSheet?.animations?.wall);
-  const floorSprite = spriteSheet?.animations?.floor;
-  const wallSprite = spriteSheet?.animations?.wall;
-  for (let y = 0; y < WORLD.height; y++) {
-    for (let x = 0; x < WORLD.width; x++) {
-      const tile = level[y * WORLD.width + x];
-      const screenX = x * TILE - camera.x;
-      const screenY = y * TILE - camera.y;
-      if (tile === 1 && wallSprite && useSprites) {
-        wallSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
-      } else if (useSprites && floorSprite) {
-        floorSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
-      } else if (tile === 1) {
-        ctx.fillStyle = COLORS.wall;
-        ctx.fillRect(screenX, screenY, TILE, TILE);
-        ctx.fillStyle = COLORS.wallInner;
-        ctx.fillRect(screenX + 2, screenY + 2, TILE - 4, TILE - 4);
-      } else {
-        ctx.fillStyle = COLORS.floor;
-        ctx.fillRect(screenX, screenY, TILE, TILE);
-        ctx.fillStyle = COLORS.floorGlow;
-        ctx.fillRect(screenX, screenY + TILE - 6, TILE, 6);
+  levelGrid.forEach((row, y) => {
+    row.forEach((tile, x) => {
+      const drawKey = tile === 1 ? 'wall' : 'floor';
+      rt.draw(drawKey, x * TILE, y * TILE);
+      if (tile === 1) {
+        const wall = walls.create(x * TILE + TILE / 2, y * TILE + TILE / 2, 'wall');
+        wall.setSize(TILE, TILE);
+        wall.refreshBody();
       }
-    }
-  }
-}
+    });
+  });
 
-export function clampCamera(camera, player, canvas) {
-  camera.x = Math.max(0, Math.min(player.x - canvas.width / 2, WORLD.width * TILE - canvas.width));
-  camera.y = Math.max(0, Math.min(player.y - canvas.height / 2, WORLD.height * TILE - canvas.height));
+  return { walls, renderTexture: rt };
 }
 
 export function getLevelName() {
   return demoLevel.name;
 }
 
+export function getActorPlacements() {
+  return demoLevel.actors;
+}
+
 export function getPickupTemplates() {
   return demoLevel.pickups;
 }
 
-export function getActorPlacements() {
-  return demoLevel.actors;
+export function isWallTile(tx, ty) {
+  if (tx < 0 || ty < 0 || tx >= WORLD.width || ty >= WORLD.height) {
+    return true;
+  }
+  return levelGrid[ty]?.[tx] === 1;
+}
+
+export function drawDebugBounds(scene) {
+  const graphics = scene.add.graphics();
+  graphics.lineStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.gridBorder).color, 0.6);
+  graphics.strokeRect(0, 0, WORLD.width * TILE, WORLD.height * TILE);
+  return graphics;
 }
