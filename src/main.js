@@ -62,6 +62,10 @@ const loop = GameLoop({
       activeSpeaker = nearestNpc.name;
       activeLine = nearestNpc.dialogue || 'Ráda tě vidím v základně.';
       nearestNpc.hasSpoken = true;
+      if (nearestNpc.info && !nearestNpc.infoShared) {
+        updateInventoryNote(nearestNpc.info);
+        nearestNpc.infoShared = true;
+      }
       dialogueTime = 4;
       showDialogue(activeSpeaker, activeLine);
     }

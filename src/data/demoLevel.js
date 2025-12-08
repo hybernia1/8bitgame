@@ -31,6 +31,14 @@ export const demoLevel = {
         ty: 4,
         dialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
       },
+      {
+        id: 'technician',
+        name: 'Technik Jára',
+        tx: 6,
+        ty: 9,
+        dialogue: 'Hej, slyšel jsem šumění u zadního skladu. Možná tam něco blýská.',
+        info: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
+      },
     ],
   },
   pickups: [
