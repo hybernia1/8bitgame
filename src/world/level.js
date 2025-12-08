@@ -2,6 +2,15 @@ import { COLORS, TILE, WORLD } from '../core/constants.js';
 import { demoLevel } from '../data/demoLevel.js';
 
 const DOOR_TILE = 2;
+const MAP_WIDTH = WORLD.width;
+const MAP_HEIGHT = demoLevel.map.length / MAP_WIDTH;
+
+if (!Number.isInteger(MAP_HEIGHT)) {
+  throw new Error(`Invalid map dimensions: expected rows of ${MAP_WIDTH} tiles but got ${demoLevel.map.length} entries.`);
+}
+
+// Keep the world size in sync with the map so the renderer and editor agree.
+WORLD.height = MAP_HEIGHT;
 const gate = {
   tx: 14,
   ty: 10,
