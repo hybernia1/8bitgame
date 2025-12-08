@@ -1,5 +1,6 @@
 import { TILE, WORLD } from './core/constants.js';
 import { ensurePhaserReady } from './core/phaserLoader.js';
+import { resolveRenderType } from './core/environment.js';
 import { demoLevel } from './data/demoLevel.js';
 import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
 import { hideInteraction, showDialogue, showPrompt } from './ui/interaction.js';
@@ -125,13 +126,16 @@ class DemoScene extends Phaser.Scene {
   }
 }
 
+const renderType = resolveRenderType(Phaser);
+
 const game = new Phaser.Game({
-  type: Phaser.AUTO,
+  type: renderType,
   width: 640,
   height: 480,
   canvas: document.getElementById('game'),
   backgroundColor: '#0b0b10',
   pixelArt: true,
+  renderType,
   physics: {
     default: 'arcade',
     arcade: { gravity: { y: 0 }, debug: false },
