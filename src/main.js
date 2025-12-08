@@ -1,4 +1,5 @@
 import { TILE, WORLD } from './core/constants.js';
+import { ensurePhaserReady } from './core/phaserLoader.js';
 import { demoLevel } from './data/demoLevel.js';
 import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
 import { hideInteraction, showDialogue, showPrompt } from './ui/interaction.js';
@@ -7,6 +8,8 @@ import { createLevel } from './world/level.js';
 import { createPlayer, createInput, updatePlayerMovement } from './entities/player.js';
 import { createPickupGroup, setupPickupOverlap, collectPickup } from './entities/pickups.js';
 import { createNpcs, findNearestNpc } from './entities/npc.js';
+
+const Phaser = await ensurePhaserReady();
 
 const inventory = new Inventory(6);
 renderInventory(inventory);
