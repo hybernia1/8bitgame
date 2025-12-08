@@ -39,6 +39,19 @@ export const demoLevel = {
         dialogue: 'Hej, slyšel jsem šumění u zadního skladu. Možná tam něco blýská.',
         info: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
       },
+      {
+        id: 'key-guard',
+        name: 'Hlídač Klíče',
+        tx: 18,
+        ty: 11,
+        dialogue: 'Stůj! Klíč tady nikdo neukradne.',
+        patrol: [
+          { tx: 18, ty: 9 },
+          { tx: 18, ty: 12 },
+        ],
+        speed: 70,
+        lethal: true,
+      },
     ],
   },
   pickups: [
@@ -64,7 +77,7 @@ export const demoLevel = {
       id: 'keycard',
       name: 'Keycard Fragment',
       icon: '🗝️',
-      x: TILE * 5 + TILE / 2,
+      x: TILE * 18 + TILE / 2,
       y: TILE * 12 + TILE / 2,
       tint: '#c66bff',
       description: 'One part of an access card. Collect the rest later.',
