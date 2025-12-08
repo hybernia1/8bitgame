@@ -17,16 +17,30 @@ const player = createPlayer();
 const pickups = createPickups();
 const inventory = new Inventory(6);
 const npcs = createNpcs(spriteSheet, getActorPlacements());
+const objectivesCollectedEl = document.querySelector('[data-objectives-collected]');
+const objectivesTotalEl = document.querySelector('[data-objectives-total]');
+const objectiveTotal = pickups.length;
 
 let interactRequested = false;
 let dialogueTime = 0;
 let activeSpeaker = '';
 let activeLine = '';
+let objectivesCollected = 0;
 
 const hudTitle = document.querySelector('.title');
 hudTitle.textContent = `Level 0: ${getLevelName()}`;
 renderInventory(inventory);
 updateInventoryNote('Najdi komponenty a naplň šest slotů inventáře.');
+updateObjectiveHud();
+
+function updateObjectiveHud() {
+  if (objectivesCollectedEl) {
+    objectivesCollectedEl.textContent = objectivesCollected;
+  }
+  if (objectivesTotalEl) {
+    objectivesTotalEl.textContent = objectiveTotal;
+  }
+}
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
@@ -55,9 +69,14 @@ const loop = GameLoop({
 
     const collected = collectNearbyPickups(player, pickups, inventory);
     if (collected.length) {
+      objectivesCollected += collected.length;
+      updateObjectiveHud();
       renderInventory(inventory);
       const names = collected.map((item) => item.name).join(', ');
       updateInventoryNote(`Sebráno: ${names}`);
+      if (objectivesCollected >= objectiveTotal) {
+        updateInventoryNote('Mise splněna: všechny komponenty jsou připravené.');
+      }
     }
 
     if (dialogueTime > 0) {
