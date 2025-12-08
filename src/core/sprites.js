@@ -2,17 +2,7 @@ import { SpriteSheet } from '../kontra.mjs';
 import { TILE, COLORS } from './constants.js';
 
 const SPRITE_ORDER = ['floor', 'wall', 'player', 'pickup', 'npc', 'monster', 'prop'];
-const CUSTOM_SPRITE_SHEET = 'assets/spritesheet.png';
 const TEXTURE_SEED = 1337;
-
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = src;
-  });
-}
 
 function makeCanvas(frames) {
   const cols = 4;
@@ -201,20 +191,7 @@ export async function loadSpriteSheet() {
     withTexture(drawMonster),
     withTexture(drawProp),
   ];
-  let image;
-
-  try {
-    image = await loadImage(CUSTOM_SPRITE_SHEET);
-    // eslint-disable-next-line no-console
-    console.info(`Loaded external sprite sheet from ${CUSTOM_SPRITE_SHEET}.`);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `Could not load ${CUSTOM_SPRITE_SHEET}; falling back to built-in generator.`,
-      error,
-    );
-    image = await canvasToImage(makeCanvas(frames));
-  }
+  const image = await canvasToImage(makeCanvas(frames));
 
   return SpriteSheet({
     image,
