@@ -134,10 +134,6 @@ export function getLevelName() {
   return demoLevel.name;
 }
 
-export function getTextureTheme() {
-  return demoLevel.textures ?? {};
-}
-
 export function getPickupTemplates() {
   return demoLevel.pickups;
 }
