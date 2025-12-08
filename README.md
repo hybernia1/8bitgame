@@ -1,9 +1,10 @@
 # 8bitgame
 
 A minimal HTML5 demo for a top-down 8-bit style game. The prototype now runs on
-Phaser 3 locally from `vendor/phaser.min.js` so you can drop the folder on any static server and move
-the character around the enclosed level to test camera follow, collision, and
-basic feel before adding enemies or objectives.
+Phaser 3 with a local loader that prefers `vendor/phaser.min.js` and falls back
+to a CDN if the bundled file cannot be read. Drop the folder on any static
+server and move the character around the enclosed level to test camera follow,
+collision, and basic feel before adding enemies or objectives.
 
 ## Structure
 - `index.html` – shell that loads the canvas, HUD, and interaction overlay.
