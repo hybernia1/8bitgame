@@ -35,16 +35,16 @@ const sealedTiles = [
 // Preserve the raw map for tooling such as the editor so we can return tiles to
 // their intended values after temporarily locking areas during the tutorial.
 const baseTiles = [...demoLevel.map];
+const unlockedTiles = demoLevel.unlockedMap ?? baseTiles;
 const levelTiles = [...baseTiles];
 const gateIndex = gate.ty * WORLD.width + gate.tx;
 const gateOpenTile = 0;
 const sealedTileIndices = sealedTiles.map(([tx, ty]) => ty * WORLD.width + tx);
-const sealedTileOriginals = sealedTileIndices.map((index) => baseTiles[index]);
+const sealedTileOriginals = sealedTileIndices.map((index) => unlockedTiles[index] ?? 0);
 
-levelTiles[gateIndex] = DOOR_TILE;
-sealedTileIndices.forEach((index) => {
-  levelTiles[index] = 1;
-});
+if (levelTiles[gateIndex] !== DOOR_TILE) {
+  levelTiles[gateIndex] = DOOR_TILE;
+}
 
 export function tileAt(x, y) {
   const tx = Math.floor(x / TILE);
