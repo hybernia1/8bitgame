@@ -37,6 +37,7 @@ let activeLine = '';
 let objectivesCollected = 0;
 let areaName = getLevelName();
 let technicianGaveKey = false;
+let deathTimeout = null;
 
 const hudTitle = document.querySelector('.title');
 hudTitle.textContent = `Level 0: ${areaName}`;
@@ -67,10 +68,15 @@ const loop = GameLoop({
     updatePlayer(player, dt, { canMove });
     clampCamera(camera, player, canvas);
 
-    const { nearestNpc } = updateNpcStates(npcs, player);
+    const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
     const gateState = getGateState();
     const gateDistance = Math.hypot(gateState.x - player.x, gateState.y - player.y);
     const nearGate = gateDistance <= 26;
+
+    if (guardCollision) {
+      handlePlayerDeath();
+      return;
+    }
 
     if (interactRequested && nearestNpc?.nearby) {
       activeSpeaker = nearestNpc.name;
@@ -158,6 +164,15 @@ const loop = GameLoop({
 function drawCameraBounds() {
   ctx.strokeStyle = COLORS.gridBorder;
   ctx.strokeRect(1, 1, WORLD.width * TILE - 2, WORLD.height * TILE - 2);
+}
+
+function handlePlayerDeath() {
+  if (deathTimeout) return;
+
+  hideInteraction();
+  updateInventoryNote('Hlídač klíče tě zneškodnil. Mise se restartuje...');
+  dialogueTime = 0;
+  deathTimeout = setTimeout(() => window.location.reload(), 900);
 }
 
 loop.start();
