@@ -3,6 +3,10 @@ import { TILE, COLORS } from './constants.js';
 
 const SPRITE_ORDER = ['floor', 'wall', 'player', 'pickup', 'npc', 'monster', 'prop'];
 const TEXTURE_SEED = 1337;
+const DEFAULT_TEXTURES = {
+  floor: 'tech',
+  wall: 'tech',
+};
 
 function makeCanvas(frames) {
   const cols = 4;
@@ -77,12 +81,11 @@ async function canvasToImage(canvas) {
   return image;
 }
 
-function withTexture(drawFn) {
-  const random = createRng();
-  return (ctx) => drawFn(ctx, random);
+function withTexture(drawFn, seed = TEXTURE_SEED) {
+  return (ctx) => drawFn(ctx, createRng(seed));
 }
 
-function drawFloor(ctx, random) {
+function drawTechFloor(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, COLORS.floor, '#0d2d27', 0.03, random);
   ctx.fillStyle = COLORS.floorGlow;
   ctx.fillRect(0, TILE - 6, TILE, 6);
@@ -92,7 +95,32 @@ function drawFloor(ctx, random) {
   ctx.strokeRect(1, 1, TILE - 2, TILE - 2);
 }
 
-function drawWall(ctx, random) {
+function drawGrassFloor(ctx, random) {
+  drawNoise(ctx, 0, 0, TILE, TILE, '#2f8c38', '#23702d', 0.06, random);
+
+  const blades = [
+    '#3cab41',
+    '#56c451',
+    '#1f6127',
+  ];
+
+  blades.forEach((color) => {
+    ctx.fillStyle = color;
+    for (let i = 0; i < 28; i += 1) {
+      const x = 2 + Math.floor(random() * (TILE - 4));
+      const y = 4 + Math.floor(random() * (TILE - 8));
+      const height = 2 + Math.floor(random() * 3);
+      ctx.fillRect(x, TILE - y - height, 1, height);
+    }
+  });
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.fillRect(0, TILE - 6, TILE, 4);
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+  ctx.strokeRect(0.5, 0.5, TILE - 1, TILE - 1);
+}
+
+function drawTechWall(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, COLORS.wall, '#0c0c15', 0.02, random);
   ctx.fillStyle = jitterColor(COLORS.wallInner, 14, random);
   ctx.fillRect(2, 2, TILE - 4, TILE - 4);
@@ -100,6 +128,37 @@ function drawWall(ctx, random) {
   ctx.fillRect(5, 5, TILE - 10, TILE - 10);
   ctx.strokeStyle = 'rgba(140, 152, 199, 0.35)';
   ctx.strokeRect(5.5, 5.5, TILE - 11, TILE - 11);
+}
+
+function drawStoneWall(ctx, random) {
+  drawNoise(ctx, 0, 0, TILE, TILE, '#555c66', '#444a52', 0.03, random);
+
+  const brickRows = 4;
+  const rowHeight = Math.floor(TILE / brickRows);
+  const mortar = '#2c3037';
+  ctx.strokeStyle = mortar;
+  ctx.lineWidth = 2;
+
+  for (let row = 0; row < brickRows; row += 1) {
+    const y = row * rowHeight;
+    ctx.beginPath();
+    ctx.moveTo(0, y + 1);
+    ctx.lineTo(TILE, y + 1);
+    ctx.stroke();
+
+    const offset = row % 2 === 0 ? rowHeight : rowHeight / 2;
+    for (let x = offset; x < TILE; x += rowHeight * 2) {
+      ctx.beginPath();
+      ctx.moveTo(x + 1, y);
+      ctx.lineTo(x + 1, y + rowHeight);
+      ctx.stroke();
+    }
+  }
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.fillRect(2, 2, TILE - 4, rowHeight - 2);
+  ctx.strokeStyle = 'rgba(12, 12, 12, 0.35)';
+  ctx.strokeRect(0.5, 0.5, TILE - 1, TILE - 1);
 }
 
 function drawPlayer(ctx, random) {
@@ -181,15 +240,41 @@ function drawProp(ctx, random) {
   ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 7);
 }
 
-export async function loadSpriteSheet() {
+const FLOOR_TEXTURES = {
+  tech: drawTechFloor,
+  grass: drawGrassFloor,
+};
+
+const WALL_TEXTURES = {
+  tech: drawTechWall,
+  stone: drawStoneWall,
+};
+
+function selectTexture(name, textures, fallback) {
+  return textures[name] ?? textures[fallback];
+}
+
+export async function loadSpriteSheet(textureOptions = {}) {
+  const seed = textureOptions.seed ?? TEXTURE_SEED;
+  const floorTexture = selectTexture(
+    textureOptions.floor ?? DEFAULT_TEXTURES.floor,
+    FLOOR_TEXTURES,
+    DEFAULT_TEXTURES.floor,
+  );
+  const wallTexture = selectTexture(
+    textureOptions.wall ?? DEFAULT_TEXTURES.wall,
+    WALL_TEXTURES,
+    DEFAULT_TEXTURES.wall,
+  );
+
   const frames = [
-    withTexture(drawFloor),
-    withTexture(drawWall),
-    withTexture(drawPlayer),
-    withTexture(drawPickup),
-    withTexture(drawNpc),
-    withTexture(drawMonster),
-    withTexture(drawProp),
+    withTexture(floorTexture, seed + 11),
+    withTexture(wallTexture, seed + 23),
+    withTexture(drawPlayer, seed + 37),
+    withTexture(drawPickup, seed + 41),
+    withTexture(drawNpc, seed + 53),
+    withTexture(drawMonster, seed + 67),
+    withTexture(drawProp, seed + 71),
   ];
   const image = await canvasToImage(makeCanvas(frames));
 
