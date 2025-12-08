@@ -26,6 +26,23 @@ export function canMove(size, nx, ny) {
 export function drawGrid(ctx, canvas) {
   ctx.fillStyle = COLORS.gridBackground;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+  ctx.lineWidth = 1;
+
+  for (let x = 0; x <= canvas.width; x += TILE) {
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, 0);
+    ctx.lineTo(x + 0.5, canvas.height);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y <= canvas.height; y += TILE) {
+    ctx.beginPath();
+    ctx.moveTo(0, y + 0.5);
+    ctx.lineTo(canvas.width, y + 0.5);
+    ctx.stroke();
+  }
 }
 
 export function drawLevel(ctx, camera, spriteSheet) {
@@ -37,20 +54,24 @@ export function drawLevel(ctx, camera, spriteSheet) {
       const tile = level[y * WORLD.width + x];
       const screenX = x * TILE - camera.x;
       const screenY = y * TILE - camera.y;
-      if (tile === 1 && wallSprite && useSprites) {
-        wallSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
-      } else if (useSprites && floorSprite) {
-        floorSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
-      } else if (tile === 1) {
+      if (tile === 1) {
         ctx.fillStyle = COLORS.wall;
         ctx.fillRect(screenX, screenY, TILE, TILE);
         ctx.fillStyle = COLORS.wallInner;
         ctx.fillRect(screenX + 2, screenY + 2, TILE - 4, TILE - 4);
+
+        if (wallSprite && useSprites) {
+          wallSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
+        }
       } else {
         ctx.fillStyle = COLORS.floor;
         ctx.fillRect(screenX, screenY, TILE, TILE);
         ctx.fillStyle = COLORS.floorGlow;
         ctx.fillRect(screenX, screenY + TILE - 6, TILE, 6);
+
+        if (floorSprite && useSprites) {
+          floorSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
+        }
       }
     }
   }

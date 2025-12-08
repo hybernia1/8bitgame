@@ -43,14 +43,14 @@ export function drawPlayer(ctx, camera, player, spriteSheet) {
   const half = player.size / 2;
   const playerSprite = spriteSheet?.animations?.player;
 
+  ctx.fillStyle = COLORS.gridBorder;
+  ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
+  ctx.fillStyle = player.color;
+  ctx.fillRect(px - half, py - half, player.size, player.size);
+  ctx.fillStyle = '#183e35';
+  ctx.fillRect(px - half, py + half - 4, player.size, 4);
+
   if (playerSprite) {
     playerSprite.render({ context: ctx, x: px - half, y: py - half, width: player.size, height: player.size });
-  } else {
-    ctx.fillStyle = COLORS.gridBorder;
-    ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
-    ctx.fillStyle = player.color;
-    ctx.fillRect(px - half, py - half, player.size, player.size);
-    ctx.fillStyle = '#183e35';
-    ctx.fillRect(px - half, py + half - 4, player.size, 4);
   }
 }
