@@ -2,50 +2,37 @@ import { TILE } from '../core/constants.js';
 
 const TALK_RADIUS = 26;
 
-export function createNpcs(spriteSheet, placements) {
+export function createNpcs(scene, placements) {
   const { npcs = [] } = placements || {};
-  return npcs.map((npc) => ({
-    ...npc,
-    x: npc.x ?? npc.tx * TILE + TILE / 2,
-    y: npc.y ?? npc.ty * TILE + TILE / 2,
-    hasSpoken: false,
-    animation: spriteSheet?.animations?.npc?.clone?.(),
-  }));
+  return npcs.map((npc) => {
+    const x = npc.x ?? npc.tx * TILE + TILE / 2;
+    const y = npc.y ?? npc.ty * TILE + TILE / 2;
+    const sprite = scene.add.sprite(x, y, 'npc');
+    sprite.setDepth(2);
+    const ring = scene.add.graphics();
+    ring.lineStyle(2, 0x5cf2cc, 0.6);
+    ring.strokeCircle(x, y + 2, TILE / 2);
+    ring.setVisible(false);
+    ring.setDepth(1);
+    return { ...npc, x, y, sprite, ring, nearby: false, hasSpoken: false };
+  });
 }
 
-export function updateNpcStates(npcs, player) {
-  let nearestNpc = null;
+export function findNearestNpc(player, npcEntries) {
+  let nearest = null;
   let nearestDistance = Infinity;
 
-  npcs.forEach((npc) => {
-    const distance = Math.hypot(npc.x - player.x, npc.y - player.y);
-    npc.nearby = distance <= TALK_RADIUS;
+  npcEntries.forEach((entry) => {
+    const dx = entry.x - player.x;
+    const dy = entry.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    entry.nearby = distance <= TALK_RADIUS;
+    entry.ring.setVisible(entry.nearby);
     if (distance < nearestDistance) {
       nearestDistance = distance;
-      nearestNpc = npc;
+      nearest = entry;
     }
   });
 
-  return { nearestNpc };
-}
-
-export function drawNpcs(ctx, camera, npcs) {
-  npcs.forEach((npc) => {
-    const px = npc.x - camera.x;
-    const py = npc.y - camera.y;
-    const half = TILE / 2;
-    if (npc.animation) {
-      npc.animation.render({ context: ctx, x: px - half, y: py - half, width: TILE, height: TILE });
-    } else {
-      ctx.fillStyle = '#87b0ff';
-      ctx.fillRect(px - half, py - half, TILE, TILE);
-    }
-    if (npc.nearby) {
-      ctx.strokeStyle = 'rgba(92, 242, 204, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(px, py + 2, TILE / 2, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  });
+  return nearest;
 }
