@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>8-Bit Demo Level</title>
   <link rel="stylesheet" href="src/style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <script src="vendor/phaser.min.js"></script>
 </head>
 <body>
   <main class="layout">
@@ -34,17 +34,17 @@
     </section>
     <aside class="panel">
       <h1>8-bit Top-Down Demo</h1>
-      <p>
-        This prototype demonstrates the basic feel of the game: a top-down 8-bit
-        view where the player can walk around a compact level. Obstacles block
-        the character, letting you test collision, camera, and movement speed.
-      </p>
-      <p>
-        Input handling, collision, and the fixed-step loop now run on
-        <strong>Phaser 3</strong> from the CDN for easier experimentation. The
-        demo level also includes simple pickups and a six-slot inventory UI to
-        test item collection.
-      </p>
+        <p>
+          This prototype demonstrates the basic feel of the game: a top-down 8-bit
+          view where the player can walk around a compact level. Obstacles block
+          the character, letting you test collision, camera, and movement speed.
+        </p>
+        <p>
+          Input handling, collision, and the fixed-step loop now run on a local
+          <strong>Phaser 3</strong> build bundled with the page, so it works even
+          if the CDN is blocked. The demo level also includes simple pickups and
+          a six-slot inventory UI to test item collection.
+        </p>
       <ul>
         <li>WASD or Arrow Keys to move</li>
         <li>Bump into walls to feel collision</li>
