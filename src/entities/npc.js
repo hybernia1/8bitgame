@@ -9,6 +9,7 @@ export function createNpcs(spriteSheet, placements) {
     x: npc.x ?? npc.tx * TILE + TILE / 2,
     y: npc.y ?? npc.ty * TILE + TILE / 2,
     hasSpoken: false,
+    infoShared: false,
     animation: spriteSheet?.animations?.npc?.clone?.(),
   }));
 }
