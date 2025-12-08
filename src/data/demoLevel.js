@@ -2,6 +2,11 @@ import { TILE } from '../core/constants.js';
 
 export const demoLevel = {
   name: 'Demo Facility',
+  textures: {
+    seed: 9001,
+    floor: 'grass',
+    wall: 'stone',
+  },
   // Locked layout (what the player sees on load).
   map: [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
