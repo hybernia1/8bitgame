@@ -6,7 +6,16 @@ import { collectNearbyPickups, createPickups, drawPickups } from './entities/pic
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
 import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
 import { hideInteraction, showDialogue, showPrompt } from './ui/interaction.js';
-import { clampCamera, drawGrid, drawLevel, getLevelName, canMove, getActorPlacements } from './world/level.js';
+import {
+  clampCamera,
+  drawGrid,
+  drawLevel,
+  getLevelName,
+  canMove,
+  getActorPlacements,
+  getGateState,
+  unlockGateToNewMap,
+} from './world/level.js';
 
 const spriteSheet = await loadSpriteSheet();
 const { canvas, context: ctx } = init('game');
@@ -26,9 +35,11 @@ let dialogueTime = 0;
 let activeSpeaker = '';
 let activeLine = '';
 let objectivesCollected = 0;
+let areaName = getLevelName();
+let technicianGaveKey = false;
 
 const hudTitle = document.querySelector('.title');
-hudTitle.textContent = `Level 0: ${getLevelName()}`;
+hudTitle.textContent = `Level 0: ${areaName}`;
 renderInventory(inventory);
 updateInventoryNote('Najdi komponenty a naplň šest slotů inventáře.');
 updateObjectiveHud();
@@ -57,16 +68,52 @@ const loop = GameLoop({
     clampCamera(camera, player, canvas);
 
     const { nearestNpc } = updateNpcStates(npcs, player);
+    const gateState = getGateState();
+    const gateDistance = Math.hypot(gateState.x - player.x, gateState.y - player.y);
+    const nearGate = gateDistance <= 26;
 
     if (interactRequested && nearestNpc?.nearby) {
       activeSpeaker = nearestNpc.name;
-      activeLine = nearestNpc.dialogue || 'Ráda tě vidím v základně.';
+      if (nearestNpc.id === 'technician') {
+        const readyForReward = objectivesCollected >= objectiveTotal;
+        if (!readyForReward) {
+          activeLine =
+            'Musíš donést všechny díly. Jakmile je máš, vrátíš se pro klíč a já ti otevřu dveře.';
+        } else if (!technicianGaveKey) {
+          const stored = inventory.addItem({
+            id: 'gate-key',
+            name: 'Klíč od dveří',
+            icon: '🔑',
+            tint: '#f2d45c',
+          });
+
+          if (stored) {
+            technicianGaveKey = true;
+            unlockGateToNewMap();
+            activeLine = 'Tady máš klíč. Dveře otevřeš směrem na východ do nové mapy.';
+            areaName = 'Nové servisní křídlo';
+            hudTitle.textContent = `Level 1: ${areaName}`;
+            updateInventoryNote('Klíč získán! Východní dveře se odemkly a mapa se rozšířila.');
+          } else {
+            activeLine = 'Tvůj inventář je plný, uvolni si místo na klíč.';
+          }
+        } else {
+          activeLine = 'Dveře už jsou otevřené. Vejdi dál a pozor na nové prostory.';
+        }
+      } else {
+        activeLine = nearestNpc.dialogue || 'Ráda tě vidím v základně.';
+      }
       nearestNpc.hasSpoken = true;
       if (nearestNpc.info && !nearestNpc.infoShared) {
         updateInventoryNote(nearestNpc.info);
         nearestNpc.infoShared = true;
       }
       dialogueTime = 4;
+      showDialogue(activeSpeaker, activeLine);
+    } else if (interactRequested && nearGate && !gateState.locked) {
+      activeSpeaker = 'Systém Dveří';
+      activeLine = 'Vstup potvrzen. Přecházíš do nového mapového křídla.';
+      dialogueTime = 3;
       showDialogue(activeSpeaker, activeLine);
     }
     interactRequested = false;
@@ -79,7 +126,7 @@ const loop = GameLoop({
       const names = collected.map((item) => item.name).join(', ');
       updateInventoryNote(`Sebráno: ${names}`);
       if (objectivesCollected >= objectiveTotal) {
-        updateInventoryNote('Mise splněna: všechny komponenty jsou připravené.');
+        updateInventoryNote('Mise splněna: všechny komponenty jsou připravené. Vrať se za Technikem Járou.');
       }
     }
 
@@ -88,6 +135,12 @@ const loop = GameLoop({
       showDialogue(activeSpeaker, activeLine);
     } else if (nearestNpc?.nearby) {
       showPrompt(`Stiskni E pro rozhovor s ${nearestNpc.name}`);
+    } else if (nearGate) {
+      if (gateState.locked) {
+        showPrompt('Dveře jsou zamčené. Technik Jára má klíč.');
+      } else {
+        showPrompt('Dveře jsou otevřené, stiskni E pro vstup do nové mapy.');
+      }
     } else {
       hideInteraction();
     }

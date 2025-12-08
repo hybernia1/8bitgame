@@ -1,7 +1,33 @@
 import { COLORS, TILE, WORLD } from '../core/constants.js';
 import { demoLevel } from '../data/demoLevel.js';
 
-const level = demoLevel.map;
+const DOOR_TILE = 2;
+const gate = {
+  tx: 14,
+  ty: 10,
+  locked: true,
+};
+
+const sealedTiles = [
+  [14, 9],
+  [15, 9],
+  [16, 9],
+  [15, 10],
+  [16, 10],
+  [17, 10],
+  [15, 11],
+  [16, 11],
+  [17, 11],
+  [15, 12],
+  [16, 12],
+  [17, 12],
+];
+
+const levelTiles = [...demoLevel.map];
+levelTiles[gate.ty * WORLD.width + gate.tx] = DOOR_TILE;
+sealedTiles.forEach(([tx, ty]) => {
+  levelTiles[ty * WORLD.width + tx] = 1;
+});
 
 export function tileAt(x, y) {
   const tx = Math.floor(x / TILE);
@@ -9,7 +35,7 @@ export function tileAt(x, y) {
   if (tx < 0 || ty < 0 || tx >= WORLD.width || ty >= WORLD.height) {
     return 1;
   }
-  return level[ty * WORLD.width + tx];
+  return levelTiles[ty * WORLD.width + tx];
 }
 
 export function canMove(size, nx, ny) {
@@ -51,7 +77,7 @@ export function drawLevel(ctx, camera, spriteSheet) {
   const wallSprite = spriteSheet?.animations?.wall;
   for (let y = 0; y < WORLD.height; y++) {
     for (let x = 0; x < WORLD.width; x++) {
-      const tile = level[y * WORLD.width + x];
+      const tile = levelTiles[y * WORLD.width + x];
       const screenX = x * TILE - camera.x;
       const screenY = y * TILE - camera.y;
       if (tile === 1) {
@@ -63,6 +89,11 @@ export function drawLevel(ctx, camera, spriteSheet) {
         if (wallSprite && useSprites) {
           wallSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
         }
+      } else if (tile === DOOR_TILE) {
+        ctx.fillStyle = COLORS.doorClosed;
+        ctx.fillRect(screenX, screenY, TILE, TILE);
+        ctx.strokeStyle = COLORS.doorAccent;
+        ctx.strokeRect(screenX + 4, screenY + 4, TILE - 8, TILE - 8);
       } else {
         ctx.fillStyle = COLORS.floor;
         ctx.fillRect(screenX, screenY, TILE, TILE);
@@ -92,4 +123,17 @@ export function getPickupTemplates() {
 
 export function getActorPlacements() {
   return demoLevel.actors;
+}
+
+export function getGateState() {
+  return { ...gate, x: gate.tx * TILE + TILE / 2, y: gate.ty * TILE + TILE / 2 };
+}
+
+export function unlockGateToNewMap() {
+  if (!gate.locked) return;
+  gate.locked = false;
+  levelTiles[gate.ty * WORLD.width + gate.tx] = 0;
+  sealedTiles.forEach(([tx, ty]) => {
+    levelTiles[ty * WORLD.width + tx] = 0;
+  });
 }
