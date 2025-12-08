@@ -70,12 +70,11 @@ export function drawNpcs(ctx, camera, npcs) {
     const px = npc.x - camera.x;
     const py = npc.y - camera.y;
     const half = TILE / 2;
-    // Always draw a visible fallback so the NPC stands out even if the sprite sheet fails.
-    ctx.fillStyle = '#87b0ff';
-    ctx.fillRect(px - half, py - half, TILE, TILE);
-
     if (npc.animation) {
       npc.animation.render({ context: ctx, x: px - half, y: py - half, width: TILE, height: TILE });
+    } else {
+      ctx.fillStyle = '#87b0ff';
+      ctx.fillRect(px - half, py - half, TILE, TILE);
     }
     if (npc.nearby) {
       ctx.strokeStyle = 'rgba(92, 242, 204, 0.6)';
