@@ -6,6 +6,16 @@ import { collectNearbyPickups, createPickups, drawPickups } from './entities/pic
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
 import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
 import { hideInteraction, showDialogue, showPrompt } from './ui/interaction.js';
+import { renderLighting } from './core/lighting.js';
+import {
+  createLantern,
+  dropLantern,
+  drawDroppedLantern,
+  getLightSources,
+  isLanternNearby,
+  pickupLantern,
+  updateLanternAnchor,
+} from './entities/lantern.js';
 import {
   clampCamera,
   drawGrid,
@@ -23,6 +33,7 @@ initKeys();
 
 const camera = { x: 0, y: 0 };
 const player = createPlayer();
+const lantern = createLantern(player);
 const pickups = createPickups();
 const inventory = new Inventory(6);
 const npcs = createNpcs(spriteSheet, getActorPlacements());
@@ -31,6 +42,7 @@ const objectivesTotalEl = document.querySelector('[data-objectives-total]');
 const objectiveTotal = pickups.length;
 
 let interactRequested = false;
+let lanternActionRequested = false;
 let dialogueTime = 0;
 let activeSpeaker = '';
 let activeLine = '';
@@ -42,7 +54,7 @@ let deathTimeout = null;
 const hudTitle = document.querySelector('.title');
 hudTitle.textContent = `Level 0: ${areaName}`;
 renderInventory(inventory);
-updateInventoryNote('Najdi komponenty a naplň šest slotů inventáře.');
+updateInventoryNote('Držíš lucerničku. Stiskni F pro položení, nasbírej komponenty do inventáře.');
 updateObjectiveHud();
 
 function updateObjectiveHud() {
@@ -61,11 +73,15 @@ document.addEventListener('keydown', (event) => {
   if (event.key.toLowerCase() === 'e') {
     interactRequested = true;
   }
+  if (event.key.toLowerCase() === 'f') {
+    lanternActionRequested = true;
+  }
 });
 
 const loop = GameLoop({
   update(dt) {
     updatePlayer(player, dt, { canMove });
+    updateLanternAnchor(lantern, player);
     clampCamera(camera, player, canvas);
 
     const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
@@ -77,6 +93,23 @@ const loop = GameLoop({
       handlePlayerDeath();
       return;
     }
+
+    if (lanternActionRequested) {
+      const dropped = lantern.carried && dropLantern(lantern, player);
+      const pickedUp = !lantern.carried && pickupLantern(lantern, player);
+
+      if (dropped) {
+        updateInventoryNote('Lucerničku jsi položil. Místo zůstává osvětlené, dokud ji nevezmeš zpět.');
+      } else if (pickedUp) {
+        updateInventoryNote('Lucernička je zpět u tebe a odhaluje okolní chodby.');
+      } else if (!lantern.carried) {
+        updateInventoryNote('Musíš být blíž k lucerničce, abys ji sebral.');
+      }
+
+      lanternActionRequested = false;
+    }
+
+    const lanternNearby = isLanternNearby(lantern, player);
 
     if (interactRequested && nearestNpc?.nearby) {
       activeSpeaker = nearestNpc.name;
@@ -139,6 +172,8 @@ const loop = GameLoop({
     if (dialogueTime > 0) {
       dialogueTime -= dt;
       showDialogue(activeSpeaker, activeLine);
+    } else if (lanternNearby && !lantern.carried) {
+      showPrompt('Stiskni F pro zvednutí lucerničky.');
     } else if (nearestNpc?.nearby) {
       showPrompt(`Stiskni E pro rozhovor s ${nearestNpc.name}`);
     } else if (nearGate) {
@@ -155,9 +190,11 @@ const loop = GameLoop({
     drawGrid(ctx, canvas);
     drawLevel(ctx, camera, spriteSheet);
     drawPickups(ctx, camera, pickups, spriteSheet);
+    drawDroppedLantern(ctx, camera, lantern);
     drawNpcs(ctx, camera, npcs);
     drawPlayer(ctx, camera, player, spriteSheet);
     drawCameraBounds();
+    renderLighting(ctx, canvas, camera, getLightSources(lantern, player));
   },
 });
 
