@@ -49,11 +49,15 @@ function createRng(seed = TEXTURE_SEED) {
 function loadTextureImage(path) {
   if (!path) return Promise.resolve(null);
 
+  // Ensure asset paths resolve correctly when the app is served from a subpath
+  // or bundled by tools that need explicit URL references.
+  const resolvedPath = new URL(`../../${path}`, import.meta.url).href;
+
   return new Promise((resolve) => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => resolve(null);
-    image.src = path;
+    image.src = resolvedPath;
   });
 }
 
