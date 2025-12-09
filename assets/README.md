@@ -15,4 +15,5 @@ If your host only lets you drop files next to `index.html`, you can also use the
 single-file names (`hero.png`, `floor.png`, etc.) in the project root; the
 loader will pick them up after checking the preferred asset folders.
 
-If any of the files above are missing, the game falls back to the built-in procedural sprites.
+If any of the files above are missing, the game falls back to the built-in procedural sprites. Files ending with either
+`.png` or `.PNG` are accepted so exports from different tools still load on case-sensitive hosts.
