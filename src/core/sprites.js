@@ -7,14 +7,14 @@ const TEXTURE_PATHS = {
   // Prefer the documented subfolder locations, but also try a flattened path
   // (e.g., assets/hero.png) to match common host uploads where the extra
   // subdirectory is omitted.
-  floor: ['assets/tiles/floor.png', 'assets/floor.png'],
-  wall: ['assets/walls/wall.png', 'assets/wall.png'],
-  door: ['assets/doors/door.png', 'assets/door.png'],
-  player: ['assets/hero/hero.png', 'assets/hero.png'],
-  pickup: ['assets/items/pickup.png', 'assets/pickup.png'],
-  npc: ['assets/npc/npc.png', 'assets/npcs/npc.png', 'assets/npc.png'],
-  monster: ['assets/npc/monster.png', 'assets/npcs/monster.png', 'assets/monsters/monster.png', 'assets/monster.png'],
-  prop: ['assets/props/prop.png', 'assets/prop.png'],
+  floor: ['assets/tiles/floor.png', 'assets/floor.png', 'floor.png'],
+  wall: ['assets/walls/wall.png', 'assets/wall.png', 'wall.png'],
+  door: ['assets/doors/door.png', 'assets/door.png', 'door.png'],
+  player: ['assets/hero/hero.png', 'assets/hero.png', 'hero.png'],
+  pickup: ['assets/items/pickup.png', 'assets/pickup.png', 'pickup.png'],
+  npc: ['assets/npc/npc.png', 'assets/npcs/npc.png', 'assets/npc.png', 'npc.png'],
+  monster: ['assets/npc/monster.png', 'assets/npcs/monster.png', 'assets/monsters/monster.png', 'assets/monster.png', 'monster.png'],
+  prop: ['assets/props/prop.png', 'assets/prop.png', 'prop.png'],
 };
 
 function makeCanvas(frames) {
