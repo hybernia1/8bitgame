@@ -12,8 +12,8 @@ const TEXTURE_PATHS = {
   door: ['assets/doors/door.png', 'assets/door.png'],
   player: ['assets/hero/hero.png', 'assets/hero.png'],
   pickup: ['assets/items/pickup.png', 'assets/pickup.png'],
-  npc: ['assets/npc/npc.png', 'assets/npc.png'],
-  monster: ['assets/npc/monster.png', 'assets/monster.png'],
+  npc: ['assets/npc/npc.png', 'assets/npcs/npc.png', 'assets/npc.png'],
+  monster: ['assets/npc/monster.png', 'assets/npcs/monster.png', 'assets/monsters/monster.png', 'assets/monster.png'],
   prop: ['assets/props/prop.png', 'assets/prop.png'],
 };
 

@@ -30,15 +30,20 @@ function updatePatrol(npc, dt) {
 
 export function createNpcs(spriteSheet, placements) {
   const { npcs = [] } = placements || {};
-  return npcs.map((npc) => ({
-    ...npc,
-    ...toWorldPosition(npc),
-    patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
-    patrolIndex: 0,
-    hasSpoken: false,
-    infoShared: false,
-    animation: spriteSheet?.animations?.npc?.clone?.(),
-  }));
+  return npcs.map((npc) => {
+    const spriteName = npc.sprite ?? (npc.lethal ? 'monster' : 'npc');
+
+    return {
+      ...npc,
+      sprite: spriteName,
+      ...toWorldPosition(npc),
+      patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
+      patrolIndex: 0,
+      hasSpoken: false,
+      infoShared: false,
+      animation: spriteSheet?.animations?.[spriteName]?.clone?.(),
+    };
+  });
 }
 
 export function updateNpcStates(npcs, player, dt) {

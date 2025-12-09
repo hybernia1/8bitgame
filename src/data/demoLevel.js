@@ -64,6 +64,7 @@ export const demoLevel = {
         name: 'Hlídač Klíče',
         tx: 18,
         ty: 11,
+        sprite: 'monster',
         dialogue: 'Stůj! Klíč tady nikdo neukradne.',
         patrol: [
           { tx: 18, ty: 1 },
