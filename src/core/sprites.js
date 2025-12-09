@@ -46,12 +46,21 @@ function createRng(seed = TEXTURE_SEED) {
   };
 }
 
+function resolveTexturePath(path) {
+  // Respect the page base URL so assets also resolve when the game is hosted on
+  // a subpath (e.g., GitHub Pages). Fall back to the module URL for local
+  // module loaders and bundlers.
+  if (typeof document !== 'undefined' && document.baseURI) {
+    return new URL(path, document.baseURI).href;
+  }
+
+  return new URL(`../../${path}`, import.meta.url).href;
+}
+
 function loadTextureImage(path) {
   if (!path) return Promise.resolve(null);
 
-  // Ensure asset paths resolve correctly when the app is served from a subpath
-  // or bundled by tools that need explicit URL references.
-  const resolvedPath = new URL(`../../${path}`, import.meta.url).href;
+  const resolvedPath = resolveTexturePath(path);
 
   return new Promise((resolve) => {
     const image = new Image();
