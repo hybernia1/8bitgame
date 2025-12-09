@@ -89,9 +89,10 @@ export function drawGrid(ctx, canvas) {
 }
 
 export function drawLevel(ctx, camera, spriteSheet) {
-  const useSprites = Boolean(spriteSheet?.animations?.floor && spriteSheet?.animations?.wall);
+  const useSprites = Boolean(spriteSheet);
   const floorSprite = spriteSheet?.animations?.floor;
   const wallSprite = spriteSheet?.animations?.wall;
+  const doorSprite = spriteSheet?.animations?.door;
   for (let y = 0; y < WORLD.height; y++) {
     for (let x = 0; x < WORLD.width; x++) {
       const tile = levelTiles[y * WORLD.width + x];
@@ -111,6 +112,10 @@ export function drawLevel(ctx, camera, spriteSheet) {
         ctx.fillRect(screenX, screenY, TILE, TILE);
         ctx.strokeStyle = COLORS.doorAccent;
         ctx.strokeRect(screenX + 4, screenY + 4, TILE - 8, TILE - 8);
+
+        if (doorSprite && useSprites) {
+          doorSprite.render({ context: ctx, x: screenX, y: screenY, width: TILE, height: TILE });
+        }
       } else {
         ctx.fillStyle = COLORS.floor;
         ctx.fillRect(screenX, screenY, TILE, TILE);
