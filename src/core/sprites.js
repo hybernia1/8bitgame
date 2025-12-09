@@ -294,7 +294,9 @@ export async function loadSpriteSheet() {
 
   return SpriteSheet({
     image,
-    frame: { width: TILE, height: TILE, margin: 0 },
+    frameWidth: TILE,
+    frameHeight: TILE,
+    frameMargin: 0,
     animations: SPRITE_ORDER.reduce((animations, name, index) => {
       animations[name] = { frames: [index] };
       return animations;
