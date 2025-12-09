@@ -34,6 +34,7 @@ const sealedTiles = [
 
 // Preserve the raw map for tooling such as the editor so we can return tiles to
 // their intended values after temporarily locking areas during the tutorial.
+const actorPlacements = demoLevel.actors ?? {};
 const baseTiles = [...demoLevel.map];
 const unlockedTiles = demoLevel.unlockedMap ?? baseTiles;
 const levelTiles = [...baseTiles];
@@ -144,7 +145,10 @@ export function getPickupTemplates() {
 }
 
 export function getActorPlacements() {
-  return demoLevel.actors;
+  // Return a defensive copy so entity initialisation cannot accidentally wipe
+  // the source data (which previously caused the demo NPCs to disappear after
+  // hot reloads).
+  return JSON.parse(JSON.stringify(actorPlacements));
 }
 
 export function getGateState() {
