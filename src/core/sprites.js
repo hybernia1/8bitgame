@@ -1,8 +1,18 @@
 import { SpriteSheet } from '../kontra.mjs';
 import { TILE, COLORS } from './constants.js';
 
-const SPRITE_ORDER = ['floor', 'wall', 'player', 'pickup', 'npc', 'monster', 'prop'];
+const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'monster', 'prop'];
 const TEXTURE_SEED = 1337;
+const TEXTURE_PATHS = {
+  floor: 'assets/tiles/floor.png',
+  wall: 'assets/walls/wall.png',
+  door: 'assets/doors/door.png',
+  player: 'assets/hero/hero.png',
+  pickup: 'assets/items/pickup.png',
+  npc: 'assets/npc/npc.png',
+  monster: 'assets/npc/monster.png',
+  prop: 'assets/props/prop.png',
+};
 
 function makeCanvas(frames) {
   const cols = 4;
@@ -34,6 +44,28 @@ function createRng(seed = TEXTURE_SEED) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+function loadTextureImage(path) {
+  if (!path) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = path;
+  });
+}
+
+async function loadTextureMap() {
+  const entries = await Promise.all(
+    Object.entries(TEXTURE_PATHS).map(async ([name, path]) => [name, await loadTextureImage(path)]),
+  );
+
+  return entries.reduce((textures, [name, image]) => {
+    if (image) textures[name] = image;
+    return textures;
+  }, {});
 }
 
 function jitterColor(hex, amount, random) {
@@ -82,6 +114,10 @@ function withTexture(drawFn) {
   return (ctx) => drawFn(ctx, random);
 }
 
+function drawFromImage(image) {
+  return (ctx) => ctx.drawImage(image, 0, 0, TILE, TILE);
+}
+
 function drawFloor(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, COLORS.floor, '#0d2d27', 0.03, random);
   ctx.fillStyle = COLORS.floorGlow;
@@ -100,6 +136,16 @@ function drawWall(ctx, random) {
   ctx.fillRect(5, 5, TILE - 10, TILE - 10);
   ctx.strokeStyle = 'rgba(140, 152, 199, 0.35)';
   ctx.strokeRect(5.5, 5.5, TILE - 11, TILE - 11);
+}
+
+function drawDoor(ctx, random) {
+  drawNoise(ctx, 0, 0, TILE, TILE, COLORS.doorClosed, '#1b0f14', 0.02, random);
+  ctx.fillStyle = jitterColor('#3b262d', 10, random);
+  ctx.fillRect(4, 4, TILE - 8, TILE - 8);
+  ctx.strokeStyle = 'rgba(242, 212, 92, 0.65)';
+  ctx.strokeRect(6, 6, TILE - 12, TILE - 12);
+  ctx.fillStyle = '#f2d45c';
+  ctx.fillRect(TILE / 2 - 2, TILE / 2 - 4, 4, 10);
 }
 
 function drawPlayer(ctx, random) {
@@ -181,16 +227,24 @@ function drawProp(ctx, random) {
   ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 7);
 }
 
+const DRAWERS = {
+  floor: drawFloor,
+  wall: drawWall,
+  door: drawDoor,
+  player: drawPlayer,
+  pickup: drawPickup,
+  npc: drawNpc,
+  monster: drawMonster,
+  prop: drawProp,
+};
+
 export async function loadSpriteSheet() {
-  const frames = [
-    withTexture(drawFloor),
-    withTexture(drawWall),
-    withTexture(drawPlayer),
-    withTexture(drawPickup),
-    withTexture(drawNpc),
-    withTexture(drawMonster),
-    withTexture(drawProp),
-  ];
+  const textures = await loadTextureMap();
+  const frames = SPRITE_ORDER.map((name) => {
+    const texture = textures[name];
+    if (texture) return drawFromImage(texture);
+    return withTexture(DRAWERS[name]);
+  });
   const image = await canvasToImage(makeCanvas(frames));
 
   return SpriteSheet({
@@ -206,6 +260,7 @@ export async function loadSpriteSheet() {
 export const SPRITE_NAMES = {
   floor: 'floor',
   wall: 'wall',
+  door: 'door',
   player: 'player',
   pickup: 'pickup',
   npc: 'npc',
