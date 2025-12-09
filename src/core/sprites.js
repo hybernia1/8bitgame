@@ -76,7 +76,27 @@ function loadTextureImage(path) {
 async function loadTextureMap() {
   const entries = await Promise.all(
     Object.entries(TEXTURE_PATHS).map(async ([name, paths]) => {
-      const candidates = Array.isArray(paths) ? paths : [paths];
+      const candidates = (Array.isArray(paths) ? paths : [paths]).reduce(
+        (expanded, candidate) => {
+          if (!candidate) return expanded;
+
+          expanded.push(candidate);
+
+          // Some tools export textures with an uppercase extension (e.g.,
+          // `hero.PNG`). Try both versions so drop-in assets load on
+          // case-sensitive hosts as well.
+          const pngIndex = candidate.toLowerCase().lastIndexOf('.png');
+          if (pngIndex !== -1) {
+            const upperVariant = `${candidate.slice(0, pngIndex)}.PNG`;
+            if (!expanded.includes(upperVariant)) {
+              expanded.push(upperVariant);
+            }
+          }
+
+          return expanded;
+        },
+        [],
+      );
       const image = await candidates.reduce(async (foundPromise, candidate) => {
         const found = await foundPromise;
         if (found) return found;
