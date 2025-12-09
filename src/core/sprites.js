@@ -4,14 +4,17 @@ import { TILE, COLORS } from './constants.js';
 const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'monster', 'prop'];
 const TEXTURE_SEED = 1337;
 const TEXTURE_PATHS = {
-  floor: 'assets/tiles/floor.png',
-  wall: 'assets/walls/wall.png',
-  door: 'assets/doors/door.png',
-  player: 'assets/hero/hero.png',
-  pickup: 'assets/items/pickup.png',
-  npc: 'assets/npc/npc.png',
-  monster: 'assets/npc/monster.png',
-  prop: 'assets/props/prop.png',
+  // Prefer the documented subfolder locations, but also try a flattened path
+  // (e.g., assets/hero.png) to match common host uploads where the extra
+  // subdirectory is omitted.
+  floor: ['assets/tiles/floor.png', 'assets/floor.png'],
+  wall: ['assets/walls/wall.png', 'assets/wall.png'],
+  door: ['assets/doors/door.png', 'assets/door.png'],
+  player: ['assets/hero/hero.png', 'assets/hero.png'],
+  pickup: ['assets/items/pickup.png', 'assets/pickup.png'],
+  npc: ['assets/npc/npc.png', 'assets/npc.png'],
+  monster: ['assets/npc/monster.png', 'assets/monster.png'],
+  prop: ['assets/props/prop.png', 'assets/prop.png'],
 };
 
 function makeCanvas(frames) {
@@ -72,7 +75,16 @@ function loadTextureImage(path) {
 
 async function loadTextureMap() {
   const entries = await Promise.all(
-    Object.entries(TEXTURE_PATHS).map(async ([name, path]) => [name, await loadTextureImage(path)]),
+    Object.entries(TEXTURE_PATHS).map(async ([name, paths]) => {
+      const candidates = Array.isArray(paths) ? paths : [paths];
+      const image = await candidates.reduce(async (foundPromise, candidate) => {
+        const found = await foundPromise;
+        if (found) return found;
+        return loadTextureImage(candidate);
+      }, Promise.resolve(null));
+
+      return [name, image];
+    }),
   );
 
   return entries.reduce((textures, [name, image]) => {
