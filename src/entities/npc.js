@@ -36,6 +36,8 @@ export function createNpcs(spriteSheet, placements) {
     return {
       ...npc,
       sprite: spriteName,
+      color: npc.color || '#87b0ff',
+      tint: npc.tint || 'rgba(135, 176, 255, 0.18)',
       ...toWorldPosition(npc),
       patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
       patrolIndex: 0,
@@ -75,18 +77,38 @@ export function drawNpcs(ctx, camera, npcs) {
     const px = npc.x - camera.x;
     const py = npc.y - camera.y;
     const half = TILE / 2;
+
+    ctx.save();
+    ctx.translate(px, py);
+
+    ctx.fillStyle = npc.tint;
+    ctx.beginPath();
+    ctx.arc(0, 2, TILE / 2, 0, Math.PI * 2);
+    ctx.fill();
+
     if (npc.animation) {
-      npc.animation.render({ context: ctx, x: px - half, y: py - half, width: TILE, height: TILE });
+      npc.animation.render({ context: ctx, x: -half, y: -half, width: TILE, height: TILE });
     } else {
-      ctx.fillStyle = '#87b0ff';
-      ctx.fillRect(px - half, py - half, TILE, TILE);
+      ctx.fillStyle = npc.color;
+      ctx.fillRect(-half, -half, TILE, TILE);
     }
+
+    if (npc.name) {
+      ctx.fillStyle = '#dbe8ff';
+      ctx.font = '10px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(npc.name, 0, -half - 4);
+    }
+
     if (npc.nearby) {
       ctx.strokeStyle = 'rgba(92, 242, 204, 0.6)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(px, py + 2, TILE / 2, 0, Math.PI * 2);
+      ctx.arc(0, 2, TILE / 2, 0, Math.PI * 2);
       ctx.stroke();
     }
+
+    ctx.restore();
   });
 }
