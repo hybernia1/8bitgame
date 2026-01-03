@@ -17,9 +17,6 @@ const TEXTURE_PATHS = {
 
 const SPRITE_ANIMATIONS = {
   player: getPlayerAnimationDefs,
-  // Monsters share the same directional sheet structure as the hero so we can
-  // reuse the existing animation definitions for walking/idle cycles.
-  monster: getPlayerAnimationDefs,
 };
 
 function getPlayerAnimationDefs(frameCount) {
