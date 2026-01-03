@@ -63,7 +63,7 @@ export function createNpcs(spriteSheet, placements) {
   const { npcs = [] } = placements || {};
   return npcs.map((npc) => {
     const spriteName = npc.sprite ?? (npc.lethal ? 'monster' : 'npc');
-    const animationBase = npc.animationBase ?? (npc.lethal ? 'player' : spriteName);
+    const animationBase = npc.animationBase ?? spriteName;
     const animations = createAnimationMap(spriteSheet, animationBase);
     const health = npc.health ?? 1;
     const facing = 'down';
