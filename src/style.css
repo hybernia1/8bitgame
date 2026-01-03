@@ -38,9 +38,11 @@ body {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), 0 0 0 8px var(--shadow);
   padding: 18px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 14px;
   position: relative;
   width: min(1200px, 100%);
+  align-items: start;
 }
 
 canvas {
@@ -55,13 +57,13 @@ canvas {
 
 .hud-bar {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid #23232e;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 14px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
@@ -139,21 +141,23 @@ canvas {
 
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
 }
 
 .inventory-slot {
   border: 1px solid #2c2c38;
   border-radius: 10px;
-  padding: 12px 14px;
-  min-height: 70px;
-  display: grid;
-  grid-template-columns: auto 1fr;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 6px;
   background: radial-gradient(circle at 0% 0%, rgba(92, 242, 204, 0.08), rgba(10, 10, 16, 0.7));
   transition: border-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  aspect-ratio: 1 / 1;
+  text-align: center;
 }
 
 .inventory-slot:hover {
@@ -169,7 +173,6 @@ canvas {
 .inventory-icon {
   font-size: 16px;
   text-align: center;
-  width: 22px;
 }
 
 .inventory-label {
@@ -199,4 +202,27 @@ canvas {
 
 .hidden {
   display: none;
+}
+
+.side-panel {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.play-column {
+  min-width: 0;
+}
+
+@media (max-width: 1050px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .hud-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
 }
