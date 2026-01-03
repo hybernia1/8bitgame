@@ -1,7 +1,7 @@
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 const saveMigrations = new Map();
 
 export function createGame({ inventory, hudSystem } = {}) {
@@ -75,6 +75,8 @@ export function createGame({ inventory, hudSystem } = {}) {
       playerState: extraSnapshot.playerState ?? null,
       playerVitals: extraSnapshot.playerVitals ?? null,
       projectiles: extraSnapshot.projectiles ?? [],
+      pickups: extraSnapshot.pickups ?? [],
+      npcs: extraSnapshot.npcs ?? [],
       sessionState: extraSnapshot.sessionState ?? null,
       persistentState: extraSnapshot.persistentState ?? null,
       savedAt: Date.now(),
@@ -170,21 +172,35 @@ export function createGame({ inventory, hudSystem } = {}) {
     'persistentState',
     'objectivesCollected',
     'savedAt',
+    'pickups',
+    'npcs',
   ];
+
+  function addSnapshotDefaults(snapshot = {}) {
+    const sessionState = snapshot?.sessionState ?? {};
+    const persistentState =
+      snapshot?.persistentState ?? {
+        flags: sessionState?.flags ?? {},
+        quests: sessionState?.quests ?? {},
+        areaName: sessionState?.areaName,
+        levelNumber: sessionState?.levelNumber,
+        subtitle: sessionState?.subtitle,
+      };
+
+    return {
+      ...snapshot,
+      sessionState,
+      persistentState,
+      pickups: snapshot?.pickups ?? [],
+      npcs: snapshot?.npcs ?? [],
+      projectiles: snapshot?.projectiles ?? [],
+    };
+  }
 
   function addPersistentStateToProgress(progress = {}) {
     const upgraded = {};
     Object.entries(progress).forEach(([levelId, snapshot]) => {
-      upgraded[levelId] = {
-        persistentState: snapshot?.persistentState ?? {
-          flags: snapshot?.sessionState?.flags ?? {},
-          quests: snapshot?.sessionState?.quests ?? {},
-          areaName: snapshot?.sessionState?.areaName,
-          levelNumber: snapshot?.sessionState?.levelNumber,
-          subtitle: snapshot?.sessionState?.subtitle,
-        },
-        ...snapshot,
-      };
+      upgraded[levelId] = addSnapshotDefaults(snapshot);
     });
     return upgraded;
   }
@@ -195,6 +211,11 @@ export function createGame({ inventory, hudSystem } = {}) {
     version: SAVE_VERSION,
   }));
   saveMigrations.set(1, (payload) => ({
+    ...payload,
+    progress: addPersistentStateToProgress(payload?.progress ?? {}),
+    version: SAVE_VERSION,
+  }));
+  saveMigrations.set(2, (payload) => ({
     ...payload,
     progress: addPersistentStateToProgress(payload?.progress ?? {}),
     version: SAVE_VERSION,
