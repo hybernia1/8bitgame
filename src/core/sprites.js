@@ -3,18 +3,16 @@ import { TILE, COLORS } from './constants.js';
 
 const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'monster', 'prop'];
 const TEXTURE_SEED = 1337;
+// Textures are loaded only from their canonical subfolders under assets/.
 const TEXTURE_PATHS = {
-  // Prefer the documented subfolder locations, but also try a flattened path
-  // (e.g., assets/hero.png) to match common host uploads where the extra
-  // subdirectory is omitted.
-  floor: ['assets/tiles/floor.png', 'assets/floor.png', 'floor.png'],
-  wall: ['assets/walls/wall.png', 'assets/wall.png', 'wall.png'],
-  door: ['assets/doors/door.png', 'assets/door.png', 'door.png'],
-  player: ['assets/hero/hero.png', 'assets/hero.png', 'hero.png'],
-  pickup: ['assets/items/pickup.png', 'assets/pickup.png', 'pickup.png'],
-  npc: ['assets/npc/npc.png', 'assets/npcs/npc.png', 'assets/npc.png', 'npc.png'],
-  monster: ['assets/npc/monster.png', 'assets/npcs/monster.png', 'assets/monsters/monster.png', 'assets/monster.png', 'monster.png'],
-  prop: ['assets/props/prop.png', 'assets/prop.png', 'prop.png'],
+  floor: 'assets/tiles/floor.png',
+  wall: 'assets/walls/wall.png',
+  door: 'assets/doors/door.png',
+  player: 'assets/hero/hero.png',
+  pickup: 'assets/items/pickup.png',
+  npc: 'assets/npc/npc.png',
+  monster: 'assets/npc/monster.png',
+  prop: 'assets/props/prop.png',
 };
 
 const SPRITE_ANIMATIONS = {
@@ -105,27 +103,7 @@ function loadTextureImage(path) {
 async function loadTextureMap() {
   const entries = await Promise.all(
     Object.entries(TEXTURE_PATHS).map(async ([name, paths]) => {
-      const candidates = (Array.isArray(paths) ? paths : [paths]).reduce(
-        (expanded, candidate) => {
-          if (!candidate) return expanded;
-
-          expanded.push(candidate);
-
-          // Some tools export textures with an uppercase extension (e.g.,
-          // `hero.PNG`). Try both versions so drop-in assets load on
-          // case-sensitive hosts as well.
-          const pngIndex = candidate.toLowerCase().lastIndexOf('.png');
-          if (pngIndex !== -1) {
-            const upperVariant = `${candidate.slice(0, pngIndex)}.PNG`;
-            if (!expanded.includes(upperVariant)) {
-              expanded.push(upperVariant);
-            }
-          }
-
-          return expanded;
-        },
-        [],
-      );
+      const candidates = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
       const image = await candidates.reduce(async (foundPromise, candidate) => {
         const found = await foundPromise;
         if (found) return found;
