@@ -17,6 +17,15 @@ const TEXTURE_PATHS = {
   prop: ['assets/props/prop.png', 'assets/prop.png', 'prop.png'],
 };
 
+const SPRITE_ANIMATIONS = {
+  player: [
+    { name: 'playerWalk', frames: '0..3', frameRate: 8 },
+    { name: 'playerIdle', frames: [4] },
+    // Keep a legacy single-frame animation for compatibility with existing lookups
+    { name: 'player', frames: [0] },
+  ],
+};
+
 function makeCanvas(frames) {
   const cols = 4;
   const rows = Math.ceil(frames.length / cols);
@@ -154,13 +163,55 @@ async function canvasToImage(canvas) {
   return image;
 }
 
-function withTexture(drawFn) {
-  const random = createRng();
+function withTexture(drawFn, seed = TEXTURE_SEED) {
+  const random = createRng(seed);
   return (ctx) => drawFn(ctx, random);
 }
 
 function drawFromImage(image) {
   return (ctx) => ctx.drawImage(image, 0, 0, TILE, TILE);
+}
+
+function drawFromImageFrame(image, sx, sy) {
+  return (ctx) => ctx.drawImage(image, sx, sy, TILE, TILE, 0, 0, TILE, TILE);
+}
+
+function buildSpriteFrames(name, texture) {
+  if (!texture) {
+    if (name === 'player') {
+      const seeds = [TEXTURE_SEED, TEXTURE_SEED + 1, TEXTURE_SEED + 2, TEXTURE_SEED + 3, TEXTURE_SEED + 4];
+      return seeds.map((seed) => withTexture(DRAWERS[name], seed));
+    }
+    return [withTexture(DRAWERS[name])];
+  }
+
+  const cols = Math.max(1, Math.floor(texture.width / TILE));
+  const rows = Math.max(1, Math.floor(texture.height / TILE));
+
+  const frames = [];
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      frames.push(drawFromImageFrame(texture, col * TILE, row * TILE));
+    }
+  }
+
+  return frames;
+}
+
+function expandFrameSpec(frameSpec, offset) {
+  const toArray = (value) => (Array.isArray(value) ? value : [value]);
+
+  if (typeof frameSpec === 'string' && frameSpec.includes('..')) {
+    const [start, end] = frameSpec.split('..').map((part) => Number.parseInt(part, 10));
+    const step = start <= end ? 1 : -1;
+    const frames = [];
+    for (let index = start; step > 0 ? index <= end : index >= end; index += step) {
+      frames.push(offset + index);
+    }
+    return frames;
+  }
+
+  return toArray(frameSpec).map((frame) => offset + frame);
 }
 
 function drawFloor(ctx, random) {
@@ -285,11 +336,32 @@ const DRAWERS = {
 
 export async function loadSpriteSheet() {
   const textures = await loadTextureMap();
-  const frames = SPRITE_ORDER.map((name) => {
+  const frames = [];
+  const animations = {};
+
+  SPRITE_ORDER.forEach((name) => {
     const texture = textures[name];
-    if (texture) return drawFromImage(texture);
-    return withTexture(DRAWERS[name]);
+    const startIndex = frames.length;
+    const spriteFrames = buildSpriteFrames(name, texture);
+    frames.push(...spriteFrames);
+
+    const animationDefs = SPRITE_ANIMATIONS[name];
+    if (animationDefs) {
+      animationDefs.forEach(({ name: animationName, frames: frameSpec, frameRate, loop = true }) => {
+        animations[animationName] = {
+          frames: expandFrameSpec(frameSpec, startIndex),
+          frameRate,
+          loop,
+        };
+      });
+      if (!animations[name]) {
+        animations[name] = { frames: [startIndex] };
+      }
+    } else {
+      animations[name] = { frames: [startIndex] };
+    }
   });
+
   const image = await canvasToImage(makeCanvas(frames));
 
   return SpriteSheet({
@@ -297,10 +369,7 @@ export async function loadSpriteSheet() {
     frameWidth: TILE,
     frameHeight: TILE,
     frameMargin: 0,
-    animations: SPRITE_ORDER.reduce((animations, name, index) => {
-      animations[name] = { frames: [index] };
-      return animations;
-    }, {}),
+    animations,
   });
 }
 

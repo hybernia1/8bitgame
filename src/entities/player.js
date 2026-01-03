@@ -12,8 +12,30 @@ function getInputAxis() {
   return { dx, dy };
 }
 
-export function createPlayer() {
+function createAnimationMap(spriteSheet) {
+  const animations = {};
+  const hasAnimations = spriteSheet?.animations;
+
+  if (hasAnimations?.playerIdle) animations.idle = hasAnimations.playerIdle.clone();
+  if (hasAnimations?.playerWalk) {
+    animations.walk = hasAnimations.playerWalk.clone();
+  } else if (hasAnimations?.player) {
+    animations.walk = hasAnimations.player.clone();
+  }
+
+  if (!animations.idle && animations.walk) {
+    animations.idle = animations.walk;
+  }
+
+  return animations;
+}
+
+export function createPlayer(spriteSheet) {
   const { playerStart } = getActorPlacements();
+  const animations = createAnimationMap(spriteSheet);
+  const currentAnimation = animations.idle || animations.walk || null;
+  currentAnimation?.start?.();
+
   return {
     x: playerStart.x,
     y: playerStart.y,
@@ -21,32 +43,44 @@ export function createPlayer() {
     size: 22,
     color: '#5cf2cc',
     lastDirection: { x: 1, y: 0 },
+    animationState: currentAnimation ? 'idle' : null,
+    currentAnimation,
+    animations,
   };
 }
 
 export function updatePlayer(player, dt, collision) {
   const { dx, dy } = getInputAxis();
-
-  if (dx === 0 && dy === 0) return;
-
+  const moving = dx !== 0 || dy !== 0;
   const len = Math.hypot(dx, dy) || 1;
-  const step = player.speed * dt;
-  const nx = player.x + (dx / len) * step;
-  const ny = player.y + (dy / len) * step;
 
-  if (dx !== 0 || dy !== 0) {
+  if (moving) {
+    const step = player.speed * dt;
+    const nx = player.x + (dx / len) * step;
+    const ny = player.y + (dy / len) * step;
+
     player.lastDirection = { x: dx / len, y: dy / len };
+
+    if (collision.canMove(player.size, nx, player.y)) player.x = nx;
+    if (collision.canMove(player.size, player.x, ny)) player.y = ny;
   }
 
-  if (collision.canMove(player.size, nx, player.y)) player.x = nx;
-  if (collision.canMove(player.size, player.x, ny)) player.y = ny;
+  const nextState = moving ? 'walk' : 'idle';
+  if (player.animationState !== nextState && player.animations?.[nextState]) {
+    player.currentAnimation?.stop?.();
+    player.currentAnimation = player.animations[nextState];
+    player.animationState = nextState;
+    player.currentAnimation?.start?.();
+  }
+
+  player.currentAnimation?.update?.(dt);
 }
 
 export function drawPlayer(ctx, camera, player, spriteSheet) {
   const px = player.x - camera.x;
   const py = player.y - camera.y;
   const half = player.size / 2;
-  const playerSprite = spriteSheet?.animations?.player;
+  const facingLeft = player.lastDirection?.x < 0;
 
   ctx.fillStyle = COLORS.gridBorder;
   ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
@@ -55,7 +89,26 @@ export function drawPlayer(ctx, camera, player, spriteSheet) {
   ctx.fillStyle = '#183e35';
   ctx.fillRect(px - half, py + half - 4, player.size, 4);
 
-  if (playerSprite) {
-    playerSprite.render({ context: ctx, x: px - half, y: py - half, width: player.size, height: player.size });
+  if (player.currentAnimation) {
+    ctx.save();
+    ctx.translate(px, py);
+    if (facingLeft) ctx.scale(-1, 1);
+    player.currentAnimation.render({
+      context: ctx,
+      x: -half,
+      y: -half,
+      width: player.size,
+      height: player.size,
+    });
+    ctx.restore();
+  } else {
+    const playerSprite = spriteSheet?.animations?.player;
+    playerSprite?.render({
+      context: ctx,
+      x: px - half,
+      y: py - half,
+      width: player.size,
+      height: player.size,
+    });
   }
 }
