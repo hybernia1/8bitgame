@@ -70,3 +70,29 @@ export function collectNearbyPickups(player, pickups, inventory) {
   });
   return collected;
 }
+
+export function serializePickups(pickups = []) {
+  return pickups.map((pickup, index) => ({
+    index,
+    id: pickup.id,
+    x: pickup.x,
+    y: pickup.y,
+    collected: Boolean(pickup.collected),
+  }));
+}
+
+export function restorePickups(pickups = [], snapshot = []) {
+  if (!Array.isArray(snapshot) || !snapshot.length) return;
+  const byIndex = new Map(snapshot.map((entry) => [entry.index, entry]));
+  const byId = new Map(
+    snapshot.filter((entry) => entry?.id).map((entry) => [entry.id, entry]),
+  );
+
+  pickups.forEach((pickup, index) => {
+    const saved = byIndex.get(index) ?? byId.get(pickup.id);
+    if (!saved) return;
+    if (typeof saved.x === 'number') pickup.x = saved.x;
+    if (typeof saved.y === 'number') pickup.y = saved.y;
+    pickup.collected = Boolean(saved.collected);
+  });
+}

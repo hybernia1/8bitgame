@@ -182,3 +182,42 @@ export function drawNpcs(ctx, camera, npcs) {
     ctx.restore();
   });
 }
+
+export function serializeNpcs(npcs = []) {
+  return npcs.map((npc) => ({
+    id: npc.id,
+    x: npc.x,
+    y: npc.y,
+    facing: npc.facing,
+    patrolIndex: npc.patrolIndex,
+    health: npc.health,
+    defeated: npc.defeated,
+    hasSpoken: npc.hasSpoken,
+    infoShared: npc.infoShared,
+  }));
+}
+
+export function restoreNpcs(npcs = [], snapshot = []) {
+  if (!Array.isArray(snapshot) || !snapshot.length) return;
+  const byId = new Map(
+    snapshot.filter((entry) => entry?.id).map((entry) => [entry.id, entry]),
+  );
+
+  snapshot.forEach((entry, index) => {
+    const target = (entry?.id && byId.get(entry.id)) || npcs[index];
+    if (!target) return;
+
+    if (typeof entry.x === 'number') target.x = entry.x;
+    if (typeof entry.y === 'number') target.y = entry.y;
+    if (entry.facing) target.facing = entry.facing;
+    if (typeof entry.patrolIndex === 'number') target.patrolIndex = entry.patrolIndex;
+    if (typeof entry.health === 'number') target.health = entry.health;
+    target.defeated = Boolean(entry.defeated);
+    target.hasSpoken = Boolean(entry.hasSpoken);
+    target.infoShared = Boolean(entry.infoShared);
+
+    if (target.defeated) {
+      target.lethal = false;
+    }
+  });
+}

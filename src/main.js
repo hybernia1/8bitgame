@@ -3,8 +3,8 @@ import { COLORS, TILE, WORLD } from './core/constants.js';
 import { createGame } from './core/game.js';
 import { loadSpriteSheet } from './core/sprites.js';
 import { createPlayer, drawPlayer, restorePlayer, serializePlayer, updatePlayer } from './entities/player.js';
-import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
-import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
+import { collectNearbyPickups, createPickups, drawPickups, restorePickups, serializePickups } from './entities/pickups.js';
+import { createNpcs, drawNpcs, restoreNpcs, serializeNpcs, updateNpcStates } from './entities/npc.js';
 import { createPushables, drawPushables, restorePushables, serializePushables } from './entities/pushables.js';
 import { renderInventory, Inventory, useInventorySlot } from './ui/inventory.js';
 import { itemHandlers } from './items.js';
@@ -340,7 +340,9 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     restorePlayer(player, savedSnapshot?.playerState, placements.playerStart ?? player);
     playerStart = { x: player.x, y: player.y };
     pickups = createPickups(level.getPickupTemplates());
+    restorePickups(pickups, savedSnapshot?.pickups);
     npcs = createNpcs(spriteSheet, placements);
+    restoreNpcs(npcs, savedSnapshot?.npcs);
     pushables = createPushables(placements);
     restorePushables(pushables, savedSnapshot?.sessionState?.pushables);
 
@@ -505,6 +507,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       playerVitals: { ...playerVitals },
       projectiles: projectilesForSave(),
       sessionState: serializeSessionState(),
+      pickups: serializePickups(pickups),
+      npcs: serializeNpcs(npcs),
     }));
   }
 
