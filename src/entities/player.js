@@ -1,6 +1,5 @@
 import { keyPressed } from '../kontra.mjs';
 import { COLORS } from '../core/constants.js';
-import { getActorPlacements } from '../world/level.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
 function getInputAxis() {
@@ -13,8 +12,8 @@ function getInputAxis() {
   return { dx, dy };
 }
 
-export function createPlayer(spriteSheet) {
-  const { playerStart } = getActorPlacements();
+export function createPlayer(spriteSheet, placements = {}) {
+  const { playerStart = { x: 0, y: 0 } } = placements;
   const animations = createAnimationMap(spriteSheet, 'player');
   const facing = 'down';
   const currentAnimation =

@@ -1,8 +1,7 @@
 import { TILE } from '../core/constants.js';
 import { updateInventoryNote } from '../ui/inventory.js';
-import { tileAt } from '../world/level.js';
 
-export function createCombatSystem({ inventory, projectiles, player, renderInventory }) {
+export function createCombatSystem({ inventory, projectiles, player, renderInventory, tileAt }) {
   function attemptShoot() {
     const ammoCount = inventory.getItemCount('ammo');
     if (ammoCount <= 0) {
