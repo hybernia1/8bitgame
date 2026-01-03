@@ -14,7 +14,7 @@ import { createCombatSystem } from './systems/combat.js';
 import { createInteractionSystem } from './systems/interactions.js';
 import { createHudSystem } from './systems/hud.js';
 import { createGameLoop } from './systems/game-loop.js';
-import { registerScene, resume, setScene, showMenu } from './core/scenes.js';
+import { getCurrentScene, registerScene, resume, setScene, showMenu } from './core/scenes.js';
 import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta } from './world/level-data.js';
 import { format } from './ui/messages.js';
 import { formatBinding, formatControlsHint } from './core/input-bindings.js';
@@ -352,7 +352,6 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     handlePlayerHit,
   };
 
-  let loop = null;
   let inputSystem = null;
   let hudSystem = null;
   let playerStart = null;
@@ -558,57 +557,56 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       collectNearbyPickups,
     });
 
-    loop = createGameLoop({
-      update(dt) {
-        updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables });
-        level.updatePressureSwitches(getSwitchOccupants());
-        level.clampCamera(camera, player, canvas);
+    updateFrame = (dt) => {
+      updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables });
+      level.updatePressureSwitches(getSwitchOccupants());
+      level.clampCamera(camera, player, canvas);
 
-        if (playerVitals.invulnerableTime > 0) {
-          playerVitals.invulnerableTime = Math.max(0, playerVitals.invulnerableTime - dt);
-        }
+      if (playerVitals.invulnerableTime > 0) {
+        playerVitals.invulnerableTime = Math.max(0, playerVitals.invulnerableTime - dt);
+      }
 
-        const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
+      const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
 
-        if (guardCollision && playerVitals.invulnerableTime === 0) {
-          handlePlayerHit();
-        }
+      if (guardCollision && playerVitals.invulnerableTime === 0) {
+        handlePlayerHit();
+      }
 
-        const interactContext = interactionSystem.handleInteract(player, {
-          interactRequested: interactQueued,
-          nearestNpc,
-          guardCollision,
-        });
+      const interactContext = interactionSystem.handleInteract(player, {
+        interactRequested: interactQueued,
+        nearestNpc,
+        guardCollision,
+      });
 
-        interactQueued = false;
+      interactQueued = false;
 
-        if (shootQueued) {
-          combatSystem.attemptShoot();
-        }
-        shootQueued = false;
+      if (shootQueued) {
+        combatSystem.attemptShoot();
+      }
+      shootQueued = false;
 
-        combatSystem.updateProjectiles(dt, npcs);
-        applyDarknessDamage(dt);
+      combatSystem.updateProjectiles(dt, npcs);
+      applyDarknessDamage(dt);
 
-        interactionSystem.updateInteractions(player, {
-          ...interactContext,
-          dt,
-        });
-      },
-      render() {
-        drawGrid(ctx, canvas, getLevelDimensions());
-        level.drawLevel(ctx, camera, spriteSheet);
-        level.drawPressureSwitches(ctx, camera);
-        level.drawLightSwitches(ctx, camera);
-        drawPickups(ctx, camera, pickups, spriteSheet);
-        drawPushables(ctx, camera, pushables, spriteSheet);
-        combatSystem.drawProjectiles(ctx, camera);
-        drawNpcs(ctx, camera, npcs);
-        drawPlayer(ctx, camera, player, spriteSheet);
-        level.drawLighting(ctx, camera);
-        drawCameraBounds(getLevelDimensions());
-      },
-    });
+      interactionSystem.updateInteractions(player, {
+        ...interactContext,
+        dt,
+      });
+    };
+
+    renderFrame = () => {
+      drawGrid(ctx, canvas, getLevelDimensions());
+      level.drawLevel(ctx, camera, spriteSheet);
+      level.drawPressureSwitches(ctx, camera);
+      level.drawLightSwitches(ctx, camera);
+      drawPickups(ctx, camera, pickups, spriteSheet);
+      drawPushables(ctx, camera, pushables, spriteSheet);
+      combatSystem.drawProjectiles(ctx, camera);
+      drawNpcs(ctx, camera, npcs);
+      drawPlayer(ctx, camera, player, spriteSheet);
+      level.drawLighting(ctx, camera);
+      drawCameraBounds(getLevelDimensions());
+    };
 
     game.setSnapshotProvider(() => ({
       playerState: serializePlayer(player),
@@ -694,23 +692,23 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     shootQueued = false;
   }
 
-  function pause() {
+  const noop = () => {};
+  let updateFrame = noop;
+  let renderFrame = noop;
+
+  function pauseSession() {
     resetActionQueue();
     inputSystem?.stop?.();
-    loop?.pauseUpdates?.();
   }
 
-  function resume() {
+  function resumeSession() {
     hidePausePanel();
     resetActionQueue();
     inputSystem?.start?.();
-    loop?.resumeUpdates?.();
-    loop?.start();
   }
 
   function cleanup() {
     inputSystem?.destroy?.();
-    loop?.stop();
     if (deathTimeout) {
       clearTimeout(deathTimeout);
       deathTimeout = null;
@@ -721,10 +719,12 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
 
   return {
     bootstrap,
-    pause,
-    resume,
+    pause: pauseSession,
+    resume: resumeSession,
     cleanup,
     manualSave,
+    updateFrame: (dt) => updateFrame(dt),
+    renderFrame: () => renderFrame(),
     levelId: () => level?.meta?.id ?? levelId ?? DEFAULT_LEVEL_ID,
   };
 }
@@ -734,6 +734,10 @@ let currentInGameSession = null;
 registerScene('menu', {
   async onEnter() {
     showMenuPanel();
+  },
+  onRender() {
+    ctx.fillStyle = COLORS.gridBackground;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   },
 });
 
@@ -782,6 +786,10 @@ registerScene('loading', {
     await setScene('inGame');
     currentInGameSession?.resume?.();
   },
+  onRender() {
+    ctx.fillStyle = COLORS.gridBackground;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  },
 });
 
 registerScene('inGame', {
@@ -801,6 +809,12 @@ registerScene('inGame', {
     currentInGameSession?.cleanup?.();
     currentInGameSession = null;
   },
+  onUpdate(dt) {
+    currentInGameSession?.updateFrame?.(dt);
+  },
+  onRender() {
+    currentInGameSession?.renderFrame?.();
+  },
 });
 
 registerScene('pause', {
@@ -810,7 +824,15 @@ registerScene('pause', {
   async onExit() {
     hidePausePanel();
   },
+  onRender() {
+    currentInGameSession?.renderFrame?.();
+  },
 });
+
+const loop = createGameLoop({
+  getScene: getCurrentScene,
+});
+loop.start();
 
 const startButton = documentRoot?.querySelector?.('[data-menu-start]');
 const continueButton = documentRoot?.querySelector?.('[data-menu-continue]');
