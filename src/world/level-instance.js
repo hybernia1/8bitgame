@@ -7,6 +7,16 @@ import { COLORS, TILE, WORLD } from '../core/constants.js';
 
 const DOOR_TILE = 2;
 
+function isOccupyingTile(entity, tx, ty) {
+  if (!entity || typeof entity.x !== 'number' || typeof entity.y !== 'number') return false;
+  const size = entity.size ?? entity.width ?? TILE;
+  const halfEntity = size / 2;
+  const halfTile = TILE / 2;
+  const cx = tx * TILE + halfTile;
+  const cy = ty * TILE + halfTile;
+  return Math.abs(entity.x - cx) < halfTile + halfEntity && Math.abs(entity.y - cy) < halfTile + halfEntity;
+}
+
 function resolveTileLayers(config) {
   const layers = config.tileLayers ?? {};
   const fallback = config.map ?? [];
@@ -75,6 +85,7 @@ export class LevelInstance {
     this.actorPlacements = levelConfig.actors ?? {};
     this.interactables = levelConfig.interactables ?? {};
     this.gateConfig = this.interactables.gate ?? null;
+    this.pressureSwitchConfig = this.interactables.pressureSwitches ?? [];
 
     this.lightingConfig = {
       ...(levelConfig.lighting ?? {}),
@@ -104,6 +115,7 @@ export class LevelInstance {
 
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
+    this.pressureSwitches = [];
 
     this.applyLightingZones(this.lightingConfig.litZones ?? []);
 
@@ -115,6 +127,8 @@ export class LevelInstance {
         this.decorTiles[this.gateIndex] = DOOR_TILE;
       }
     }
+
+    this.initializePressureSwitches();
   }
 
   applyLightingZones(zones = []) {
@@ -208,6 +222,28 @@ export class LevelInstance {
     ctx.restore();
   }
 
+  drawPressureSwitches(ctx, camera) {
+    if (!this.pressureSwitches.length) return;
+    ctx.save();
+    this.pressureSwitches.forEach((plate) => {
+      const px = plate.tx * TILE - camera.x;
+      const py = plate.ty * TILE - camera.y;
+      const active = plate.activated;
+      const margin = 6;
+      const innerMargin = 12;
+
+      ctx.fillStyle = active ? 'rgba(110, 242, 164, 0.14)' : 'rgba(242, 212, 92, 0.12)';
+      ctx.strokeStyle = active ? '#6ef2a4' : COLORS.doorAccent;
+      ctx.lineWidth = 2;
+      ctx.fillRect(px + margin, py + margin, TILE - margin * 2, TILE - margin * 2);
+      ctx.strokeRect(px + margin, py + margin, TILE - margin * 2, TILE - margin * 2);
+
+      ctx.fillStyle = active ? '#6ef2a4' : '#f28f5c';
+      ctx.fillRect(px + innerMargin, py + innerMargin, TILE - innerMargin * 2, TILE - innerMargin * 2);
+    });
+    ctx.restore();
+  }
+
   drawLighting(ctx, camera) {
     ctx.save();
     ctx.fillStyle = 'rgba(4, 6, 14, 0.78)';
@@ -273,6 +309,60 @@ export class LevelInstance {
 
   getActorPlacements() {
     return JSON.parse(JSON.stringify(this.actorPlacements));
+  }
+
+  initializePressureSwitches() {
+    if (!this.pressureSwitchConfig?.length) {
+      this.pressureSwitches = [];
+      return;
+    }
+
+    this.pressureSwitches = this.pressureSwitchConfig.map((plate) => {
+      const targets = Array.isArray(plate.targets) ? plate.targets : [];
+      return {
+        ...plate,
+        openTile: plate.openTile ?? 0,
+        closedTile: plate.closedTile ?? DOOR_TILE,
+        targetIndices: targets
+          .map(({ tx, ty }) => ty * this.mapWidth + tx)
+          .filter((index) => Number.isInteger(index) && index >= 0 && index < this.collisionTiles.length),
+        activated: false,
+      };
+    });
+
+    this.pressureSwitches.forEach((plate) => {
+      const tileValue = plate.closedTile ?? DOOR_TILE;
+      plate.targetIndices.forEach((index) => {
+        this.collisionTiles[index] = tileValue;
+        this.decorTiles[index] = tileValue;
+      });
+    });
+  }
+
+  applyPressureSwitchState(plate) {
+    const tileValue = plate.activated ? plate.openTile : plate.closedTile;
+    plate.targetIndices?.forEach((index) => {
+      this.collisionTiles[index] = tileValue;
+      this.decorTiles[index] = tileValue;
+    });
+  }
+
+  updatePressureSwitches(occupants = []) {
+    if (!this.pressureSwitches.length) return false;
+
+    let changed = false;
+    const normalized = occupants.filter((entity) => entity && Number.isFinite(entity.x) && Number.isFinite(entity.y));
+
+    this.pressureSwitches.forEach((plate) => {
+      const active = normalized.some((entity) => isOccupyingTile(entity, plate.tx, plate.ty));
+      if (active !== plate.activated) {
+        plate.activated = active;
+        this.applyPressureSwitchState(plate);
+        changed = true;
+      }
+    });
+
+    return changed;
   }
 
   getPickupTemplates() {

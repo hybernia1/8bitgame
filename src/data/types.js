@@ -77,9 +77,21 @@
  */
 
 /**
+ * @typedef {Object} InteractablePressureSwitch
+ * @property {string} id
+ * @property {number} tx
+ * @property {number} ty
+ * @property {Array<{ tx: number, ty: number }>} targets
+ * @property {number} [openTile]
+ * @property {number} [closedTile]
+ * @property {string} [name]
+ */
+
+/**
  * @typedef {Object} Interactables
  * @property {InteractableGate} [gate]
  * @property {Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }>} [switches]
+ * @property {InteractablePressureSwitch[]} [pressureSwitches]
  */
 
 /**
