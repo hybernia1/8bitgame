@@ -17,6 +17,8 @@ const TEXTURE_PATHS = {
 
 const SPRITE_ANIMATIONS = {
   player: getPlayerAnimationDefs,
+  npc: getPlayerAnimationDefs,
+  monster: getPlayerAnimationDefs,
 };
 
 function getPlayerAnimationDefs(frameCount) {
