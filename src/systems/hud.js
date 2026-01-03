@@ -11,10 +11,14 @@ const elements = {
   healthCurrentEl: document.querySelector('.hud-health-current'),
   healthTotalEl: document.querySelector('.hud-health-total'),
   inventoryNote: document.querySelector('.inventory-note'),
+  inventoryBinding: document.querySelector('[data-inventory-binding]'),
+  inventoryStatus: document.querySelector('[data-inventory-status]'),
   toast: document.querySelector('.hud-toast'),
   banner: document.querySelector('.interaction-banner'),
   bannerTitle: document.querySelector('.interaction-title'),
   bannerBody: document.querySelector('.interaction-text'),
+  hudSubtitle: document.querySelector('[data-controls-hint]') ?? document.querySelector('.subtitle'),
+  pauseBindings: document.querySelector('[data-pause-bindings]'),
 };
 
 function applyText(node, text) {
@@ -116,11 +120,39 @@ export function createHudSystem() {
     applyText(elements.questProgress, progressText ?? '');
   }
 
+  function setControlsHint({ interact, shoot, inventory, pause } = {}) {
+    if (!elements.hudSubtitle && !elements.pauseBindings) return;
+    const text = format('hud.controls', {
+      interact: interact ?? '',
+      shoot: shoot ?? '',
+      inventory: inventory ?? '',
+      pause: pause ?? '',
+    });
+    applyText(elements.hudSubtitle, text);
+    applyText(elements.pauseBindings, text);
+  }
+
+  function setInventoryBindingHint(bindingLabel) {
+    applyText(elements.inventoryBinding, format('note.inventory.toggle', { binding: bindingLabel ?? '' }));
+  }
+
+  function setInventoryStatus(collapsed, bindingLabel) {
+    if (!elements.inventoryStatus) return;
+    if (!collapsed) {
+      elements.inventoryStatus.classList.add('hidden');
+      applyText(elements.inventoryStatus, '');
+      return;
+    }
+    elements.inventoryStatus.classList.remove('hidden');
+    applyText(elements.inventoryStatus, format('note.inventory.collapsed', { binding: bindingLabel ?? '' }));
+  }
+
   return {
     setLevelTitle,
     setObjectives,
     setHealth,
     setSubtitle,
+    setControlsHint,
     setQuestLog,
     showNote,
     showToast,
@@ -129,5 +161,7 @@ export function createHudSystem() {
     showPrompt,
     showDialogue,
     hideInteraction,
+    setInventoryBindingHint,
+    setInventoryStatus,
   };
 }

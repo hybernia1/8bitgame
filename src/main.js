@@ -5,7 +5,7 @@ import { loadSpriteSheet } from './core/sprites.js';
 import { createPlayer, drawPlayer, restorePlayer, serializePlayer, updatePlayer } from './entities/player.js';
 import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
-import { renderInventory, Inventory } from './ui/inventory.js';
+import { renderInventory, Inventory, useInventorySlot } from './ui/inventory.js';
 import { itemHandlers } from './items.js';
 import { drawGrid } from './world/level-instance.js';
 import { createInputSystem } from './systems/input.js';
@@ -16,6 +16,7 @@ import { createGameLoop } from './systems/game-loop.js';
 import { registerScene, resume, setScene, showMenu } from './core/scenes.js';
 import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta } from './world/level-data.js';
 import { format } from './ui/messages.js';
+import { formatBinding, formatControlsHint } from './core/input-bindings.js';
 
 const { canvas, context: ctx } = init('game');
 initKeys();
@@ -234,6 +235,9 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let pickups = null;
   let spriteSheet = null;
   let savedSnapshot = null;
+  let interactQueued = false;
+  let shootQueued = false;
+  let inventoryCollapsed = false;
 
   function getLevelDimensions() {
     return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
@@ -273,7 +277,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   function setLevelMeta(meta) {
     const areaName = state.areaName ?? meta.title ?? meta.name ?? 'Unknown Sector';
     const levelNumber = state.levelNumber ?? meta.levelNumber ?? 0;
-    const subtitle = state.subtitle ?? meta.subtitle ?? 'hud.controls';
+    const subtitle = state.subtitle ?? meta.subtitle ?? '';
     hudSystem.setLevelTitle(areaName, levelNumber);
     hudSystem.setSubtitle(subtitle);
   }
@@ -305,7 +309,6 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     objectivesCollected = state.objectivesCollected;
     restoreProjectiles(savedSnapshot?.projectiles);
 
-    renderInventory(inventory);
     hudSystem = createHudSystem();
     game.setHud(hudSystem);
     hudSystem.showNote('note.inventory.intro');
@@ -313,15 +316,63 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
     setLevelMeta(level.meta);
 
+    renderInventory(inventory);
+
+    const inventoryElement = document.querySelector('.inventory');
+
+    const handleInventoryUse = (slotIndex) =>
+      useInventorySlot({
+        inventory,
+        slotIndex,
+        playerVitals,
+        updateHealthHud: () => hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth),
+        renderInventory,
+        showNote: hudSystem.showNote,
+        handlers: itemHandlers,
+      });
+
+    function setInventoryCollapsed(collapsed) {
+      inventoryCollapsed = Boolean(collapsed);
+      inventoryElement?.classList.toggle('collapsed', inventoryCollapsed);
+      const bindingLabel = formatBinding(inputSystem.getBindings(), 'toggle-inventory');
+      hudSystem.setInventoryStatus(inventoryCollapsed, bindingLabel);
+    }
+
+    function toggleInventory() {
+      setInventoryCollapsed(!inventoryCollapsed);
+    }
+
+    function handleAction(action, detail = {}) {
+      switch (action) {
+        case 'interact':
+          interactQueued = true;
+          break;
+        case 'shoot':
+          shootQueued = true;
+          break;
+        case 'use-slot':
+          handleInventoryUse(detail.slotIndex);
+          break;
+        case 'toggle-pause':
+          togglePauseScene();
+          break;
+        case 'toggle-inventory':
+          toggleInventory();
+          break;
+        default:
+          break;
+      }
+    }
+
     inputSystem = createInputSystem({
-      inventory,
-      playerVitals,
-      updateHealthHud: () => hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth),
-      renderInventory,
-      showNote: hudSystem.showNote,
-      handlers: itemHandlers,
-      onPauseToggle: togglePauseScene,
+      inventorySlots: inventory.slots.length,
+      onAction: handleAction,
     });
+
+    const controlsHint = formatControlsHint(inputSystem.getBindings());
+    hudSystem.setControlsHint(controlsHint);
+    hudSystem.setInventoryBindingHint(controlsHint.inventory);
+    hudSystem.setInventoryStatus(inventoryCollapsed, controlsHint.inventory);
 
     const combatSystem = createCombatSystem({
       inventory,
@@ -362,14 +413,18 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
         }
 
         const interactContext = interactionSystem.handleInteract(player, {
-          interactRequested: inputSystem.consumeInteractRequest(),
+          interactRequested: interactQueued,
           nearestNpc,
           guardCollision,
         });
 
-        if (inputSystem.consumeShootRequest()) {
+        interactQueued = false;
+
+        if (shootQueued) {
           combatSystem.attemptShoot();
         }
+        shootQueued = false;
+
         combatSystem.updateProjectiles(dt, npcs);
         applyDarknessDamage(dt);
 
@@ -467,12 +522,20 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     refreshSaveSlotList();
   }
 
+  function resetActionQueue() {
+    interactQueued = false;
+    shootQueued = false;
+  }
+
   function pause() {
-    loop?.stop();
+    resetActionQueue();
+    loop?.pauseUpdates?.();
   }
 
   function resume() {
     hidePausePanel();
+    resetActionQueue();
+    loop?.resumeUpdates?.();
     loop?.start();
   }
 
