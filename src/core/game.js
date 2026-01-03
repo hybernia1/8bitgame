@@ -21,9 +21,9 @@ export function createGame({ inventory, hudSystem } = {}) {
   function syncHud() {
     if (!hud || !currentLevel) return;
     const meta = getLevelMeta(currentLevel.config);
-    hud.updateAreaTitle?.(meta.title ?? meta.name ?? meta.id ?? 'Unknown Sector', meta.levelNumber ?? 0);
-    hud.updateSubtitle?.(meta.subtitle ?? '');
-    hud.updateObjectiveHud?.(objectivesCollected);
+    hud.setLevelTitle?.(meta.title ?? meta.name ?? meta.id ?? 'Unknown Sector', meta.levelNumber ?? 0);
+    hud.setSubtitle?.(meta.subtitle ?? '');
+    hud.setObjectives?.(objectivesCollected, currentLevel.getObjectiveTotal?.());
   }
 
   function loadLevel(id) {
@@ -58,7 +58,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   function recordObjectives(count) {
     objectivesCollected = count;
-    hud?.updateObjectiveHud?.(objectivesCollected);
+    hud?.setObjectives?.(objectivesCollected, currentLevel?.getObjectiveTotal?.());
     saveProgress();
   }
 

@@ -8,9 +8,9 @@ export const items = {
 };
 
 export const itemHandlers = {
-  apple({ inventory, slotIndex, playerVitals, updateHealthHud, renderInventory, updateInventoryNote }) {
+  apple({ inventory, slotIndex, playerVitals, updateHealthHud, renderInventory, showNote }) {
     if (playerVitals.health >= playerVitals.maxHealth) {
-      updateInventoryNote?.('Máš plné zdraví, jablko si nech na horší chvíli.');
+      showNote?.('note.apple.fullHealth');
       return;
     }
 
@@ -20,6 +20,6 @@ export const itemHandlers = {
     playerVitals.health = Math.min(playerVitals.maxHealth, playerVitals.health + 1);
     updateHealthHud?.();
     renderInventory?.(inventory);
-    updateInventoryNote?.('Jablko ti doplnilo jeden život.');
+    showNote?.('note.apple.healed');
   },
 };
