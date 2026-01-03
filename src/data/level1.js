@@ -1,4 +1,8 @@
 import { TILE } from '../core/constants.js';
+import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
+
+const BASE_WIDTH = 16;
+const { width: TARGET_WIDTH, height: TARGET_HEIGHT } = WIDESCREEN_DIMENSIONS;
 
 const baseLayout = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -24,13 +28,13 @@ export const levelOne = {
     subtitle: 'hud.controls',
     levelNumber: 1,
   },
-  width: 16,
-  height: 12,
+  width: TARGET_WIDTH,
+  height: TARGET_HEIGHT,
   tileLayers: {
-    collision: baseLayout,
-    collisionUnlocked: baseLayout,
-    decor: baseLayout,
-    decorUnlocked: baseLayout,
+    collision: padLayer(baseLayout, BASE_WIDTH),
+    collisionUnlocked: padLayer(baseLayout, BASE_WIDTH),
+    decor: padLayer(baseLayout, BASE_WIDTH),
+    decorUnlocked: padLayer(baseLayout, BASE_WIDTH),
   },
   lighting: {
     litZones: [{ x: 1, y: 1, w: 14, h: 10 }],
