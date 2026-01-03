@@ -32,6 +32,7 @@ const player = createPlayer();
 const pickups = createPickups();
 const inventory = new Inventory(6);
 const npcs = createNpcs(spriteSheet, getActorPlacements());
+const SWITCH_INTERACT_DISTANCE = TILE;
 const objectivesCollectedEl = document.querySelector('[data-objectives-collected]');
 const objectivesTotalEl = document.querySelector('[data-objectives-total]');
 const objectiveTotal = pickups.filter((pickup) => pickup.objective !== false).length;
@@ -109,7 +110,7 @@ const loop = GameLoop({
       handlePlayerHit();
     }
 
-    if (interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= 24) {
+    if (interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       const toggled = activateLightSwitch(activeSwitch.id);
       if (toggled) {
         updateInventoryNote(`Vypínač ${activeSwitch.name} rozsvítil další část místnosti.`);
@@ -190,7 +191,7 @@ const loop = GameLoop({
       showDialogue(activeSpeaker, activeLine);
     } else if (nearestNpc?.nearby) {
       showPrompt(`Stiskni E pro rozhovor s ${nearestNpc.name}`);
-    } else if (activeSwitch && !activeSwitch.activated && switchDistance <= 24) {
+    } else if (activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       showPrompt('Stiskni E pro aktivaci vypínače');
     } else if (nearGate) {
       if (gateState.locked) {
