@@ -199,12 +199,12 @@ export function serializeNpcs(npcs = []) {
 
 export function restoreNpcs(npcs = [], snapshot = []) {
   if (!Array.isArray(snapshot) || !snapshot.length) return;
-  const byId = new Map(
-    snapshot.filter((entry) => entry?.id).map((entry) => [entry.id, entry]),
+  const npcsById = new Map(
+    npcs.filter((npc) => npc?.id).map((npc) => [npc.id, npc]),
   );
 
   snapshot.forEach((entry, index) => {
-    const target = (entry?.id && byId.get(entry.id)) || npcs[index];
+    const target = (entry?.id && npcsById.get(entry.id)) || npcs[index];
     if (!target) return;
 
     if (typeof entry.x === 'number') target.x = entry.x;
