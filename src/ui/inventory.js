@@ -61,6 +61,37 @@ export class Inventory {
   }
 }
 
+export function useInventorySlot({
+  inventory,
+  slotIndex,
+  playerVitals,
+  updateHealthHud,
+  renderInventory,
+  updateInventoryNote,
+  handlers,
+}) {
+  const item = inventory.slots[slotIndex];
+  if (!item) {
+    updateInventoryNote?.(`Slot ${slotIndex + 1} je prázdný.`);
+    return;
+  }
+
+  const handler = handlers?.[item.id];
+  if (handler) {
+    handler({
+      inventory,
+      slotIndex,
+      playerVitals,
+      updateHealthHud,
+      renderInventory,
+      updateInventoryNote,
+    });
+    return;
+  }
+
+  updateInventoryNote?.('Tenhle předmět teď nemůžeš použít.');
+}
+
 export function renderInventory(inventory) {
   const grid = document.querySelector('.inventory-grid');
   if (!grid) return;
