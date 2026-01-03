@@ -182,6 +182,7 @@ export const demoLevel = {
       ty: 10,
       locked: true,
       openTile: 0,
+      nextLevelId: 'level-1',
       sealedTiles: [
         [14, 9],
         [15, 9],

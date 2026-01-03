@@ -1,4 +1,5 @@
 import { demoLevel } from '../data/demoLevel.js';
+import { levelOne } from '../data/level1.js';
 import { getDialoguesForLevel } from '../data/dialogues/index.js';
 import { getQuestsForLevel } from '../data/quests/index.js';
 import { normalizeLevelConfig } from './level-loader.js';
@@ -37,6 +38,7 @@ export function registerLevelModule(id, modulePath) {
 }
 
 registerLevelConfig(demoId, demoLevel);
+registerLevelConfig(levelOne.meta?.id ?? 'level-1', levelOne);
 
 export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {
   const base = registry.get(id) ?? registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(demoLevel);
