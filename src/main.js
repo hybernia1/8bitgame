@@ -4,8 +4,9 @@ import { loadSpriteSheet } from './core/sprites.js';
 import { createPlayer, drawPlayer, updatePlayer } from './entities/player.js';
 import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
-import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
+import { renderInventory, Inventory, updateInventoryNote, useInventorySlot } from './ui/inventory.js';
 import { hideInteraction, showDialogue, showPrompt } from './ui/interaction.js';
+import { items, itemHandlers } from './items.js';
 import {
   clampCamera,
   drawGrid,
@@ -97,7 +98,15 @@ document.addEventListener('keydown', (event) => {
   }
   const slotNumber = Number.parseInt(event.key, 10);
   if (Number.isInteger(slotNumber) && slotNumber >= 1 && slotNumber <= inventory.slots.length) {
-    useInventorySlot(slotNumber - 1);
+    useInventorySlot({
+      inventory,
+      slotIndex: slotNumber - 1,
+      playerVitals,
+      updateHealthHud,
+      renderInventory,
+      updateInventoryNote,
+      handlers: itemHandlers,
+    });
   }
 });
 
@@ -106,7 +115,15 @@ document.querySelector('.inventory-grid')?.addEventListener('click', (event) => 
   if (!slot) return;
   const index = Number.parseInt(slot.dataset.index, 10) - 1;
   if (Number.isInteger(index)) {
-    useInventorySlot(index);
+    useInventorySlot({
+      inventory,
+      slotIndex: index,
+      playerVitals,
+      updateHealthHud,
+      renderInventory,
+      updateInventoryNote,
+      handlers: itemHandlers,
+    });
   }
 });
 
@@ -141,12 +158,7 @@ const loop = GameLoop({
       if (nearestNpc.id === 'caretaker') {
         const hasApple = inventory.getItemCount('apple') > 0;
         if (!caretakerGaveApple) {
-          const stored = inventory.addItem({
-            id: 'apple',
-            name: 'Jablko',
-            icon: '🍎',
-            tint: '#f25c5c',
-          });
+          const stored = inventory.addItem({ ...items.apple });
 
           if (stored) {
             caretakerGaveApple = true;
@@ -410,32 +422,6 @@ function findNearestLightSwitch() {
     }
   });
   return { activeSwitch: best, switchDistance: bestDistance };
-}
-
-function useInventorySlot(slotIndex) {
-  const item = inventory.slots[slotIndex];
-  if (!item) {
-    updateInventoryNote(`Slot ${slotIndex + 1} je prázdný.`);
-    return;
-  }
-
-  if (item.id === 'apple') {
-    if (playerVitals.health >= playerVitals.maxHealth) {
-      updateInventoryNote('Máš plné zdraví, jablko si nech na horší chvíli.');
-      return;
-    }
-
-    const consumed = inventory.consumeSlot(slotIndex, 1);
-    if (consumed) {
-      playerVitals.health = Math.min(playerVitals.maxHealth, playerVitals.health + 1);
-      updateHealthHud();
-      renderInventory(inventory);
-      updateInventoryNote('Jablko ti doplnilo jeden život.');
-    }
-    return;
-  }
-
-  updateInventoryNote('Tenhle předmět teď nemůžeš použít.');
 }
 
 loop.start();
