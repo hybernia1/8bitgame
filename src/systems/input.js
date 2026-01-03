@@ -27,6 +27,7 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
   let windowRoot = null;
   let inventoryGrid = null;
   let gamepadFrame = null;
+  let running = false;
   const buttonState = new Map();
 
   function emit(action, detail) {
@@ -47,6 +48,7 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
   }
 
   function onKeyDown(event) {
+    if (!running) return;
     const action = resolveActionForKey(bindings, event.code);
     if (!action) return;
 
@@ -66,6 +68,7 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
   }
 
   function onInventoryClick(event) {
+    if (!running) return;
     const slot = event.target?.closest?.('.inventory-slot');
     if (!slot) return;
     const index = Number.parseInt(slot.dataset.index, 10) - 1;
@@ -75,6 +78,7 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
   }
 
   function pollGamepads() {
+    if (!running) return;
     const pads = (windowRoot ?? globalThis)?.navigator?.getGamepads?.();
     const active = pads?.find((pad) => pad && pad.connected);
     if (active) {
@@ -95,13 +99,13 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
       });
     }
     const raf = windowRoot?.requestAnimationFrame ?? globalThis.requestAnimationFrame;
-    if (typeof raf === 'function') {
+    if (running && typeof raf === 'function') {
       gamepadFrame = raf(pollGamepads);
     }
   }
 
   function startGamepadPolling() {
-    if (gamepadFrame) return;
+    if (!running || gamepadFrame) return;
     const raf = windowRoot?.requestAnimationFrame ?? globalThis.requestAnimationFrame;
     if (typeof raf !== 'function') return;
     gamepadFrame = raf(pollGamepads);
@@ -128,7 +132,6 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
     inventoryGrid?.addEventListener?.('click', onInventoryClick);
     windowRoot?.addEventListener?.('gamepadconnected', startGamepadPolling);
     windowRoot?.addEventListener?.('gamepaddisconnected', stopGamepadPolling);
-    startGamepadPolling();
   }
 
   function destroy() {
@@ -137,7 +140,21 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
     windowRoot?.removeEventListener?.('gamepadconnected', startGamepadPolling);
     windowRoot?.removeEventListener?.('gamepaddisconnected', stopGamepadPolling);
     stopGamepadPolling();
+    running = false;
     listeners.clear();
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    startGamepadPolling();
+  }
+
+  function stop() {
+    if (!running) return;
+    running = false;
+    stopGamepadPolling();
+    buttonState.clear();
   }
 
   function on(listener) {
@@ -156,8 +173,12 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
   return {
     destroy,
     init,
+    start,
+    stop,
     onAction: on,
     getBindings: () => bindings,
+    isRunning: () => running,
+    getButtonState: () => new Map(buttonState),
     updateBindings,
   };
 }
