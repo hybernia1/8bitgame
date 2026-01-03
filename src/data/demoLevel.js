@@ -1,7 +1,59 @@
 import { TILE } from '../core/constants.js';
 
+const baseSwitches = [
+  {
+    id: 'entry-switch',
+    name: 'Vstupní vypínač',
+    tx: 5,
+    ty: 2,
+    lights: [
+      {
+        x: 1,
+        y: 1,
+        w: 10,
+        h: 7,
+      },
+    ],
+  },
+  {
+    id: 'storage-switch',
+    name: 'Skladový vypínač',
+    tx: 13,
+    ty: 5,
+    lights: [
+      {
+        x: 9,
+        y: 4,
+        w: 7,
+        h: 7,
+      },
+    ],
+  },
+  {
+    id: 'lab-switch',
+    name: 'Laboratorní vypínač',
+    tx: 17,
+    ty: 9,
+    lights: [
+      {
+        x: 13,
+        y: 7,
+        w: 6,
+        h: 6,
+      },
+    ],
+  },
+];
+
+/** @type {import('./types.js').LevelConfig} */
 export const demoLevel = {
-  name: 'Demo Facility',
+  meta: {
+    id: 'demo-facility',
+    name: 'Demo Facility',
+    title: 'Demo Facility',
+    subtitle: 'WASD/šipky = pohyb · E = interakce · Mezerník = střelba',
+    levelNumber: 0,
+  },
   // Locked layout (what the player sees on load).
   map: [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -48,50 +100,36 @@ export const demoLevel = {
         h: 4,
       },
     ],
-    switches: [
-      {
-        id: 'entry-switch',
-        name: 'Vstupní vypínač',
-        tx: 5,
-        ty: 2,
-        lights: [
-          {
-            x: 1,
-            y: 1,
-            w: 10,
-            h: 7,
-          },
-        ],
-      },
-      {
-        id: 'storage-switch',
-        name: 'Skladový vypínač',
-        tx: 13,
-        ty: 5,
-        lights: [
-          {
-            x: 9,
-            y: 4,
-            w: 7,
-            h: 7,
-          },
-        ],
-      },
-      {
-        id: 'lab-switch',
-        name: 'Laboratorní vypínač',
-        tx: 17,
-        ty: 9,
-        lights: [
-          {
-            x: 13,
-            y: 7,
-            w: 6,
-            h: 6,
-          },
-        ],
-      },
-    ],
+    switches: baseSwitches,
+  },
+  interactables: {
+    switches: baseSwitches,
+    gate: {
+      id: 'main-gate',
+      tx: 14,
+      ty: 10,
+      locked: true,
+      openTile: 0,
+      sealedTiles: [
+        [14, 9],
+        [15, 9],
+        [16, 9],
+        [15, 10],
+        [16, 10],
+        [17, 10],
+        [15, 11],
+        [16, 11],
+        [17, 11],
+        [15, 12],
+        [16, 12],
+        [17, 12],
+      ],
+      promptLocked: 'Dveře jsou zamčené. Technik Jára má klíč.',
+      promptUnlocked: 'Dveře jsou otevřené, stiskni E pro vstup do nové mapy.',
+      speaker: 'Systém Dveří',
+      unlockLine: 'Vstup potvrzen. Přecházíš do nového mapového křídla.',
+      consumeNote: 'Klíč se zasunul do zámku a zmizel z inventáře.',
+    },
   },
   actors: {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
@@ -186,4 +224,86 @@ export const demoLevel = {
       quantity: 6,
     },
   ],
+  quests: [
+    {
+      id: 'collect-components',
+      name: 'Zajisti komponenty',
+      description: 'Sesbírej energoblok, klíčový fragment a servisní nářadí.',
+      objectiveCount: 3,
+      completionNote: 'Mise splněna: všechny komponenty jsou připravené. Vrať se za Technikem Járou.',
+    },
+  ],
+  npcScripts: {
+    caretaker: {
+      defaultDialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
+      lines: [
+        {
+          id: 'give-apple',
+          when: [{ flag: 'caretakerGaveApple', equals: false }],
+          dialogue: 'Tady máš jablko, doplní ti síly. Stiskni číslo slotu nebo na něj klikni v inventáři.',
+          note: 'Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.',
+          rewardId: 'caretaker-apple',
+          setState: { caretakerGaveApple: true },
+        },
+        {
+          id: 'apple-reminder',
+          when: [
+            { flag: 'caretakerGaveApple', equals: true },
+            { hasItem: 'apple' },
+          ],
+          dialogue: 'Jablko máš v inventáři. Klikni na slot nebo stiskni jeho číslo, až budeš potřebovat život.',
+        },
+        {
+          id: 'caretaker-default',
+          dialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
+        },
+      ],
+    },
+    technician: {
+      defaultDialogue: 'Hej, slyšel jsem šumění u zadního skladu. Možná tam něco blýská.',
+      infoNote: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
+      lines: [
+        {
+          id: 'collect-first',
+          when: [{ questIncomplete: 'collect-components' }],
+          dialogue: 'Musíš donést všechny díly. Jakmile je máš, vrátíš se pro klíč a já ti otevřu dveře.',
+        },
+        {
+          id: 'give-key',
+          when: [
+            { questComplete: 'collect-components' },
+            { flag: 'technicianGaveKey', equals: false },
+          ],
+          dialogue: 'Tady máš klíč. Dveře otevřeš směrem na východ do nové mapy.',
+          rewardId: 'technician-gate-key',
+          setState: { technicianGaveKey: true },
+        },
+        {
+          id: 'tech-default',
+          dialogue: 'Dveře už jsou otevřené. Vejdi dál a pozor na nové prostory.',
+        },
+      ],
+    },
+  },
+  rewards: {
+    'caretaker-apple': {
+      id: 'caretaker-apple',
+      item: { id: 'apple', name: 'Jablko', icon: '🍎', tint: '#f25c5c' },
+      note: 'Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.',
+      blockedDialogue: 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.',
+      blockedNote: 'Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.',
+    },
+    'technician-gate-key': {
+      id: 'technician-gate-key',
+      item: { id: 'gate-key', name: 'Klíč od dveří', icon: '🔑', tint: '#f2d45c' },
+      note: 'Klíč získán! Východní dveře se odemkly a mapa se rozšířila.',
+      blockedDialogue: 'Tvůj inventář je plný, uvolni si místo na klíč.',
+      actions: {
+        unlockGate: true,
+        clearObjectives: true,
+        setAreaName: 'Nové servisní křídlo',
+        setLevelNumber: 1,
+      },
+    },
+  },
 };

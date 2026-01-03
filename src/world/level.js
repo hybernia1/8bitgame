@@ -1,49 +1,52 @@
+/**
+ * @typedef {import('../data/types.js').LevelConfig} LevelConfig
+ */
+
 import { COLORS, TILE, WORLD } from '../core/constants.js';
 import { demoLevel } from '../data/demoLevel.js';
 
 const DOOR_TILE = 2;
+
+/** @type {LevelConfig} */
+const levelConfig = demoLevel;
+
 const MAP_WIDTH = WORLD.width;
-const MAP_HEIGHT = demoLevel.map.length / MAP_WIDTH;
+const MAP_HEIGHT = levelConfig.map.length / MAP_WIDTH;
 
 if (!Number.isInteger(MAP_HEIGHT)) {
-  throw new Error(`Invalid map dimensions: expected rows of ${MAP_WIDTH} tiles but got ${demoLevel.map.length} entries.`);
+  throw new Error(
+    `Invalid map dimensions: expected rows of ${MAP_WIDTH} tiles but got ${levelConfig.map.length} entries.`,
+  );
 }
 
 // Keep the world size in sync with the map so the renderer and editor agree.
 WORLD.height = MAP_HEIGHT;
-const gate = {
+
+const interactables = levelConfig.interactables ?? {};
+const gate = interactables.gate ?? {
   tx: 14,
   ty: 10,
   locked: true,
+  openTile: 0,
+  sealedTiles: [],
 };
-
-const sealedTiles = [
-  [14, 9],
-  [15, 9],
-  [16, 9],
-  [15, 10],
-  [16, 10],
-  [17, 10],
-  [15, 11],
-  [16, 11],
-  [17, 11],
-  [15, 12],
-  [16, 12],
-  [17, 12],
-];
+const sealedTiles = gate.sealedTiles ?? [];
 
 // Preserve the raw map for tooling such as the editor so we can return tiles to
 // their intended values after temporarily locking areas during the tutorial.
-const actorPlacements = demoLevel.actors ?? {};
-const baseTiles = [...demoLevel.map];
-const unlockedTiles = demoLevel.unlockedMap ?? baseTiles;
+const actorPlacements = levelConfig.actors ?? {};
+const baseTiles = [...levelConfig.map];
+const unlockedTiles = levelConfig.unlockedMap ?? baseTiles;
 const levelTiles = [...baseTiles];
-const gateIndex = gate.ty * WORLD.width + gate.tx;
-const gateOpenTile = 0;
-const sealedTileIndices = sealedTiles.map(([tx, ty]) => ty * WORLD.width + tx);
-const sealedTileOriginals = sealedTileIndices.map((index) => unlockedTiles[index] ?? 0);
+const gateIndex = gate ? gate.ty * WORLD.width + gate.tx : null;
+const gateOpenTile = gate?.openTile ?? 0;
+const sealedTileIndices = gateIndex === null ? [] : sealedTiles.map(([tx, ty]) => ty * WORLD.width + tx);
+const sealedTileOriginals = gateIndex === null ? [] : sealedTileIndices.map((index) => unlockedTiles[index] ?? 0);
 
-const lightingConfig = demoLevel.lighting ?? {};
+const lightingConfig = {
+  ...(levelConfig.lighting ?? {}),
+  switches: interactables.switches ?? levelConfig.lighting?.switches ?? [],
+};
 const lightTiles = new Array(WORLD.width * WORLD.height).fill(false);
 const lightSwitches = (lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
 
@@ -64,7 +67,7 @@ function applyLightingZones(zones = []) {
 
 applyLightingZones(lightingConfig.litZones ?? []);
 
-if (levelTiles[gateIndex] !== DOOR_TILE) {
+if (gateIndex !== null && levelTiles[gateIndex] !== DOOR_TILE) {
   levelTiles[gateIndex] = DOOR_TILE;
 }
 
@@ -158,11 +161,15 @@ export function clampCamera(camera, player, canvas) {
 }
 
 export function getLevelName() {
-  return demoLevel.name;
+  return levelConfig.meta?.name ?? 'Unknown Sector';
+}
+
+export function getLevelMeta() {
+  return levelConfig.meta ?? { name: getLevelName() };
 }
 
 export function getPickupTemplates() {
-  return demoLevel.pickups;
+  return levelConfig.pickups;
 }
 
 export function getActorPlacements() {
@@ -173,13 +180,16 @@ export function getActorPlacements() {
 }
 
 export function getGateState() {
+  if (!gate) return null;
   return { ...gate, x: gate.tx * TILE + TILE / 2, y: gate.ty * TILE + TILE / 2 };
 }
 
 export function unlockGateToNewMap() {
-  if (!gate.locked) return;
+  if (!gate || !gate.locked) return;
   gate.locked = false;
-  levelTiles[gateIndex] = gateOpenTile;
+  if (gateIndex !== null) {
+    levelTiles[gateIndex] = gateOpenTile;
+  }
   sealedTileIndices.forEach((index, i) => {
     levelTiles[index] = sealedTileOriginals[i] ?? 0;
   });
@@ -215,6 +225,24 @@ export function drawLightSwitches(ctx, camera) {
     ctx.strokeRect(x + TILE / 2 - 6, y + TILE / 2 - 6, 12, 12);
   });
   ctx.restore();
+}
+
+export function getNpcScripts() {
+  return levelConfig.npcScripts ?? {};
+}
+
+export function getRewards() {
+  return levelConfig.rewards ?? {};
+}
+
+export function getQuestConfigs() {
+  return levelConfig.quests ?? [];
+}
+
+export function getObjectiveTotal() {
+  const questObjective = levelConfig.quests?.[0]?.objectiveCount;
+  if (questObjective != null) return questObjective;
+  return (levelConfig.pickups ?? []).filter((pickup) => pickup.objective !== false).length;
 }
 
 export function drawLighting(ctx, camera) {

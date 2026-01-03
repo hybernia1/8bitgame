@@ -1,6 +1,13 @@
 import { TILE } from '../core/constants.js';
-import { items } from '../items.js';
-import { getGateState, unlockGateToNewMap, activateLightSwitch, getLightSwitches } from '../world/level.js';
+import {
+  getGateState,
+  unlockGateToNewMap,
+  activateLightSwitch,
+  getLightSwitches,
+  getNpcScripts,
+  getRewards,
+  getQuestConfigs,
+} from '../world/level.js';
 
 export function createInteractionSystem({
   inventory,
@@ -9,12 +16,16 @@ export function createInteractionSystem({
   hud,
   state,
   renderInventory,
-  objectiveTotal,
   updateInventoryNote: updateNote,
   updateObjectiveHud,
   collectNearbyPickups,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
+  const npcScripts = getNpcScripts();
+  const rewards = getRewards();
+  const questConfigs = getQuestConfigs();
+  const questState = state.quests ?? (state.quests = {});
+  const flags = state.flags ?? (state.flags = {});
 
   function findNearestLightSwitch(player) {
     let best = null;
@@ -31,11 +42,107 @@ export function createInteractionSystem({
     return { activeSwitch: best, switchDistance: bestDistance };
   }
 
+  function evaluateQuestCompletion() {
+    questConfigs.forEach((quest) => {
+      const entry = questState[quest.id] ?? (questState[quest.id] = { completed: false });
+      if (entry.completed) return;
+
+      const hasEnough = quest.objectiveCount == null || state.objectivesCollected >= quest.objectiveCount;
+      const itemsReady =
+        !quest.objectiveItemIds || quest.objectiveItemIds.every((itemId) => inventory.getItemCount(itemId) > 0);
+
+      if (hasEnough && itemsReady) {
+        entry.completed = true;
+        if (quest.completionNote) {
+          updateNote(quest.completionNote);
+        }
+      }
+    });
+  }
+
+  function evaluateLineConditions(conditions = []) {
+    return conditions.every((cond) => {
+      if (cond.flag) {
+        const expected = cond.equals ?? true;
+        const actual = flags[cond.flag] ?? state[cond.flag] ?? false;
+        return actual === expected;
+      }
+      if (cond.questComplete) {
+        return questState[cond.questComplete]?.completed === true;
+      }
+      if (cond.questIncomplete) {
+        return questState[cond.questIncomplete]?.completed !== true;
+      }
+      if (cond.hasItem) {
+        return inventory.getItemCount(cond.hasItem) > 0;
+      }
+      return true;
+    });
+  }
+
+  function pickNpcLine(script) {
+    if (!script?.lines?.length) return null;
+    return script.lines.find((line) => evaluateLineConditions(line.when));
+  }
+
+  function applyStateChanges(nextState = {}) {
+    Object.entries(nextState).forEach(([key, value]) => {
+      flags[key] = value;
+      state[key] = value;
+    });
+  }
+
+  function applyReward(rewardId) {
+    if (!rewardId) return { success: true };
+    const reward = rewards[rewardId];
+    if (!reward) return { success: true };
+
+    if (reward.item) {
+      const stored = inventory.addItem({ ...reward.item });
+      if (!stored) {
+        return {
+          success: false,
+          blockedDialogue: reward.blockedDialogue,
+          blockedNote: reward.blockedNote,
+        };
+      }
+      renderInventory(inventory);
+    }
+
+    if (reward.actions?.clearObjectives) {
+      inventory.clearObjectiveItems();
+      renderInventory(inventory);
+    }
+
+    if (reward.actions?.unlockGate) {
+      unlockGateToNewMap();
+    }
+
+    if (reward.actions?.setAreaName) {
+      state.areaName = reward.actions.setAreaName;
+    }
+
+    if (typeof reward.actions?.setLevelNumber === 'number') {
+      state.levelNumber = reward.actions.setLevelNumber;
+    }
+
+    if (reward.actions?.setSubtitle) {
+      state.subtitle = reward.actions.setSubtitle;
+      hud.updateSubtitle?.(state.subtitle);
+    }
+
+    if (reward.actions?.setAreaName || typeof reward.actions?.setLevelNumber === 'number') {
+      hud.updateAreaTitle?.(state.areaName, state.levelNumber ?? 0);
+    }
+
+    return { success: true, note: reward.note };
+  }
+
   function handleInteract(player, context) {
     const { nearestNpc, guardCollision } = context;
     const gateState = getGateState();
-    const gateDistance = Math.hypot(gateState.x - player.x, gateState.y - player.y);
-    const nearGate = gateDistance <= 26;
+    const gateDistance = gateState ? Math.hypot(gateState.x - player.x, gateState.y - player.y) : Infinity;
+    const nearGate = gateState ? gateDistance <= 26 : false;
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
 
     if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
@@ -47,72 +154,49 @@ export function createInteractionSystem({
       }
     } else if (context.interactRequested && nearestNpc?.nearby) {
       state.activeSpeaker = nearestNpc.name;
-      if (nearestNpc.id === 'caretaker') {
-        const hasApple = inventory.getItemCount('apple') > 0;
-        if (!state.caretakerGaveApple) {
-          const stored = inventory.addItem({ ...items.apple });
+      const script = npcScripts[nearestNpc.id];
+      const pickedLine = pickNpcLine(script);
+      let dialogue = pickedLine?.dialogue || script?.defaultDialogue || nearestNpc.dialogue || 'Ráda tě vidím v základně.';
+      let note = pickedLine?.note;
+      let rewardBlocked = false;
 
-          if (stored) {
-            state.caretakerGaveApple = true;
-            state.activeLine = 'Tady máš jablko, doplní ti síly. Stiskni číslo slotu nebo na něj klikni v inventáři.';
-            updateNote('Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.');
-            renderInventory(inventory);
-          } else {
-            state.activeLine = 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.';
-            updateNote('Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.');
-          }
-        } else if (hasApple) {
-          state.activeLine = 'Jablko máš v inventáři. Klikni na slot nebo stiskni jeho číslo, až budeš potřebovat život.';
-        } else {
-          state.activeLine = nearestNpc.dialogue || 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.';
+      if (pickedLine?.rewardId) {
+        const rewardResult = applyReward(pickedLine.rewardId);
+        rewardBlocked = !rewardResult.success;
+        if (!rewardResult.success) {
+          dialogue = rewardResult.blockedDialogue || script?.defaultDialogue || dialogue;
+          note = rewardResult.blockedNote ?? note;
+        } else if (rewardResult.note) {
+          note = rewardResult.note;
         }
-      } else if (nearestNpc.id === 'technician') {
-        const readyForReward = state.objectivesCollected >= objectiveTotal;
-        if (!readyForReward) {
-          state.activeLine =
-            'Musíš donést všechny díly. Jakmile je máš, vrátíš se pro klíč a já ti otevřu dveře.';
-        } else if (!state.technicianGaveKey) {
-          const stored = inventory.addItem({
-            id: 'gate-key',
-            name: 'Klíč od dveří',
-            icon: '🔑',
-            tint: '#f2d45c',
-          });
-
-          if (stored) {
-            inventory.clearObjectiveItems();
-            state.technicianGaveKey = true;
-            unlockGateToNewMap();
-            state.activeLine = 'Tady máš klíč. Dveře otevřeš směrem na východ do nové mapy.';
-            state.areaName = 'Nové servisní křídlo';
-            hud.updateAreaTitle(state.areaName, 1);
-            updateNote('Klíč získán! Východní dveře se odemkly a mapa se rozšířila.');
-            renderInventory(inventory);
-          } else {
-            state.activeLine = 'Tvůj inventář je plný, uvolni si místo na klíč.';
-          }
-        } else {
-          state.activeLine = 'Dveře už jsou otevřené. Vejdi dál a pozor na nové prostory.';
-        }
-      } else {
-        state.activeLine = nearestNpc.dialogue || 'Ráda tě vidím v základně.';
       }
+
+      if (pickedLine?.setState && !rewardBlocked) {
+        applyStateChanges(pickedLine.setState);
+      }
+
+      if (note) {
+        updateNote(note);
+      }
+
       nearestNpc.hasSpoken = true;
-      if (nearestNpc.info && !nearestNpc.infoShared) {
-        updateNote(nearestNpc.info);
+      if (script?.infoNote && !nearestNpc.infoShared) {
+        updateNote(script.infoNote);
         nearestNpc.infoShared = true;
       }
+
+      state.activeLine = dialogue;
       state.dialogueTime = 4;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
-    } else if (context.interactRequested && nearGate && !gateState.locked) {
-      state.activeSpeaker = 'Systém Dveří';
-      state.activeLine = 'Vstup potvrzen. Přecházíš do nového mapového křídla.';
+    } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
+      state.activeSpeaker = gateState.speaker || 'Systém Dveří';
+      state.activeLine = gateState.unlockLine || 'Vstup potvrzen. Přecházíš do nového mapového křídla.';
       if (!state.gateKeyUsed) {
         const consumed = inventory.consumeItem('gate-key', 1);
         if (consumed) {
           state.gateKeyUsed = true;
           renderInventory(inventory);
-          updateNote('Klíč se zasunul do zámku a zmizel z inventáře.');
+          updateNote(gateState.consumeNote || 'Klíč se zasunul do zámku a zmizel z inventáře.');
         }
       }
       state.dialogueTime = 3;
@@ -129,9 +213,7 @@ export function createInteractionSystem({
       renderInventory(inventory);
       const names = collected.map((item) => item.name).join(', ');
       updateNote(`Sebráno: ${names}`);
-      if (state.objectivesCollected >= objectiveTotal) {
-        updateNote('Mise splněna: všechny komponenty jsou připravené. Vrať se za Technikem Járou.');
-      }
+      evaluateQuestCompletion();
     }
 
     return {
@@ -148,16 +230,16 @@ export function createInteractionSystem({
     const { nearestNpc, activeSwitch, switchDistance, nearGate } = context;
     if (state.dialogueTime > 0) {
       state.dialogueTime -= context.dt;
-      showDialogue(state.activeSpeaker, state.activeLine);
+      hud.showDialogue(state.activeSpeaker, state.activeLine);
     } else if (nearestNpc?.nearby) {
       hud.showPrompt(`Stiskni E pro rozhovor s ${nearestNpc.name}`);
     } else if (activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       hud.showPrompt('Stiskni E pro aktivaci vypínače');
     } else if (nearGate) {
-      if (context.gateState.locked) {
-        hud.showPrompt('Dveře jsou zamčené. Technik Jára má klíč.');
+      if (context.gateState?.locked) {
+        hud.showPrompt(context.gateState.promptLocked || 'Dveře jsou zamčené. Technik Jára má klíč.');
       } else {
-        hud.showPrompt('Dveře jsou otevřené, stiskni E pro vstup do nové mapy.');
+        hud.showPrompt(context.gateState?.promptUnlocked || 'Dveře jsou otevřené, stiskni E pro vstup do nové mapy.');
       }
     } else {
       hud.hideInteraction();
