@@ -630,12 +630,14 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
 
   function pause() {
     resetActionQueue();
+    inputSystem?.stop?.();
     loop?.pauseUpdates?.();
   }
 
   function resume() {
     hidePausePanel();
     resetActionQueue();
+    inputSystem?.start?.();
     loop?.resumeUpdates?.();
     loop?.start();
   }
@@ -712,6 +714,7 @@ registerScene('loading', {
     }
     hideAllPanels();
     await setScene('inGame');
+    currentInGameSession?.resume?.();
   },
 });
 

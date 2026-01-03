@@ -71,7 +71,16 @@ describe('systems smoke tests', () => {
   it('initializes input system with mock DOM references', () => {
     const doc = createMockEventTarget();
     const windowMock = createMockEventTarget();
-    windowMock.navigator = { getGamepads: () => [] };
+    let scheduledFrame = null;
+    const gamepads = [{ connected: true, buttons: [{ pressed: true }] }];
+    windowMock.navigator = { getGamepads: () => gamepads };
+    windowMock.requestAnimationFrame = (cb) => {
+      scheduledFrame = cb;
+      return 1;
+    };
+    windowMock.cancelAnimationFrame = () => {
+      scheduledFrame = null;
+    };
     const inventoryGrid = createMockEventTarget();
 
     const actions = [];
@@ -84,6 +93,7 @@ describe('systems smoke tests', () => {
       window: windowMock,
       inventoryGrid,
     });
+    input.start();
 
     let prevented = false;
     doc.dispatch('keydown', {
@@ -102,6 +112,20 @@ describe('systems smoke tests', () => {
       },
     });
     assert.deepEqual(actions.shift(), { action: 'use-slot', detail: { slotIndex: 1 } });
+
+    scheduledFrame?.();
+    assert.equal(input.getButtonState().get(0), true);
+    assert.equal(actions.shift()?.action, 'interact');
+
+    input.stop();
+    doc.dispatch('keydown', { code: 'KeyE', target: {} });
+    assert.equal(actions.length, 0);
+    assert.equal(input.isRunning(), false);
+    assert.equal(input.getButtonState().size, 0);
+
+    gamepads[0].buttons[0].pressed = false;
+    scheduledFrame?.();
+    assert.equal(input.getButtonState().size, 0);
 
     input.destroy();
     doc.dispatch('keydown', { code: 'KeyE', target: {} });
