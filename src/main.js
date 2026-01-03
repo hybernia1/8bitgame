@@ -182,7 +182,10 @@ function showLoadingPanel(message = 'Načítání...') {
   toggleVisibility(menuPanel, false);
   toggleVisibility(pausePanel, false);
   toggleVisibility(loadingPanel, true);
-  loadingPanel?.querySelector?.('[data-loading-text]')?.textContent = message;
+  const loadingText = loadingPanel?.querySelector?.('[data-loading-text]');
+  if (loadingText) {
+    loadingText.textContent = message;
+  }
 }
 
 function hideContinuePanel() {
