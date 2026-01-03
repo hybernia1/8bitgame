@@ -112,7 +112,7 @@ document.querySelector('.inventory-grid')?.addEventListener('click', (event) => 
 
 const loop = GameLoop({
   update(dt) {
-    updatePlayer(player, dt, { canMove }, spriteSheet?.animations?.player);
+    updatePlayer(player, dt, { canMove });
     clampCamera(camera, player, canvas);
 
     if (playerVitals.invulnerableTime > 0) {

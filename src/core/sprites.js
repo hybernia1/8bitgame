@@ -163,12 +163,6 @@ function drawFromImage(image) {
   return (ctx) => ctx.drawImage(image, 0, 0, TILE, TILE);
 }
 
-function drawFromImageFrame(image, col, row) {
-  const sx = col * TILE;
-  const sy = row * TILE;
-  return (ctx) => ctx.drawImage(image, sx, sy, TILE, TILE, 0, 0, TILE, TILE);
-}
-
 function drawFloor(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, COLORS.floor, '#0d2d27', 0.03, random);
   ctx.fillStyle = COLORS.floorGlow;
@@ -291,25 +285,10 @@ const DRAWERS = {
 
 export async function loadSpriteSheet() {
   const textures = await loadTextureMap();
-  const frames = [];
-  const animations = {};
-  SPRITE_ORDER.forEach((name) => {
+  const frames = SPRITE_ORDER.map((name) => {
     const texture = textures[name];
-    const startIndex = frames.length;
-    if (texture) {
-      const cols = Math.max(1, Math.floor(texture.width / TILE));
-      const rows = Math.max(1, Math.floor(texture.height / TILE));
-      for (let row = 0; row < rows; row += 1) {
-        for (let col = 0; col < cols; col += 1) {
-          frames.push(drawFromImageFrame(texture, col, row));
-        }
-      }
-      const frameIndices = Array.from({ length: cols * rows }, (_value, offset) => startIndex + offset);
-      animations[name] = { frames: frameIndices, frameRate: frameIndices.length > 1 ? 8 : 1 };
-    } else {
-      frames.push(withTexture(DRAWERS[name]));
-      animations[name] = { frames: [startIndex], frameRate: 1 };
-    }
+    if (texture) return drawFromImage(texture);
+    return withTexture(DRAWERS[name]);
   });
   const image = await canvasToImage(makeCanvas(frames));
 
@@ -318,7 +297,10 @@ export async function loadSpriteSheet() {
     frameWidth: TILE,
     frameHeight: TILE,
     frameMargin: 0,
-    animations,
+    animations: SPRITE_ORDER.reduce((animations, name, index) => {
+      animations[name] = { frames: [index] };
+      return animations;
+    }, {}),
   });
 }
 
