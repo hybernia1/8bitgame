@@ -1,6 +1,7 @@
 import { hideInteraction, showDialogue, showPrompt } from '../ui/interaction.js';
 export function createHudSystem({
   hudTitle,
+  hudSubtitle,
   objectiveTotal,
   objectivesCollectedEl,
   objectivesTotalEl,
@@ -26,10 +27,16 @@ export function createHudSystem({
     hudTitle.textContent = `Level ${level}: ${areaName}`;
   }
 
+  function updateSubtitle(subtitle) {
+    if (!hudSubtitle) return;
+    hudSubtitle.textContent = subtitle;
+  }
+
   return {
     updateObjectiveHud,
     updateHealthHud,
     updateAreaTitle,
+    updateSubtitle,
     showPrompt,
     showDialogue,
     hideInteraction,

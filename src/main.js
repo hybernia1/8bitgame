@@ -12,7 +12,8 @@ import {
   drawLevel,
   drawLighting,
   drawLightSwitches,
-  getLevelName,
+  getLevelMeta,
+  getObjectiveTotal,
   canMove,
   getActorPlacements,
   isLitAt,
@@ -34,17 +35,17 @@ const inventory = new Inventory(6);
 const npcs = createNpcs(spriteSheet, getActorPlacements());
 const objectivesCollectedEl = document.querySelector('[data-objectives-collected]');
 const objectivesTotalEl = document.querySelector('[data-objectives-total]');
-const objectiveTotal = pickups.filter((pickup) => pickup.objective !== false).length;
+const levelMeta = getLevelMeta();
+const objectiveTotal = getObjectiveTotal();
 const projectiles = [];
-let gateKeyUsed = false;
 
 let dialogueTime = 0;
 let activeSpeaker = '';
 let activeLine = '';
 let objectivesCollected = 0;
-let areaName = getLevelName();
-let technicianGaveKey = false;
-let caretakerGaveApple = false;
+let areaName = levelMeta.title ?? levelMeta.name;
+let levelNumber = levelMeta.levelNumber ?? 0;
+let subtitle = levelMeta.subtitle ?? '';
 let deathTimeout = null;
 let darknessTimer = 0;
 const playerVitals = {
@@ -58,10 +59,12 @@ const healthCurrentEl = document.querySelector('.hud-health-current');
 const healthTotalEl = document.querySelector('.hud-health-total');
 
 const hudTitle = document.querySelector('.level-title');
+const hudSubtitle = document.querySelector('.subtitle');
 renderInventory(inventory);
 updateInventoryNote('Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.');
 const hudSystem = createHudSystem({
   hudTitle,
+  hudSubtitle,
   objectiveTotal,
   objectivesCollectedEl,
   objectivesTotalEl,
@@ -69,7 +72,8 @@ const hudSystem = createHudSystem({
   healthTotalEl,
 });
 
-hudSystem.updateAreaTitle(areaName, 0);
+hudSystem.updateAreaTitle(areaName, levelNumber);
+hudSystem.updateSubtitle(subtitle);
 
 const inputSystem = createInputSystem({
   inventory,
@@ -118,23 +122,41 @@ const interactionState = {
   set areaName(value) {
     areaName = value;
   },
+  get levelNumber() {
+    return levelNumber;
+  },
+  set levelNumber(value) {
+    levelNumber = value;
+  },
+  get subtitle() {
+    return subtitle;
+  },
+  set subtitle(value) {
+    subtitle = value;
+  },
+  flags: {
+    technicianGaveKey: false,
+    caretakerGaveApple: false,
+    gateKeyUsed: false,
+  },
+  quests: {},
   get technicianGaveKey() {
-    return technicianGaveKey;
+    return this.flags.technicianGaveKey;
   },
   set technicianGaveKey(value) {
-    technicianGaveKey = value;
+    this.flags.technicianGaveKey = value;
   },
   get caretakerGaveApple() {
-    return caretakerGaveApple;
+    return this.flags.caretakerGaveApple;
   },
   set caretakerGaveApple(value) {
-    caretakerGaveApple = value;
+    this.flags.caretakerGaveApple = value;
   },
   get gateKeyUsed() {
-    return gateKeyUsed;
+    return this.flags.gateKeyUsed;
   },
   set gateKeyUsed(value) {
-    gateKeyUsed = value;
+    this.flags.gateKeyUsed = value;
   },
   playerVitals,
   handlePlayerHit,
@@ -147,7 +169,6 @@ const interactionSystem = createInteractionSystem({
   hud: hudSystem,
   state: interactionState,
   renderInventory,
-  objectiveTotal,
   updateInventoryNote,
   updateObjectiveHud: (count) => hudSystem.updateObjectiveHud(count ?? interactionState.objectivesCollected),
   collectNearbyPickups,
@@ -213,6 +234,8 @@ function handlePlayerHit() {
     note: 'Zásah! Přišel jsi o život. Vrať se a dávej si pozor.',
     deathNote: 'Hlídač klíče tě zneškodnil. Mise se restartuje...',
   });
+}
+
 function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNote }) {
   if (deathTimeout || playerVitals.health <= 0) return;
 
