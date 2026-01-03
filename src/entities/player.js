@@ -20,6 +20,7 @@ export function createPlayer() {
     speed: 120,
     size: 22,
     color: '#5cf2cc',
+    lastDirection: { x: 1, y: 0 },
   };
 }
 
@@ -32,6 +33,10 @@ export function updatePlayer(player, dt, collision) {
   const step = player.speed * dt;
   const nx = player.x + (dx / len) * step;
   const ny = player.y + (dy / len) * step;
+
+  if (dx !== 0 || dy !== 0) {
+    player.lastDirection = { x: dx / len, y: dy / len };
+  }
 
   if (collision.canMove(player.size, nx, player.y)) player.x = nx;
   if (collision.canMove(player.size, player.x, ny)) player.y = ny;

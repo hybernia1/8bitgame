@@ -32,6 +32,7 @@ export function createNpcs(spriteSheet, placements) {
   const { npcs = [] } = placements || {};
   return npcs.map((npc) => {
     const spriteName = npc.sprite ?? (npc.lethal ? 'monster' : 'npc');
+    const health = npc.health ?? 1;
 
     return {
       ...npc,
@@ -41,6 +42,9 @@ export function createNpcs(spriteSheet, placements) {
       ...toWorldPosition(npc),
       patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
       patrolIndex: 0,
+      health,
+      maxHealth: health,
+      defeated: false,
       hasSpoken: false,
       infoShared: false,
       animation: spriteSheet?.animations?.[spriteName]?.clone?.(),
@@ -54,6 +58,8 @@ export function updateNpcStates(npcs, player, dt) {
   let guardCollision = false;
 
   npcs.forEach((npc) => {
+    if (npc.defeated) return;
+
     updatePatrol(npc, dt);
 
     const distance = Math.hypot(npc.x - player.x, npc.y - player.y);
@@ -74,6 +80,8 @@ export function updateNpcStates(npcs, player, dt) {
 
 export function drawNpcs(ctx, camera, npcs) {
   npcs.forEach((npc) => {
+    if (npc.defeated) return;
+
     const px = npc.x - camera.x;
     const py = npc.y - camera.y;
     const half = TILE / 2;
@@ -107,6 +115,18 @@ export function drawNpcs(ctx, camera, npcs) {
       ctx.beginPath();
       ctx.arc(0, 2, TILE / 2, 0, Math.PI * 2);
       ctx.stroke();
+    }
+
+    if (npc.lethal && npc.maxHealth > 1) {
+      const barWidth = TILE;
+      const healthRatio = Math.max(0, npc.health) / npc.maxHealth;
+      ctx.translate(-half, -half - 10);
+      ctx.fillStyle = '#1a1a22';
+      ctx.fillRect(0, 0, barWidth, 6);
+      ctx.fillStyle = '#5cf2cc';
+      ctx.fillRect(0, 0, barWidth * healthRatio, 6);
+      ctx.strokeStyle = '#0b0b10';
+      ctx.strokeRect(0, 0, barWidth, 6);
     }
 
     ctx.restore();

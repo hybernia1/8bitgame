@@ -4,10 +4,55 @@ export class Inventory {
   }
 
   addItem(item) {
+    if (item.stackable) {
+      const existingIndex = this.slots.findIndex((slot) => slot?.id === item.id);
+      if (existingIndex !== -1) {
+        const existing = this.slots[existingIndex];
+        const quantity = item.quantity ?? 1;
+        existing.quantity = (existing.quantity ?? 1) + quantity;
+        return true;
+      }
+    }
+
     const emptyIndex = this.slots.findIndex((slot) => slot === null);
     if (emptyIndex === -1) return false;
-    this.slots[emptyIndex] = item;
+
+    const quantity = item.quantity ?? (item.stackable ? 1 : undefined);
+    this.slots[emptyIndex] = quantity ? { ...item, quantity } : { ...item };
     return true;
+  }
+
+  consumeItem(id, amount = 1) {
+    const index = this.slots.findIndex((slot) => slot?.id === id);
+    if (index === -1) return false;
+
+    const slot = this.slots[index];
+    if (!slot.stackable) {
+      this.slots[index] = null;
+      return true;
+    }
+
+    const remaining = (slot.quantity ?? 1) - amount;
+    if (remaining > 0) {
+      slot.quantity = remaining;
+    } else {
+      this.slots[index] = null;
+    }
+
+    return true;
+  }
+
+  clearObjectiveItems() {
+    this.slots = this.slots.map((slot) => {
+      if (!slot) return null;
+      return slot.objective === true ? null : slot;
+    });
+  }
+
+  getItemCount(id) {
+    const slot = this.slots.find((entry) => entry?.id === id);
+    if (!slot) return 0;
+    return slot.quantity ?? 1;
   }
 }
 
@@ -28,7 +73,8 @@ export function renderInventory(inventory) {
       }
       const label = document.createElement('div');
       label.className = 'inventory-label';
-      label.textContent = item.name;
+      const quantity = item.quantity ?? 0;
+      label.textContent = quantity > 1 ? `${item.name} ×${quantity}` : item.name;
       slot.append(icon, label);
     } else {
       slot.classList.add('inventory-empty');
