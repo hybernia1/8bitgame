@@ -9,6 +9,9 @@ export function createPickups() {
   const offset = centerOffset();
   return getPickupTemplates().map((pickup) => ({
     ...pickup,
+    objective: pickup.objective ?? true,
+    stackable: pickup.stackable ?? false,
+    quantity: pickup.quantity ?? (pickup.stackable ? 1 : undefined),
     x: pickup.x ?? pickup.tx * TILE + offset,
     y: pickup.y ?? pickup.ty * TILE + offset,
     collected: false,
@@ -51,7 +54,15 @@ export function collectNearbyPickups(player, pickups, inventory) {
     const dy = pickup.y - player.y;
     const distance = Math.hypot(dx, dy);
     if (distance <= player.size / 2 + 12) {
-      const stored = inventory.addItem({ id: pickup.id, name: pickup.name, icon: pickup.icon, tint: pickup.tint });
+      const stored = inventory.addItem({
+        id: pickup.id,
+        name: pickup.name,
+        icon: pickup.icon,
+        tint: pickup.tint,
+        objective: pickup.objective,
+        stackable: pickup.stackable,
+        quantity: pickup.quantity,
+      });
       if (stored) {
         pickup.collected = true;
         collected.push(pickup);
