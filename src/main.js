@@ -45,6 +45,7 @@ let activeLine = '';
 let objectivesCollected = 0;
 let areaName = getLevelName();
 let technicianGaveKey = false;
+let caretakerGaveApple = false;
 let deathTimeout = null;
 let shootRequested = false;
 let darknessTimer = 0;
@@ -82,12 +83,28 @@ function updateHealthHud() {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     document.querySelector('.panel').classList.toggle('hidden');
+    return;
   }
   if (event.key.toLowerCase() === 'e') {
     interactRequested = true;
+    return;
   }
   if (event.code === 'Space') {
     shootRequested = true;
+    return;
+  }
+  const slotNumber = Number.parseInt(event.key, 10);
+  if (Number.isInteger(slotNumber) && slotNumber >= 1 && slotNumber <= inventory.slots.length) {
+    useInventorySlot(slotNumber - 1);
+  }
+});
+
+document.querySelector('.inventory-grid')?.addEventListener('click', (event) => {
+  const slot = event.target.closest('.inventory-slot');
+  if (!slot) return;
+  const index = Number.parseInt(slot.dataset.index, 10) - 1;
+  if (Number.isInteger(index)) {
+    useInventorySlot(index);
   }
 });
 
@@ -119,7 +136,31 @@ const loop = GameLoop({
       }
     } else if (interactRequested && nearestNpc?.nearby) {
       activeSpeaker = nearestNpc.name;
-      if (nearestNpc.id === 'technician') {
+      if (nearestNpc.id === 'caretaker') {
+        const hasApple = inventory.getItemCount('apple') > 0;
+        if (!caretakerGaveApple) {
+          const stored = inventory.addItem({
+            id: 'apple',
+            name: 'Jablko',
+            icon: '🍎',
+            tint: '#f25c5c',
+          });
+
+          if (stored) {
+            caretakerGaveApple = true;
+            activeLine = 'Tady máš jablko, doplní ti síly. Stiskni číslo slotu nebo na něj klikni v inventáři.';
+            updateInventoryNote('Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.');
+            renderInventory(inventory);
+          } else {
+            activeLine = 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.';
+            updateInventoryNote('Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.');
+          }
+        } else if (hasApple) {
+          activeLine = 'Jablko máš v inventáři. Klikni na slot nebo stiskni jeho číslo, až budeš potřebovat život.';
+        } else {
+          activeLine = nearestNpc.dialogue || 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.';
+        }
+      } else if (nearestNpc.id === 'technician') {
         const readyForReward = objectivesCollected >= objectiveTotal;
         if (!readyForReward) {
           activeLine =
@@ -356,6 +397,32 @@ function findNearestLightSwitch() {
     }
   });
   return { activeSwitch: best, switchDistance: bestDistance };
+}
+
+function useInventorySlot(slotIndex) {
+  const item = inventory.slots[slotIndex];
+  if (!item) {
+    updateInventoryNote(`Slot ${slotIndex + 1} je prázdný.`);
+    return;
+  }
+
+  if (item.id === 'apple') {
+    if (playerVitals.health >= playerVitals.maxHealth) {
+      updateInventoryNote('Máš plné zdraví, jablko si nech na horší chvíli.');
+      return;
+    }
+
+    const consumed = inventory.consumeSlot(slotIndex, 1);
+    if (consumed) {
+      playerVitals.health = Math.min(playerVitals.maxHealth, playerVitals.health + 1);
+      updateHealthHud();
+      renderInventory(inventory);
+      updateInventoryNote('Jablko ti doplnilo jeden život.');
+    }
+    return;
+  }
+
+  updateInventoryNote('Tenhle předmět teď nemůžeš použít.');
 }
 
 loop.start();
