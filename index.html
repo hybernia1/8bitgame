@@ -8,31 +8,35 @@
 </head>
 <body>
   <main class="game-shell">
-    <header class="hud-bar">
-      <div class="hud-heading">
-        <div class="eyebrow">Ops zóna</div>
-        <div class="title level-title">Level 0: Demo Facility</div>
-        <div class="subtitle">WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
+    <section class="play-column">
+      <div class="game-frame">
+        <canvas id="game" width="640" height="480" aria-label="Demo level canvas"></canvas>
+        <div class="interaction-banner hidden" aria-live="polite">
+          <div class="interaction-title">Interakce</div>
+          <div class="interaction-text">Přibliž se k Technikovi Járovi a stiskni E.</div>
+        </div>
       </div>
-      <div class="hud-pills" aria-live="polite">
-        <div class="hud-pill">❤ <span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></div>
-        <div class="hud-pill">🎯 Úkoly: <span data-objectives-collected>0</span>/<span data-objectives-total>0</span></div>
-      </div>
-    </header>
-    <div class="game-frame">
-      <canvas id="game" width="640" height="480" aria-label="Demo level canvas"></canvas>
-      <div class="interaction-banner hidden" aria-live="polite">
-        <div class="interaction-title">Interakce</div>
-        <div class="interaction-text">Přibliž se k Technikovi Járovi a stiskni E.</div>
-      </div>
-    </div>
-    <section class="inventory" aria-label="Inventář se šesti sloty">
-      <div class="inventory-header">
-        <div class="title">Výbava</div>
-        <div class="inventory-note">Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
-      </div>
-      <div class="inventory-grid" role="list"></div>
     </section>
+    <aside class="side-panel" aria-label="Stav mise">
+      <header class="hud-bar">
+        <div class="hud-heading">
+          <div class="eyebrow">Ops zóna</div>
+          <div class="title level-title">Level 0: Demo Facility</div>
+          <div class="subtitle">WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
+        </div>
+        <div class="hud-pills" aria-live="polite">
+          <div class="hud-pill">❤ <span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></div>
+          <div class="hud-pill">🎯 Úkoly: <span data-objectives-collected>0</span>/<span data-objectives-total>0</span></div>
+        </div>
+      </header>
+      <section class="inventory" aria-label="Inventář se šesti sloty">
+        <div class="inventory-header">
+          <div class="title">Výbava</div>
+          <div class="inventory-note">Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
+        </div>
+        <div class="inventory-grid" role="list"></div>
+      </section>
+    </aside>
   </main>
   <script type="module" src="src/main.js"></script>
 </body>
