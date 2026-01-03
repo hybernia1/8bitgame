@@ -3,6 +3,7 @@ import { createAnimationMap, pickAnimation, resolveDirection } from './character
 
 const TALK_RADIUS = 26;
 const CHARACTER_SIZE = 22;
+const MIN_TARGET_DISTANCE = 4;
 
 function toWorldPosition(point = {}) {
   return {
@@ -12,6 +13,49 @@ function toWorldPosition(point = {}) {
 }
 
 function updatePatrol(npc, dt) {
+  if (npc.busyTimer > 0) {
+    npc.busyTimer = Math.max(0, npc.busyTimer - dt);
+    return { dx: 0, dy: 0, moving: false };
+  }
+
+  if (npc.wanderRadius > 0) {
+    npc.wanderCooldown = Math.max(0, npc.wanderCooldown - dt);
+    const anchor = npc.wanderAnchor ?? { x: npc.x, y: npc.y };
+    if (!npc.wanderTarget && npc.wanderCooldown <= 0) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * npc.wanderRadius;
+      npc.wanderTarget = {
+        x: anchor.x + Math.cos(angle) * distance,
+        y: anchor.y + Math.sin(angle) * distance,
+      };
+    }
+
+    if (npc.wanderTarget) {
+      const dx = npc.wanderTarget.x - npc.x;
+      const dy = npc.wanderTarget.y - npc.y;
+      const distance = Math.hypot(dx, dy);
+
+      if (distance < MIN_TARGET_DISTANCE) {
+        npc.wanderTarget = null;
+        npc.wanderCooldown = npc.wanderInterval;
+        return { dx: 0, dy: 0, moving: false };
+      }
+
+      const step = (npc.speed ?? 36) * dt;
+      const move = Math.min(step, distance);
+      const normalizedX = dx / (distance || 1);
+      const normalizedY = dy / (distance || 1);
+      const facing = resolveDirection(normalizedX, normalizedY, npc.facing);
+
+      npc.lastDirection = { x: normalizedX, y: normalizedY };
+      npc.facing = facing;
+      npc.x += normalizedX * move;
+      npc.y += normalizedY * move;
+
+      return { dx: normalizedX, dy: normalizedY, moving: move > 0 };
+    }
+  }
+
   if (!npc.patrolPoints?.length) return { dx: 0, dy: 0, moving: false };
 
   const target = npc.patrolPoints[npc.patrolIndex];
@@ -19,7 +63,7 @@ function updatePatrol(npc, dt) {
   const dy = target.y - npc.y;
   const distance = Math.hypot(dx, dy);
 
-  if (distance < 4) {
+  if (distance < MIN_TARGET_DISTANCE) {
     npc.patrolIndex = (npc.patrolIndex + 1) % npc.patrolPoints.length;
     return { dx: 0, dy: 0, moving: false };
   }
@@ -83,6 +127,12 @@ export function createNpcs(spriteSheet, placements) {
       ...toWorldPosition(npc),
       patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
       patrolIndex: 0,
+      wanderRadius: npc.wanderRadius ?? 0,
+      wanderInterval: npc.wanderInterval ?? 1.2,
+      wanderAnchor: toWorldPosition(npc),
+      wanderCooldown: 0,
+      wanderTarget: null,
+      busyTimer: 0,
       health,
       maxHealth: health,
       defeated: false,
