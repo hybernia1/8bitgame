@@ -109,12 +109,16 @@ export function drawPlayer(ctx, camera, player, spriteSheet) {
   const py = player.y - camera.y;
   const half = player.size / 2;
 
-  ctx.fillStyle = COLORS.gridBorder;
-  ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
-  ctx.fillStyle = player.color;
-  ctx.fillRect(px - half, py - half, player.size, player.size);
-  ctx.fillStyle = '#183e35';
-  ctx.fillRect(px - half, py + half - 4, player.size, 4);
+  const hasSprite = player.currentAnimation || spriteSheet?.animations?.player;
+
+  if (!hasSprite) {
+    ctx.fillStyle = COLORS.gridBorder;
+    ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
+    ctx.fillStyle = player.color;
+    ctx.fillRect(px - half, py - half, player.size, player.size);
+    ctx.fillStyle = '#183e35';
+    ctx.fillRect(px - half, py + half - 4, player.size, 4);
+  }
 
   if (player.currentAnimation) {
     ctx.save();
