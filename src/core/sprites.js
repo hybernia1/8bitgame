@@ -18,13 +18,33 @@ const TEXTURE_PATHS = {
 };
 
 const SPRITE_ANIMATIONS = {
-  player: [
+  player: getPlayerAnimationDefs,
+};
+
+function getPlayerAnimationDefs(frameCount) {
+  // Prefer 3x4 directional sheets (down, left, right, up) with three frames each.
+  if (frameCount >= 12) {
+    return [
+      { name: 'playerWalkDown', frames: '0..2', frameRate: 8 },
+      { name: 'playerIdleDown', frames: [1] },
+      { name: 'playerWalkLeft', frames: '3..5', frameRate: 8 },
+      { name: 'playerIdleLeft', frames: [4] },
+      { name: 'playerWalkRight', frames: '6..8', frameRate: 8 },
+      { name: 'playerIdleRight', frames: [7] },
+      { name: 'playerWalkUp', frames: '9..11', frameRate: 8 },
+      { name: 'playerIdleUp', frames: [10] },
+      // Keep a legacy single-frame animation for compatibility with existing lookups
+      { name: 'player', frames: [1] },
+    ];
+  }
+
+  return [
     { name: 'playerWalk', frames: '0..3', frameRate: 8 },
     { name: 'playerIdle', frames: [4] },
     // Keep a legacy single-frame animation for compatibility with existing lookups
     { name: 'player', frames: [0] },
-  ],
-};
+  ];
+}
 
 function makeCanvas(frames) {
   const cols = 4;
@@ -323,6 +343,12 @@ function drawProp(ctx, random) {
   ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 7);
 }
 
+function getAnimationDefs(name, frameCount) {
+  const definitions = SPRITE_ANIMATIONS[name];
+  if (!definitions) return null;
+  return typeof definitions === 'function' ? definitions(frameCount) : definitions;
+}
+
 const DRAWERS = {
   floor: drawFloor,
   wall: drawWall,
@@ -345,7 +371,7 @@ export async function loadSpriteSheet() {
     const spriteFrames = buildSpriteFrames(name, texture);
     frames.push(...spriteFrames);
 
-    const animationDefs = SPRITE_ANIMATIONS[name];
+    const animationDefs = getAnimationDefs(name, spriteFrames.length);
     if (animationDefs) {
       animationDefs.forEach(({ name: animationName, frames: frameSpec, frameRate, loop = true }) => {
         animations[animationName] = {
