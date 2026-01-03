@@ -1,8 +1,8 @@
 export const TILE = 32;
 
 export const WORLD = {
-  width: 20,
-  height: 15,
+  width: 32,
+  height: 18,
 };
 
 export const COLORS = {
