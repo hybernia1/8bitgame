@@ -1,4 +1,4 @@
-import defaultBindings from '../data/inputBindings.json' assert { type: 'json' };
+import defaultBindings from '../data/inputBindings.js';
 
 const STORAGE_KEY = '8bitgame.inputBindings';
 

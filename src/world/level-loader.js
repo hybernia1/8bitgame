@@ -203,13 +203,14 @@ export function importTiledLevel(mapData, options = {}) {
   const actors = parseSpawnLayer(spawnLayer);
 
   const props = readProperties(mapData.properties);
+  const parsedLevelNumber = Number.parseInt(props.levelNumber ?? props.levelIndex ?? 0, 10);
   /** @type {LevelMeta} */
   const meta = {
     id: props.id ?? mapData.properties?.find?.((p) => p.name === 'id')?.value ?? mapData.name ?? 'tiled-level',
     name: props.name ?? mapData.name ?? 'Tiled Level',
     title: props.title ?? mapData.name,
     subtitle: props.subtitle,
-    levelNumber: props.levelNumber ?? Number.parseInt(props.levelIndex ?? 0, 10) || 0,
+    levelNumber: Number.isNaN(parsedLevelNumber) ? 0 : parsedLevelNumber,
   };
 
   return {
