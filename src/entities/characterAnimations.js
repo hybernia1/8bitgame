@@ -37,12 +37,13 @@ function addAnimationsFromBase(animations, spriteSheet, baseName, { onlyMissing 
   }
 }
 
-export function createAnimationMap(spriteSheet, baseName = 'player') {
+export function createAnimationMap(spriteSheet, baseName = 'player', options = {}) {
+  const { includePlayerFallback = true } = options;
   const animations = {};
 
   addAnimationsFromBase(animations, spriteSheet, baseName);
 
-  if (baseName !== 'player') {
+  if (includePlayerFallback && baseName !== 'player') {
     addAnimationsFromBase(animations, spriteSheet, 'player', { onlyMissing: true });
   }
 

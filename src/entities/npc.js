@@ -64,7 +64,7 @@ export function createNpcs(spriteSheet, placements) {
   return npcs.map((npc) => {
     const spriteName = npc.sprite ?? (npc.lethal ? 'monster' : 'npc');
     const animationBase = npc.animationBase ?? spriteName;
-    const animations = createAnimationMap(spriteSheet, animationBase);
+    const animations = createAnimationMap(spriteSheet, animationBase, { includePlayerFallback: false });
     const health = npc.health ?? 1;
     const facing = 'down';
     const fallbackAnimation = spriteSheet?.animations?.[spriteName]?.clone?.();
