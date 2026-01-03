@@ -1,46 +1,62 @@
-import { useInventorySlot } from '../ui/inventory.js';
+import {
+  getSlotIndexFromBinding,
+  loadInputBindings,
+  resolveActionForButton,
+  resolveActionForKey,
+  saveInputBindings,
+} from '../core/input-bindings.js';
 
-export function createInputSystem({
-  inventory,
-  playerVitals,
-  updateHealthHud,
-  renderInventory,
-  showNote,
-  handlers,
-  onPauseToggle,
-}) {
-  let interactRequested = false;
-  let shootRequested = false;
+function isTextInput(target) {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target?.isContentEditable === true
+  );
+}
 
-  function handleInventoryUse(slotIndex) {
-    useInventorySlot({
-      inventory,
-      slotIndex,
-      playerVitals,
-      updateHealthHud,
-      renderInventory,
-      showNote,
-      handlers,
+export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
+  let bindings = loadInputBindings();
+  saveInputBindings(bindings);
+
+  const listeners = new Set();
+  if (onAction) {
+    listeners.add(onAction);
+  }
+
+  function emit(action, detail) {
+    listeners.forEach((listener) => {
+      listener?.(action, detail ?? {});
     });
   }
 
+  function handleAction(action, detail) {
+    if (!action) return;
+    if (action === 'use-slot') {
+      const slotIndex = detail?.slotIndex;
+      if (slotIndex == null || slotIndex < 0 || slotIndex >= inventorySlots) return;
+      emit(action, { slotIndex });
+      return;
+    }
+    emit(action, detail);
+  }
+
   function onKeyDown(event) {
-    if (event.key === 'Escape') {
-      onPauseToggle?.();
+    const action = resolveActionForKey(bindings, event.code);
+    if (!action) return;
+
+    if (isTextInput(event.target) && action !== 'toggle-pause') return;
+
+    if (action === 'use-slot') {
+      const slotIndex = getSlotIndexFromBinding(bindings, event.code, 'keyboard');
+      if (slotIndex >= 0) {
+        handleAction(action, { slotIndex });
+        event.preventDefault();
+      }
       return;
     }
-    if (event.key.toLowerCase() === 'e') {
-      interactRequested = true;
-      return;
-    }
-    if (event.code === 'Space') {
-      shootRequested = true;
-      return;
-    }
-    const slotNumber = Number.parseInt(event.key, 10);
-    if (Number.isInteger(slotNumber) && slotNumber >= 1 && slotNumber <= inventory.slots.length) {
-      handleInventoryUse(slotNumber - 1);
-    }
+
+    handleAction(action);
+    event.preventDefault();
   }
 
   function onInventoryClick(event) {
@@ -48,33 +64,80 @@ export function createInputSystem({
     if (!slot) return;
     const index = Number.parseInt(slot.dataset.index, 10) - 1;
     if (Number.isInteger(index)) {
-      handleInventoryUse(index);
+      handleAction('use-slot', { slotIndex: index });
     }
+  }
+
+  let gamepadFrame = null;
+  const buttonState = new Map();
+
+  function pollGamepads() {
+    const pads = navigator.getGamepads?.();
+    const active = pads?.find((pad) => pad && pad.connected);
+    if (active) {
+      active.buttons.forEach((button, index) => {
+        const wasPressed = buttonState.get(index) === true;
+        if (button.pressed && !wasPressed) {
+          const action = resolveActionForButton(bindings, index);
+          if (action === 'use-slot') {
+            const slotIndex = getSlotIndexFromBinding(bindings, index, 'gamepad');
+            if (slotIndex >= 0) {
+              handleAction('use-slot', { slotIndex });
+            }
+          } else if (action) {
+            handleAction(action);
+          }
+        }
+        buttonState.set(index, button.pressed);
+      });
+    }
+    gamepadFrame = requestAnimationFrame(pollGamepads);
+  }
+
+  function startGamepadPolling() {
+    if (typeof navigator === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
+    if (gamepadFrame) return;
+    gamepadFrame = requestAnimationFrame(pollGamepads);
+  }
+
+  function stopGamepadPolling() {
+    if (!gamepadFrame || typeof cancelAnimationFrame === 'undefined') return;
+    cancelAnimationFrame(gamepadFrame);
+    gamepadFrame = null;
   }
 
   document.addEventListener('keydown', onKeyDown);
   document.querySelector('.inventory-grid')?.addEventListener('click', onInventoryClick);
+  window.addEventListener('gamepadconnected', startGamepadPolling);
+  window.addEventListener('gamepaddisconnected', stopGamepadPolling);
+  startGamepadPolling();
 
   function destroy() {
     document.removeEventListener('keydown', onKeyDown);
     document.querySelector('.inventory-grid')?.removeEventListener('click', onInventoryClick);
+    window.removeEventListener('gamepadconnected', startGamepadPolling);
+    window.removeEventListener('gamepaddisconnected', stopGamepadPolling);
+    stopGamepadPolling();
+    listeners.clear();
   }
 
-  function consumeInteractRequest() {
-    const requested = interactRequested;
-    interactRequested = false;
-    return requested;
+  function on(listener) {
+    if (listener) {
+      listeners.add(listener);
+    }
+    return () => listeners.delete(listener);
   }
 
-  function consumeShootRequest() {
-    const requested = shootRequested;
-    shootRequested = false;
-    return requested;
+  function updateBindings(nextBindings) {
+    if (!nextBindings) return;
+    bindings = nextBindings;
+    saveInputBindings(bindings);
   }
 
   return {
-    consumeInteractRequest,
-    consumeShootRequest,
     destroy,
+    onAction: on,
+    getBindings: () => bindings,
+    updateBindings,
   };
 }

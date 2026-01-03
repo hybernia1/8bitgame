@@ -43,6 +43,7 @@
         <section class="overlay pause-panel hidden" aria-label="Pauza">
           <div class="panel-title">Pauza</div>
           <p class="menu-subtitle">Stiskni Escape nebo vyber možnost.</p>
+          <p class="menu-subtitle binding-hint" data-pause-bindings></p>
           <div class="menu-actions">
             <button type="button" class="menu-button" data-pause-resume>Pokračovat</button>
             <button type="button" class="menu-button" data-pause-save>Uložit ručně</button>
@@ -56,7 +57,7 @@
         <div class="hud-heading">
           <div class="eyebrow">Ops zóna</div>
           <div class="title level-title">Level 0: Demo Facility</div>
-          <div class="subtitle">WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
+          <div class="subtitle" data-controls-hint>WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
         </div>
         <div class="hud-pills" aria-live="polite">
           <div class="hud-pill">❤ <span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></div>
@@ -78,7 +79,9 @@
         <div class="inventory-header">
           <div class="title">Výbava</div>
           <div class="inventory-note">Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
+          <div class="binding-hint" data-inventory-binding></div>
         </div>
+        <div class="inventory-status hidden" data-inventory-status></div>
         <div class="inventory-grid" role="list"></div>
       </section>
     </aside>

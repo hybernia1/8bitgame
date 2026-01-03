@@ -9,8 +9,11 @@ export const messages = {
   'dialogue.gateUnlocked': 'Vstup potvrzen. Přecházíš do nového mapového křídla.',
   'speaker.gateSystem': 'Systém Dveří',
   'hud.levelTitle': 'Level {level}: {name}',
-  'hud.controls': 'WASD/šipky = pohyb · E = interakce · Mezerník = střelba',
+  'hud.controls':
+    'Pohyb: WASD/šipky · Interakce: {interact} · Střelba: {shoot} · Inventář: {inventory} · Pauza: {pause}',
   'note.inventory.intro': 'Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.',
+  'note.inventory.toggle': 'Inventář: {binding}',
+  'note.inventory.collapsed': 'Inventář je skrytý. Stiskni {binding} pro zobrazení.',
   'note.inventory.emptySlot': 'Slot {index} je prázdný.',
   'note.inventory.slotLabel': 'Slot {index}',
   'note.inventory.unusable': 'Tenhle předmět teď nemůžeš použít.',

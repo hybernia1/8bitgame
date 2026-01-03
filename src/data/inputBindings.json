@@ -1,0 +1,15 @@
+{
+  "keyboard": {
+    "interact": ["KeyE"],
+    "shoot": ["Space"],
+    "toggle-pause": ["Escape"],
+    "toggle-inventory": ["KeyI", "Tab"],
+    "use-slot": ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6"]
+  },
+  "gamepad": {
+    "interact": [0],
+    "shoot": [1],
+    "toggle-pause": [9],
+    "toggle-inventory": [2]
+  }
+}
