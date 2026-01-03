@@ -142,7 +142,7 @@ export function createInteractionSystem({
       const toggled = level.activateLightSwitch(activeSwitch.id);
       if (toggled) {
         showNote('note.switch.activated', { name: activeSwitch.name });
-        game?.saveProgress?.();
+        game?.saveProgress?.({ auto: true });
       } else {
         showNote('note.switch.alreadyOn');
       }

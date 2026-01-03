@@ -19,13 +19,21 @@
           <div class="panel-title">Hlavní menu</div>
           <p class="menu-subtitle">Vyber si akci pro další postup.</p>
           <div class="menu-actions">
-            <button type="button" class="menu-button" data-menu-start>Start</button>
-            <button type="button" class="menu-button" data-menu-continue>Pokračovat ze savu</button>
+            <div class="menu-row">
+              <input type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
+              <button type="button" class="menu-button" data-menu-start>Nový start</button>
+            </div>
+            <button type="button" class="menu-button" data-menu-continue>Pokračovat z posledního savu</button>
             <div class="menu-row">
               <input type="text" aria-label="ID levelu" data-level-input placeholder="demo-level" />
               <button type="button" class="menu-button ghost" data-menu-select>Výběr levelu</button>
             </div>
             <button type="button" class="menu-button ghost" data-menu-settings>Nastavení</button>
+            <div class="save-panel">
+              <div class="panel-title">Pokračovat</div>
+              <p class="menu-subtitle">Vyber uložený slot nebo ho smaž.</p>
+              <div class="save-slot-list" data-save-slot-list></div>
+            </div>
           </div>
         </section>
         <section class="overlay loading-panel hidden" aria-live="polite">
@@ -37,6 +45,7 @@
           <p class="menu-subtitle">Stiskni Escape nebo vyber možnost.</p>
           <div class="menu-actions">
             <button type="button" class="menu-button" data-pause-resume>Pokračovat</button>
+            <button type="button" class="menu-button" data-pause-save>Uložit ručně</button>
             <button type="button" class="menu-button ghost" data-pause-menu>Hlavní menu</button>
           </div>
         </section>
@@ -54,6 +63,7 @@
           <div class="hud-pill">🎯 Úkoly: <span data-objectives-collected>0</span>/<span data-objectives-total>0</span></div>
         </div>
       </header>
+      <div class="hud-toast hidden" role="status" aria-live="polite"></div>
       <section class="inventory" aria-label="Inventář se šesti sloty">
         <div class="inventory-header">
           <div class="title">Výbava</div>

@@ -8,6 +8,7 @@ const elements = {
   healthCurrentEl: document.querySelector('.hud-health-current'),
   healthTotalEl: document.querySelector('.hud-health-total'),
   inventoryNote: document.querySelector('.inventory-note'),
+  toast: document.querySelector('.hud-toast'),
   banner: document.querySelector('.interaction-banner'),
   bannerTitle: document.querySelector('.interaction-title'),
   bannerBody: document.querySelector('.interaction-text'),
@@ -34,6 +35,7 @@ function hideBanner() {
 
 export function createHudSystem() {
   let cachedObjectivesTotal = 0;
+  let toastTimer = null;
 
   function setLevelTitle(areaName, level = 0) {
     applyText(elements.hudTitle, format('hud.levelTitle', { name: areaName, level }));
@@ -62,6 +64,31 @@ export function createHudSystem() {
     applyText(elements.inventoryNote, format(messageId, params));
   }
 
+  function showToast(messageId, params, duration = 2000) {
+    if (!elements.toast) return;
+    applyText(elements.toast, format(messageId, params));
+    elements.toast.classList.remove('hidden');
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+    }
+    toastTimer = setTimeout(() => {
+      elements.toast?.classList.add('hidden');
+    }, duration);
+  }
+
+  function hideToast() {
+    if (!elements.toast) return;
+    elements.toast.classList.add('hidden');
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+  }
+
+  function showSaveToast(messageId, params) {
+    showToast(messageId, params, 2200);
+  }
+
   function showPrompt(messageId, params) {
     showBanner('prompt', format(messageId, params));
   }
@@ -86,6 +113,9 @@ export function createHudSystem() {
     setHealth,
     setSubtitle,
     showNote,
+    showToast,
+    showSaveToast,
+    hideToast,
     showPrompt,
     showDialogue,
     hideInteraction,
