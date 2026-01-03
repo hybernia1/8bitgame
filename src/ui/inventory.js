@@ -25,8 +25,13 @@ export class Inventory {
   consumeItem(id, amount = 1) {
     const index = this.slots.findIndex((slot) => slot?.id === id);
     if (index === -1) return false;
+    return this.consumeSlot(index, amount);
+  }
 
+  consumeSlot(index, amount = 1) {
     const slot = this.slots[index];
+    if (!slot) return false;
+
     if (!slot.stackable) {
       this.slots[index] = null;
       return true;
