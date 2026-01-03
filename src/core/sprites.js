@@ -1,7 +1,7 @@
 import { SpriteSheet } from '../kontra.mjs';
 import { TILE, COLORS } from './constants.js';
 
-const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'monster', 'prop'];
+const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'cat', 'monster', 'prop'];
 const TEXTURE_SEED = 1337;
 // Textures are loaded only from their canonical subfolders under assets/.
 const TEXTURE_PATHS = {
@@ -11,6 +11,7 @@ const TEXTURE_PATHS = {
   player: 'assets/hero/hero.png',
   pickup: 'assets/items/pickup.png',
   npc: 'assets/npc/npc.png',
+  cat: ['assets/npc/cat.png', 'assets/npc/npc.png'],
   monster: 'assets/npc/monster.png',
   prop: 'assets/props/prop.png',
 };
@@ -18,6 +19,7 @@ const TEXTURE_PATHS = {
 const SPRITE_ANIMATIONS = {
   player: (frameCount) => getDirectionalAnimationDefs('player', frameCount, { includeLegacyDefault: true }),
   npc: (frameCount) => getDirectionalAnimationDefs('npc', frameCount, { includeLegacyDefault: true }),
+  cat: (frameCount) => getDirectionalAnimationDefs('cat', frameCount, { includeLegacyDefault: true }),
   monster: (frameCount) => getDirectionalAnimationDefs('monster', frameCount, { includeLegacyDefault: true }),
 };
 
@@ -295,6 +297,20 @@ function drawNpc(ctx, random) {
   ctx.strokeRect(5.5, 7.5, TILE - 11, TILE - 13);
 }
 
+function drawCat(ctx, random) {
+  drawNoise(ctx, 0, 0, TILE, TILE, '#0f1724', '#0b101a', 0.02, random);
+  ctx.fillStyle = jitterColor('#c9b18c', 24, random);
+  ctx.fillRect(6, 10, TILE - 12, TILE - 14);
+  ctx.fillStyle = '#2a2116';
+  ctx.fillRect(8, TILE - 9, TILE - 16, 7);
+  ctx.fillStyle = '#f2e2c4';
+  ctx.fillRect(TILE / 2 - 3, 10, 6, 6);
+  ctx.fillRect(10, 6, 6, 6);
+  ctx.fillRect(TILE - 16, 6, 6, 6);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.strokeRect(5.5, 9.5, TILE - 11, TILE - 13);
+}
+
 function drawMonster(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, '#220910', '#1a060b', 0.04, random);
   ctx.fillStyle = jitterColor('#f05b78', 26, random);
@@ -342,6 +358,7 @@ const DRAWERS = {
   player: drawPlayer,
   pickup: drawPickup,
   npc: drawNpc,
+  cat: drawCat,
   monster: drawMonster,
   prop: drawProp,
 };
@@ -392,6 +409,7 @@ export const SPRITE_NAMES = {
   player: 'player',
   pickup: 'pickup',
   npc: 'npc',
+  cat: 'cat',
   monster: 'monster',
   prop: 'prop',
 };

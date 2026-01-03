@@ -72,6 +72,17 @@ export const levelOne = {
         ty: 5,
         dialogue: 'Vítej v servisním křídle. Prozkoumej sklad a připrav se na další výpravu.',
       },
+      {
+        id: 'cat',
+        name: 'Kočka',
+        sprite: 'cat',
+        tx: 4,
+        ty: 3,
+        speed: 28,
+        wanderRadius: TILE * 3,
+        wanderInterval: 0.8,
+        dialogue: 'Podrbat na bříšku! *prrr*',
+      },
     ],
   },
   pickups: [
@@ -120,4 +131,9 @@ export const levelOne = {
   ],
   rewards: {},
   quests: [],
+  npcScripts: {
+    cat: {
+      defaultDialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
+    },
+  },
 };

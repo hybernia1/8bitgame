@@ -174,13 +174,17 @@ export function createInteractionSystem({
       }
 
       nearestNpc.hasSpoken = true;
+      const dialogueDuration = 4;
+      nearestNpc.busyTimer = Math.max(nearestNpc.busyTimer ?? 0, dialogueDuration);
+      nearestNpc.wanderTarget = null;
+      nearestNpc.wanderCooldown = nearestNpc.wanderInterval ?? 0;
       if (script?.infoNote && !nearestNpc.infoShared) {
         showNote(script.infoNote);
         nearestNpc.infoShared = true;
       }
 
       state.activeLine = dialogue;
-      state.dialogueTime = 4;
+      state.dialogueTime = dialogueDuration;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
     } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
