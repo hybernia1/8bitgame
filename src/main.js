@@ -319,7 +319,10 @@ function updateProjectiles(dt, npcsList) {
     }
 
     const hitNpc = npcsList.find(
-      (npc) => !npc.defeated && npc.lethal && Math.hypot(npc.x - bullet.x, npc.y - bullet.y) < TILE / 2
+      (npc) =>
+        !npc.defeated &&
+        npc.lethal &&
+        Math.hypot(npc.x - bullet.x, npc.y - bullet.y) < (npc.size ?? TILE) / 2
     );
 
     if (hitNpc) {

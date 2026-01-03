@@ -1,8 +1,7 @@
 import { keyPressed } from '../kontra.mjs';
 import { COLORS } from '../core/constants.js';
 import { getActorPlacements } from '../world/level.js';
-
-const DIRECTIONS = ['down', 'left', 'right', 'up'];
+import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
 function getInputAxis() {
   let dx = 0;
@@ -14,46 +13,9 @@ function getInputAxis() {
   return { dx, dy };
 }
 
-function createAnimationMap(spriteSheet) {
-  const animations = {};
-  const hasAnimations = spriteSheet?.animations;
-
-  const clone = (animation) => animation?.clone?.();
-
-  DIRECTIONS.forEach((direction) => {
-    const capitalized = direction[0].toUpperCase() + direction.slice(1);
-    const walkKey = `playerWalk${capitalized}`;
-    const idleKey = `playerIdle${capitalized}`;
-    const walk = clone(hasAnimations?.[walkKey]);
-    const idle = clone(hasAnimations?.[idleKey]);
-    if (walk) animations[`walk-${direction}`] = walk;
-    if (idle) animations[`idle-${direction}`] = idle;
-  });
-
-  const defaultWalk = clone(hasAnimations?.playerWalk || hasAnimations?.player);
-  const defaultIdle = clone(hasAnimations?.playerIdle);
-
-  if (defaultWalk) animations['walk-default'] = defaultWalk;
-  if (defaultIdle) animations['idle-default'] = defaultIdle;
-  if (!animations['idle-default'] && defaultWalk) animations['idle-default'] = defaultWalk;
-
-  return animations;
-}
-
-function resolveDirection(dx, dy, fallback = 'down') {
-  if (dx === 0 && dy === 0) return fallback;
-  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
-  if (Math.abs(dy) > 0) return dy > 0 ? 'down' : 'up';
-  return fallback;
-}
-
-function pickAnimation(animations, state, direction) {
-  return animations[`${state}-${direction}`] || animations[`${state}-default`] || null;
-}
-
 export function createPlayer(spriteSheet) {
   const { playerStart } = getActorPlacements();
-  const animations = createAnimationMap(spriteSheet);
+  const animations = createAnimationMap(spriteSheet, 'player');
   const facing = 'down';
   const currentAnimation =
     pickAnimation(animations, 'idle', facing) || pickAnimation(animations, 'walk', facing);
