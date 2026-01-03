@@ -50,6 +50,14 @@
             <button type="button" class="menu-button ghost" data-pause-menu>Hlavní menu</button>
           </div>
         </section>
+        <div class="inventory-status hidden" data-inventory-status></div>
+        <section class="overlay inventory inventory-modal collapsed" aria-label="Inventář se šesti sloty">
+          <div class="inventory-header">
+            <div class="title">Výbava</div>
+            <div class="binding-hint" data-inventory-binding></div>
+          </div>
+          <div class="inventory-grid" role="list"></div>
+        </section>
       </div>
     </section>
     <aside class="side-panel" aria-label="Stav mise">
@@ -65,6 +73,7 @@
         </div>
       </header>
       <div class="hud-toast hidden" role="status" aria-live="polite"></div>
+      <div class="inventory-note" data-inventory-note>Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
       <section class="quest-log" aria-label="Quest log">
         <div class="quest-log-header">
           <div class="title">Úkol</div>
@@ -74,15 +83,6 @@
           <div class="quest-title" data-quest-title>Úkol načítám...</div>
           <div class="quest-description" data-quest-description></div>
         </div>
-      </section>
-      <section class="inventory" aria-label="Inventář se šesti sloty">
-        <div class="inventory-header">
-          <div class="title">Výbava</div>
-          <div class="inventory-note">Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
-          <div class="binding-hint" data-inventory-binding></div>
-        </div>
-        <div class="inventory-status hidden" data-inventory-status></div>
-        <div class="inventory-grid" role="list"></div>
       </section>
     </aside>
   </main>
