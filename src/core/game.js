@@ -1,4 +1,4 @@
-import { getLevelConfig, getLevelMeta } from '../world/level-data.js';
+import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 
 export function createGame({ inventory, hudSystem } = {}) {
@@ -42,8 +42,8 @@ export function createGame({ inventory, hudSystem } = {}) {
     hud.setObjectives?.(objectivesCollected, currentLevel.getObjectiveTotal?.());
   }
 
-  function loadLevel(id) {
-    const config = getLevelConfig(id);
+  async function loadLevel(id) {
+    const config = await loadLevelConfig(id);
     currentLevel = new LevelInstance(config);
     currentLevelId = config.meta?.id ?? id ?? 'level';
     objectivesCollected = 0;
@@ -119,10 +119,10 @@ export function createGame({ inventory, hudSystem } = {}) {
     hooks.advanceToMap = callback;
   }
 
-  function advanceToNextMap(nextLevelId) {
+  async function advanceToNextMap(nextLevelId) {
     hooks.advanceToMap?.(nextLevelId ?? null);
     if (!hooks.advanceToMap && nextLevelId) {
-      loadLevel(nextLevelId);
+      await loadLevel(nextLevelId);
     }
   }
 
