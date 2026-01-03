@@ -41,8 +41,18 @@ function overlaps(x1, y1, size1, x2, y2, size2) {
   return Math.abs(x1 - x2) < half1 + half2 && Math.abs(y1 - y2) < half1 + half2;
 }
 
+function overlapsWithPadding(x1, y1, size1, x2, y2, size2, padding = 0) {
+  const half1 = size1 / 2 + padding;
+  const half2 = size2 / 2;
+  return Math.abs(x1 - x2) < half1 + half2 && Math.abs(y1 - y2) < half1 + half2;
+}
+
 export function findBlockingPushable(pushables = [], size, nx, ny) {
   return pushables.find((prop) => overlaps(nx, ny, size, prop.x, prop.y, prop.size ?? size));
+}
+
+export function findNearbyPushable(pushables = [], size, x, y, padding = 0) {
+  return pushables.find((prop) => overlapsWithPadding(x, y, size, prop.x, prop.y, prop.size ?? size, padding));
 }
 
 export function attemptPush(pushables = [], prop, moveX, moveY, canMove = () => true) {

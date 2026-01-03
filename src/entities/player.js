@@ -1,6 +1,6 @@
 import { keyPressed } from '../kontra.mjs';
 import { COLORS } from '../core/constants.js';
-import { attemptPush, findBlockingPushable } from './pushables.js';
+import { attemptPush, findBlockingPushable, findNearbyPushable } from './pushables.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
 function getInputAxis() {
@@ -32,6 +32,7 @@ export function createPlayer(spriteSheet, placements = {}) {
     animationState: currentAnimation ? 'idle' : null,
     currentAnimation,
     animations,
+    grabbedPushableId: null,
   };
 }
 
@@ -40,8 +41,31 @@ export function updatePlayer(player, dt, collision = {}) {
   const pushables = collision?.pushables ?? [];
   const { dx, dy } = getInputAxis();
   const moving = dx !== 0 || dy !== 0;
+  const actionHeld = keyPressed('e');
   const len = Math.hypot(dx, dy) || 1;
   const direction = resolveDirection(dx, dy, player.facing);
+  const grabPadding = 6;
+
+  const attemptGrab = () => {
+    if (!actionHeld) {
+      player.grabbedPushableId = null;
+      return null;
+    }
+
+    const current = pushables.find((prop) => prop.id === player.grabbedPushableId);
+    const stillTouching = current
+      ? findNearbyPushable([current], player.size, player.x, player.y, grabPadding)
+      : null;
+    if (stillTouching) {
+      return stillTouching;
+    }
+
+    const candidate = findNearbyPushable(pushables, player.size, player.x, player.y, grabPadding);
+    player.grabbedPushableId = candidate?.id ?? null;
+    return candidate ?? null;
+  };
+
+  const grabbed = attemptGrab();
 
   if (moving) {
     const step = player.speed * dt;
@@ -56,18 +80,28 @@ export function updatePlayer(player, dt, collision = {}) {
       const nx = axis === 'x' ? player.x + delta : player.x;
       const ny = axis === 'y' ? player.y + delta : player.y;
       const blocking = findBlockingPushable(pushables, player.size, nx, ny);
+      let grabbedMoved = false;
+
       if (blocking) {
+        if (!actionHeld) return;
         const pushed = attemptPush(pushables, blocking, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0, canMove);
+        grabbedMoved = pushed && blocking === grabbed;
         if (!pushed) return;
       }
-      if (canMove(player.size, nx, ny)) {
-        const overlapAfterMove = findBlockingPushable(pushables, player.size, nx, ny);
-        if (overlapAfterMove) return;
-        if (axis === 'x') {
-          player.x = nx;
-        } else {
-          player.y = ny;
-        }
+
+      if (grabbed && !grabbedMoved) {
+        const moved = attemptPush(pushables, grabbed, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0, canMove);
+        if (!moved) return;
+      }
+
+      if (!canMove(player.size, nx, ny)) return;
+      const overlapAfterMove = findBlockingPushable(pushables, player.size, nx, ny);
+      if (overlapAfterMove) return;
+
+      if (axis === 'x') {
+        player.x = nx;
+      } else {
+        player.y = ny;
       }
     };
 
