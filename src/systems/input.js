@@ -7,11 +7,11 @@ import {
 } from '../core/input-bindings.js';
 
 function isTextInput(target) {
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    target?.isContentEditable === true
-  );
+  const hasInput = typeof HTMLInputElement !== 'undefined' && target instanceof HTMLInputElement;
+  const hasTextArea = typeof HTMLTextAreaElement !== 'undefined' && target instanceof HTMLTextAreaElement;
+  if (hasInput || hasTextArea) return true;
+  const tagName = target?.tagName?.toLowerCase?.();
+  return tagName === 'input' || tagName === 'textarea' || target?.isContentEditable === true;
 }
 
 export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
@@ -22,6 +22,12 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
   if (onAction) {
     listeners.add(onAction);
   }
+
+  let documentRoot = null;
+  let windowRoot = null;
+  let inventoryGrid = null;
+  let gamepadFrame = null;
+  const buttonState = new Map();
 
   function emit(action, detail) {
     listeners.forEach((listener) => {
@@ -50,17 +56,17 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
       const slotIndex = getSlotIndexFromBinding(bindings, event.code, 'keyboard');
       if (slotIndex >= 0) {
         handleAction(action, { slotIndex });
-        event.preventDefault();
+        event.preventDefault?.();
       }
       return;
     }
 
     handleAction(action);
-    event.preventDefault();
+    event.preventDefault?.();
   }
 
   function onInventoryClick(event) {
-    const slot = event.target.closest('.inventory-slot');
+    const slot = event.target?.closest?.('.inventory-slot');
     if (!slot) return;
     const index = Number.parseInt(slot.dataset.index, 10) - 1;
     if (Number.isInteger(index)) {
@@ -68,11 +74,8 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
     }
   }
 
-  let gamepadFrame = null;
-  const buttonState = new Map();
-
   function pollGamepads() {
-    const pads = navigator.getGamepads?.();
+    const pads = (windowRoot ?? globalThis)?.navigator?.getGamepads?.();
     const active = pads?.find((pad) => pad && pad.connected);
     if (active) {
       active.buttons.forEach((button, index) => {
@@ -91,32 +94,48 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
         buttonState.set(index, button.pressed);
       });
     }
-    gamepadFrame = requestAnimationFrame(pollGamepads);
+    const raf = windowRoot?.requestAnimationFrame ?? globalThis.requestAnimationFrame;
+    if (typeof raf === 'function') {
+      gamepadFrame = raf(pollGamepads);
+    }
   }
 
   function startGamepadPolling() {
-    if (typeof navigator === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
     if (gamepadFrame) return;
-    gamepadFrame = requestAnimationFrame(pollGamepads);
+    const raf = windowRoot?.requestAnimationFrame ?? globalThis.requestAnimationFrame;
+    if (typeof raf !== 'function') return;
+    gamepadFrame = raf(pollGamepads);
   }
 
   function stopGamepadPolling() {
-    if (!gamepadFrame || typeof cancelAnimationFrame === 'undefined') return;
-    cancelAnimationFrame(gamepadFrame);
+    if (!gamepadFrame) return;
+    const cancelRaf = windowRoot?.cancelAnimationFrame ?? globalThis.cancelAnimationFrame;
+    if (typeof cancelRaf === 'function') {
+      cancelRaf(gamepadFrame);
+    }
     gamepadFrame = null;
   }
 
-  document.addEventListener('keydown', onKeyDown);
-  document.querySelector('.inventory-grid')?.addEventListener('click', onInventoryClick);
-  window.addEventListener('gamepadconnected', startGamepadPolling);
-  window.addEventListener('gamepaddisconnected', stopGamepadPolling);
-  startGamepadPolling();
+  function init(domRefs = {}) {
+    documentRoot = domRefs.document ?? (typeof document !== 'undefined' ? document : null);
+    windowRoot = domRefs.window ?? (typeof window !== 'undefined' ? window : null);
+    inventoryGrid =
+      domRefs.inventoryGrid ??
+      documentRoot?.querySelector?.('.inventory-grid') ??
+      null;
+
+    documentRoot?.addEventListener?.('keydown', onKeyDown);
+    inventoryGrid?.addEventListener?.('click', onInventoryClick);
+    windowRoot?.addEventListener?.('gamepadconnected', startGamepadPolling);
+    windowRoot?.addEventListener?.('gamepaddisconnected', stopGamepadPolling);
+    startGamepadPolling();
+  }
 
   function destroy() {
-    document.removeEventListener('keydown', onKeyDown);
-    document.querySelector('.inventory-grid')?.removeEventListener('click', onInventoryClick);
-    window.removeEventListener('gamepadconnected', startGamepadPolling);
-    window.removeEventListener('gamepaddisconnected', stopGamepadPolling);
+    documentRoot?.removeEventListener?.('keydown', onKeyDown);
+    inventoryGrid?.removeEventListener?.('click', onInventoryClick);
+    windowRoot?.removeEventListener?.('gamepadconnected', startGamepadPolling);
+    windowRoot?.removeEventListener?.('gamepaddisconnected', stopGamepadPolling);
     stopGamepadPolling();
     listeners.clear();
   }
@@ -136,6 +155,7 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
 
   return {
     destroy,
+    init,
     onAction: on,
     getBindings: () => bindings,
     updateBindings,

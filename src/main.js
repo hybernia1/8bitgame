@@ -26,18 +26,46 @@ const inventory = new Inventory(6);
 const game = createGame({ inventory });
 const spriteSheetPromise = loadSpriteSheet();
 
-const menuPanel = document.querySelector('.menu-panel');
-const pausePanel = document.querySelector('.pause-panel');
-const loadingPanel = document.querySelector('.loading-panel');
-const continuePanel = document.querySelector('.continue-panel');
-const continueTitle = document.querySelector('[data-continue-title]');
-const continueSubtitle = document.querySelector('[data-continue-subtitle]');
-const continueDetail = document.querySelector('[data-continue-detail]');
-const levelSelectInput = document.querySelector('[data-level-input]');
-const slotInput = document.querySelector('[data-slot-input]');
-const menuSubtitle = document.querySelector('.menu-subtitle');
-const saveSlotList = document.querySelector('[data-save-slot-list]');
+const documentRoot = typeof document !== 'undefined' ? document : null;
+
+const menuPanel = documentRoot?.querySelector('.menu-panel');
+const pausePanel = documentRoot?.querySelector('.pause-panel');
+const loadingPanel = documentRoot?.querySelector('.loading-panel');
+const continuePanel = documentRoot?.querySelector('.continue-panel');
+const continueTitle = documentRoot?.querySelector('[data-continue-title]');
+const continueSubtitle = documentRoot?.querySelector('[data-continue-subtitle]');
+const continueDetail = documentRoot?.querySelector('[data-continue-detail]');
+const levelSelectInput = documentRoot?.querySelector('[data-level-input]');
+const slotInput = documentRoot?.querySelector('[data-slot-input]');
+const menuSubtitle = documentRoot?.querySelector('.menu-subtitle');
+const saveSlotList = documentRoot?.querySelector('[data-save-slot-list]');
 const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
+
+function getHudDomRefs(root = documentRoot) {
+  if (!root) return {};
+  const subtitleElement = root.querySelector('[data-controls-hint]') ?? root.querySelector('.subtitle');
+  return {
+    hudTitle: root.querySelector('.level-title'),
+    hudSubtitle: subtitleElement,
+    objectivesCollectedEl: root.querySelector('[data-objectives-collected]'),
+    objectivesTotalEl: root.querySelector('[data-objectives-total]'),
+    questTitle: root.querySelector('[data-quest-title]'),
+    questDescription: root.querySelector('[data-quest-description]'),
+    questProgress: root.querySelector('[data-quest-progress]'),
+    healthCurrentEl: root.querySelector('.hud-health-current'),
+    healthTotalEl: root.querySelector('.hud-health-total'),
+    inventoryNote: root.querySelector('[data-inventory-note]'),
+    inventoryBinding: root.querySelector('[data-inventory-binding]'),
+    inventoryStatus: root.querySelector('[data-inventory-status]'),
+    toast: root.querySelector('.hud-toast'),
+    banner: root.querySelector('.interaction-banner'),
+    bannerTitle: root.querySelector('.interaction-title'),
+    bannerBody: root.querySelector('.interaction-text'),
+    pauseBindings: root.querySelector('[data-pause-bindings]'),
+  };
+}
+
+const hudDomRefs = getHudDomRefs();
 
 if (levelSelectInput) {
   levelSelectInput.value = levelSelectInput.placeholder || DEFAULT_LEVEL_ID;
@@ -154,9 +182,7 @@ function showLoadingPanel(message = 'Načítání...') {
   toggleVisibility(menuPanel, false);
   toggleVisibility(pausePanel, false);
   toggleVisibility(loadingPanel, true);
-  if (loadingPanel) {
-    loadingPanel.querySelector('[data-loading-text]').textContent = message;
-  }
+  loadingPanel?.querySelector?.('[data-loading-text]')?.textContent = message;
 }
 
 function hideContinuePanel() {
@@ -372,7 +398,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     objectivesCollected = state.objectivesCollected;
     restoreProjectiles(savedSnapshot?.projectiles);
 
-    hudSystem = createHudSystem();
+    hudSystem = createHudSystem(hudDomRefs);
     game.setHud(hudSystem);
     hudSystem.showNote('note.inventory.intro');
     hudSystem.setObjectives(objectivesCollected, level.getObjectiveTotal());
@@ -381,7 +407,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
 
     renderInventory(inventory);
 
-    const inventoryElement = document.querySelector('.inventory');
+    const inventoryElement = documentRoot?.querySelector?.('.inventory') ?? null;
 
     const handleInventoryUse = (slotIndex) =>
       useInventorySlot({
@@ -431,6 +457,11 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     inputSystem = createInputSystem({
       inventorySlots: inventory.slots.length,
       onAction: handleAction,
+    });
+    inputSystem.init({
+      document: documentRoot,
+      window: typeof window !== 'undefined' ? window : null,
+      inventoryGrid: inventoryElement?.querySelector?.('.inventory-grid') ?? null,
     });
 
     const controlsHint = formatControlsHint(inputSystem.getBindings());
@@ -712,13 +743,13 @@ registerScene('pause', {
   },
 });
 
-const startButton = document.querySelector('[data-menu-start]');
-const continueButton = document.querySelector('[data-menu-continue]');
-const selectButton = document.querySelector('[data-menu-select]');
-const settingsButton = document.querySelector('[data-menu-settings]');
-const pauseResumeButton = document.querySelector('[data-pause-resume]');
-const pauseSaveButton = document.querySelector('[data-pause-save]');
-const pauseMenuButton = document.querySelector('[data-pause-menu]');
+const startButton = documentRoot?.querySelector?.('[data-menu-start]');
+const continueButton = documentRoot?.querySelector?.('[data-menu-continue]');
+const selectButton = documentRoot?.querySelector?.('[data-menu-select]');
+const settingsButton = documentRoot?.querySelector?.('[data-menu-settings]');
+const pauseResumeButton = documentRoot?.querySelector?.('[data-pause-resume]');
+const pauseSaveButton = documentRoot?.querySelector?.('[data-pause-save]');
+const pauseMenuButton = documentRoot?.querySelector?.('[data-pause-menu]');
 
 startButton?.addEventListener('click', () =>
   setScene('loading', { levelId: DEFAULT_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
