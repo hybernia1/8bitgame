@@ -1,11 +1,10 @@
 import { TILE } from '../core/constants.js';
-import { updateInventoryNote } from '../ui/inventory.js';
 
-export function createCombatSystem({ inventory, projectiles, player, renderInventory, tileAt }) {
+export function createCombatSystem({ inventory, projectiles, player, renderInventory, tileAt, showNote }) {
   function attemptShoot() {
     const ammoCount = inventory.getItemCount('ammo');
     if (ammoCount <= 0) {
-      updateInventoryNote('Došla ti munice. Posbírej další náboje.');
+      showNote?.('note.combat.noAmmo');
       return;
     }
 
@@ -50,9 +49,9 @@ export function createCombatSystem({ inventory, projectiles, player, renderInven
         if (hitNpc.health <= 0) {
           hitNpc.defeated = true;
           hitNpc.lethal = false;
-          updateInventoryNote(`${hitNpc.name} byl vyřazen.`);
+          showNote?.('note.combat.npcDown', { name: hitNpc.name });
         } else {
-          updateInventoryNote(`${hitNpc.name} - zásah! Zbývá ${hitNpc.health} HP.`);
+          showNote?.('note.combat.npcHit', { name: hitNpc.name, hp: hitNpc.health });
         }
         projectiles.splice(i, 1);
       }

@@ -1,3 +1,5 @@
+import { format } from './messages.js';
+
 export class Inventory {
   constructor(slots = 6) {
     this.slots = Array(slots).fill(null);
@@ -75,12 +77,12 @@ export function useInventorySlot({
   playerVitals,
   updateHealthHud,
   renderInventory,
-  updateInventoryNote,
+  showNote,
   handlers,
 }) {
   const item = inventory.slots[slotIndex];
   if (!item) {
-    updateInventoryNote?.(`Slot ${slotIndex + 1} je prázdný.`);
+    showNote?.('note.inventory.emptySlot', { index: slotIndex + 1 });
     return;
   }
 
@@ -92,12 +94,12 @@ export function useInventorySlot({
       playerVitals,
       updateHealthHud,
       renderInventory,
-      updateInventoryNote,
+      showNote,
     });
     return;
   }
 
-  updateInventoryNote?.('Tenhle předmět teď nemůžeš použít.');
+  showNote?.('note.inventory.unusable');
 }
 
 export function renderInventory(inventory) {
@@ -122,14 +124,11 @@ export function renderInventory(inventory) {
       slot.append(icon, label);
     } else {
       slot.classList.add('inventory-empty');
-      slot.innerHTML = `<div class="inventory-icon">·</div><div class="inventory-label">Slot ${index + 1}</div>`;
+      slot.innerHTML = `<div class="inventory-icon">·</div><div class="inventory-label">${format(
+        'note.inventory.slotLabel',
+        { index: index + 1 }
+      )}</div>`;
     }
     grid.appendChild(slot);
   });
-}
-
-export function updateInventoryNote(text) {
-  const note = document.querySelector('.inventory-note');
-  if (!note) return;
-  note.textContent = text;
 }

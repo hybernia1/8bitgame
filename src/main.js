@@ -5,7 +5,7 @@ import { loadSpriteSheet } from './core/sprites.js';
 import { createPlayer, drawPlayer, updatePlayer } from './entities/player.js';
 import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
-import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
+import { renderInventory, Inventory } from './ui/inventory.js';
 import { itemHandlers } from './items.js';
 import { drawGrid } from './world/level-instance.js';
 import { createInputSystem } from './systems/input.js';
@@ -27,8 +27,6 @@ const camera = { x: 0, y: 0 };
 const player = createPlayer(spriteSheet, placements);
 const pickups = createPickups(level.getPickupTemplates());
 const npcs = createNpcs(spriteSheet, placements);
-const objectivesCollectedEl = document.querySelector('[data-objectives-collected]');
-const objectivesTotalEl = document.querySelector('[data-objectives-total]');
 const levelMeta = level.meta;
 const objectiveTotal = level.getObjectiveTotal();
 const projectiles = [];
@@ -49,33 +47,21 @@ const playerVitals = {
 };
 const playerStart = { x: placements.playerStart?.x ?? player.x, y: placements.playerStart?.y ?? player.y };
 
-const healthCurrentEl = document.querySelector('.hud-health-current');
-const healthTotalEl = document.querySelector('.hud-health-total');
-
-const hudTitle = document.querySelector('.level-title');
-const hudSubtitle = document.querySelector('.subtitle');
 renderInventory(inventory);
-updateInventoryNote('Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.');
-const hudSystem = createHudSystem({
-  hudTitle,
-  hudSubtitle,
-  objectiveTotal,
-  objectivesCollectedEl,
-  objectivesTotalEl,
-  healthCurrentEl,
-  healthTotalEl,
-});
-
-hudSystem.updateAreaTitle(areaName, levelNumber);
-hudSystem.updateSubtitle(subtitle);
+const hudSystem = createHudSystem();
+hudSystem.showNote('note.inventory.intro');
+hudSystem.setObjectives(objectivesCollected, objectiveTotal);
+hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
+hudSystem.setLevelTitle(areaName, levelNumber);
+hudSystem.setSubtitle(subtitle || 'hud.controls');
 game.setHud(hudSystem);
 
 const inputSystem = createInputSystem({
   inventory,
   playerVitals,
-  updateHealthHud: () => hudSystem.updateHealthHud(playerVitals),
+  updateHealthHud: () => hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth),
   renderInventory,
-  updateInventoryNote,
+  showNote: hudSystem.showNote,
   handlers: itemHandlers,
 });
 
@@ -85,6 +71,7 @@ const combatSystem = createCombatSystem({
   player,
   renderInventory,
   tileAt: level.tileAt.bind(level),
+  showNote: hudSystem.showNote,
 });
 
 const interactionState = {
@@ -167,13 +154,10 @@ const interactionSystem = createInteractionSystem({
   level,
   game,
   renderInventory,
-  updateInventoryNote,
-  updateObjectiveHud: (count) => hudSystem.updateObjectiveHud(count ?? interactionState.objectivesCollected),
+  showNote: hudSystem.showNote,
+  setObjectives: (count) => hudSystem.setObjectives(count ?? interactionState.objectivesCollected),
   collectNearbyPickups,
 });
-
-hudSystem.updateObjectiveHud(interactionState.objectivesCollected);
-hudSystem.updateHealthHud(playerVitals);
 
 const loop = createGameLoop({
   update(dt) {
@@ -229,8 +213,8 @@ function handlePlayerHit() {
   applyDamage({
     invulnerability: 1.2,
     resetPosition: true,
-    note: 'Zásah! Přišel jsi o život. Vrať se a dávej si pozor.',
-    deathNote: 'Hlídač klíče tě zneškodnil. Mise se restartuje...',
+    note: 'note.damage.hit',
+    deathNote: 'note.death.guard',
   });
 }
 
@@ -239,7 +223,7 @@ function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNo
 
   playerVitals.health -= 1;
   playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, invulnerability);
-  hudSystem.updateHealthHud(playerVitals);
+  hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
 
   if (playerVitals.health <= 0) {
     handlePlayerDeath(deathNote);
@@ -252,14 +236,14 @@ function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNo
   }
 
   if (note) {
-    updateInventoryNote(note);
+    hudSystem.showNote(note);
   }
 }
 
 function handlePlayerDeath(deathNote) {
   if (deathTimeout) return;
   hudSystem.hideInteraction();
-  updateInventoryNote(deathNote || 'Tma tě pohltila. Mise se restartuje...');
+  hudSystem.showNote(deathNote || 'note.death.darkness');
   dialogueTime = 0;
   deathTimeout = setTimeout(() => window.location.reload(), 900);
 }
@@ -275,8 +259,8 @@ function applyDarknessDamage(dt) {
     darknessTimer = 0;
     applyDamage({
       invulnerability: 1,
-      note: 'Tma pálí! Najdi vypínač a rozsviť část místnosti.',
-      deathNote: 'Tma tě zcela pohltila. Mise se restartuje...',
+      note: 'note.damage.darkness',
+      deathNote: 'note.death.darkness',
     });
   }
 }

@@ -1,0 +1,28 @@
+{
+  "prompt.talk": {
+    "params": {
+      "name": "NPC"
+    },
+    "text": "Stiskni E pro rozhovor s NPC"
+  },
+  "note.switch.activated": {
+    "params": {
+      "name": "Laboratoř"
+    },
+    "text": "Vypínač Laboratoř rozsvítil další část místnosti."
+  },
+  "hud.levelTitle": {
+    "params": {
+      "level": 2,
+      "name": "Testovací Místnost"
+    },
+    "text": "Level 2: Testovací Místnost"
+  },
+  "note.combat.npcHit": {
+    "params": {
+      "name": "Hlídač",
+      "hp": 2
+    },
+    "text": "Hlídač - zásah! Zbývá 2 HP."
+  }
+}

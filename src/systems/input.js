@@ -5,7 +5,7 @@ export function createInputSystem({
   playerVitals,
   updateHealthHud,
   renderInventory,
-  updateInventoryNote,
+  showNote,
   handlers,
 }) {
   let interactRequested = false;
@@ -18,7 +18,7 @@ export function createInputSystem({
       playerVitals,
       updateHealthHud,
       renderInventory,
-      updateInventoryNote,
+      showNote,
       handlers,
     });
   }

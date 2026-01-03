@@ -8,8 +8,8 @@ export function createInteractionSystem({
   level,
   game,
   renderInventory,
-  updateInventoryNote: updateNote,
-  updateObjectiveHud,
+  showNote,
+  setObjectives,
   collectNearbyPickups,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
@@ -46,7 +46,7 @@ export function createInteractionSystem({
       if (hasEnough && itemsReady) {
         entry.completed = true;
         if (quest.completionNote) {
-          updateNote(quest.completionNote);
+          showNote(quest.completionNote);
         }
       }
     });
@@ -121,11 +121,11 @@ export function createInteractionSystem({
 
     if (reward.actions?.setSubtitle) {
       state.subtitle = reward.actions.setSubtitle;
-      hud.updateSubtitle?.(state.subtitle);
+      hud.setSubtitle?.(state.subtitle);
     }
 
     if (reward.actions?.setAreaName || typeof reward.actions?.setLevelNumber === 'number') {
-      hud.updateAreaTitle?.(state.areaName, state.levelNumber ?? 0);
+      hud.setLevelTitle?.(state.areaName, state.levelNumber ?? 0);
     }
 
     return { success: true, note: reward.note };
@@ -141,16 +141,16 @@ export function createInteractionSystem({
     if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       const toggled = level.activateLightSwitch(activeSwitch.id);
       if (toggled) {
-        updateNote(`Vypínač ${activeSwitch.name} rozsvítil další část místnosti.`);
+        showNote('note.switch.activated', { name: activeSwitch.name });
         game?.saveProgress?.();
       } else {
-        updateNote('Vypínač už je aktivovaný.');
+        showNote('note.switch.alreadyOn');
       }
     } else if (context.interactRequested && nearestNpc?.nearby) {
       state.activeSpeaker = nearestNpc.name;
       const script = npcScripts[nearestNpc.id];
       const pickedLine = pickNpcLine(script);
-      let dialogue = pickedLine?.dialogue || script?.defaultDialogue || nearestNpc.dialogue || 'Ráda tě vidím v základně.';
+      let dialogue = pickedLine?.dialogue || script?.defaultDialogue || nearestNpc.dialogue || 'dialogue.npcDefault';
       let note = pickedLine?.note;
       let rewardBlocked = false;
 
@@ -170,12 +170,12 @@ export function createInteractionSystem({
       }
 
       if (note) {
-        updateNote(note);
+        showNote(note);
       }
 
       nearestNpc.hasSpoken = true;
       if (script?.infoNote && !nearestNpc.infoShared) {
-        updateNote(script.infoNote);
+        showNote(script.infoNote);
         nearestNpc.infoShared = true;
       }
 
@@ -183,14 +183,14 @@ export function createInteractionSystem({
       state.dialogueTime = 4;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
     } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
-      state.activeSpeaker = gateState.speaker || 'Systém Dveří';
-      state.activeLine = gateState.unlockLine || 'Vstup potvrzen. Přecházíš do nového mapového křídla.';
+      state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
+      state.activeLine = gateState.unlockLine || 'dialogue.gateUnlocked';
       if (!state.gateKeyUsed) {
         const consumed = inventory.consumeItem('gate-key', 1);
         if (consumed) {
           state.gateKeyUsed = true;
           renderInventory(inventory);
-          updateNote(gateState.consumeNote || 'Klíč se zasunul do zámku a zmizel z inventáře.');
+          showNote(gateState.consumeNote || 'note.gate.consumeKey');
         }
       }
       state.dialogueTime = 3;
@@ -203,11 +203,11 @@ export function createInteractionSystem({
       if (objectiveLoot) {
         state.objectivesCollected += objectiveLoot;
       }
-      updateObjectiveHud(state.objectivesCollected);
+      setObjectives(state.objectivesCollected);
       game?.recordObjectives?.(state.objectivesCollected);
       renderInventory(inventory);
       const names = collected.map((item) => item.name).join(', ');
-      updateNote(`Sebráno: ${names}`);
+      showNote('note.pickup.collected', { items: names });
       evaluateQuestCompletion();
     }
 
@@ -227,14 +227,14 @@ export function createInteractionSystem({
       state.dialogueTime -= context.dt;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
     } else if (nearestNpc?.nearby) {
-      hud.showPrompt(`Stiskni E pro rozhovor s ${nearestNpc.name}`);
+      hud.showPrompt('prompt.talk', { name: nearestNpc.name });
     } else if (activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
-      hud.showPrompt('Stiskni E pro aktivaci vypínače');
+      hud.showPrompt('prompt.switch');
     } else if (nearGate) {
       if (context.gateState?.locked) {
-        hud.showPrompt(context.gateState.promptLocked || 'Dveře jsou zamčené. Technik Jára má klíč.');
+        hud.showPrompt(context.gateState.promptLocked || 'prompt.gateLocked');
       } else {
-        hud.showPrompt(context.gateState?.promptUnlocked || 'Dveře jsou otevřené, stiskni E pro vstup do nové mapy.');
+        hud.showPrompt(context.gateState?.promptUnlocked || 'prompt.gateUnlocked');
       }
     } else {
       hud.hideInteraction();
