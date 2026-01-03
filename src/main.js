@@ -10,12 +10,17 @@ import {
   clampCamera,
   drawGrid,
   drawLevel,
+  drawLighting,
+  drawLightSwitches,
   getLevelName,
   canMove,
   getActorPlacements,
   getGateState,
   unlockGateToNewMap,
   tileAt,
+  isLitAt,
+  getLightSwitches,
+  activateLightSwitch,
 } from './world/level.js';
 
 const spriteSheet = await loadSpriteSheet();
@@ -41,6 +46,7 @@ let areaName = getLevelName();
 let technicianGaveKey = false;
 let deathTimeout = null;
 let shootRequested = false;
+let darknessTimer = 0;
 const playerVitals = {
   health: 3,
   maxHealth: 3,
@@ -54,7 +60,7 @@ const healthTotalEl = document.querySelector('.hud-health-total');
 const hudTitle = document.querySelector('.title');
 hudTitle.textContent = `Level 0: ${areaName}`;
 renderInventory(inventory);
-updateInventoryNote('Najdi komponenty a naplň šest slotů inventáře.');
+updateInventoryNote('Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.');
 updateObjectiveHud();
 updateHealthHud();
 
@@ -97,12 +103,20 @@ const loop = GameLoop({
     const gateState = getGateState();
     const gateDistance = Math.hypot(gateState.x - player.x, gateState.y - player.y);
     const nearGate = gateDistance <= 26;
+    const { activeSwitch, switchDistance } = findNearestLightSwitch();
 
     if (guardCollision && playerVitals.invulnerableTime === 0) {
       handlePlayerHit();
     }
 
-    if (interactRequested && nearestNpc?.nearby) {
+    if (interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= 24) {
+      const toggled = activateLightSwitch(activeSwitch.id);
+      if (toggled) {
+        updateInventoryNote(`Vypínač ${activeSwitch.name} rozsvítil další část místnosti.`);
+      } else {
+        updateInventoryNote('Vypínač už je aktivovaný.');
+      }
+    } else if (interactRequested && nearestNpc?.nearby) {
       activeSpeaker = nearestNpc.name;
       if (nearestNpc.id === 'technician') {
         const readyForReward = objectivesCollected >= objectiveTotal;
@@ -169,12 +183,15 @@ const loop = GameLoop({
       attemptShoot();
     }
     updateProjectiles(dt, npcs);
+    applyDarknessDamage(dt);
 
     if (dialogueTime > 0) {
       dialogueTime -= dt;
       showDialogue(activeSpeaker, activeLine);
     } else if (nearestNpc?.nearby) {
       showPrompt(`Stiskni E pro rozhovor s ${nearestNpc.name}`);
+    } else if (activeSwitch && !activeSwitch.activated && switchDistance <= 24) {
+      showPrompt('Stiskni E pro aktivaci vypínače');
     } else if (nearGate) {
       if (gateState.locked) {
         showPrompt('Dveře jsou zamčené. Technik Jára má klíč.');
@@ -188,10 +205,12 @@ const loop = GameLoop({
   render() {
     drawGrid(ctx, canvas);
     drawLevel(ctx, camera, spriteSheet);
+    drawLightSwitches(ctx, camera);
     drawPickups(ctx, camera, pickups, spriteSheet);
     drawProjectiles(ctx, camera);
     drawNpcs(ctx, camera, npcs);
     drawPlayer(ctx, camera, player, spriteSheet);
+    drawLighting(ctx, camera);
     drawCameraBounds();
   },
 });
@@ -202,22 +221,12 @@ function drawCameraBounds() {
 }
 
 function handlePlayerHit() {
-  if (deathTimeout) return;
-
-  playerVitals.health -= 1;
-  playerVitals.invulnerableTime = 1.2;
-  updateHealthHud();
-  if (playerVitals.health <= 0) {
-    hideInteraction();
-    updateInventoryNote('Hlídač klíče tě zneškodnil. Mise se restartuje...');
-    dialogueTime = 0;
-    deathTimeout = setTimeout(() => window.location.reload(), 900);
-    return;
-  }
-
-  player.x = playerStart.x;
-  player.y = playerStart.y;
-  updateInventoryNote('Zásah! Přišel jsi o život. Vrať se a dávej si pozor.');
+  applyDamage({
+    invulnerability: 1.2,
+    resetPosition: true,
+    note: 'Zásah! Přišel jsi o život. Vrať se a dávej si pozor.',
+    deathNote: 'Hlídač klíče tě zneškodnil. Mise se restartuje...',
+  });
 }
 
 function attemptShoot() {
@@ -284,6 +293,68 @@ function drawProjectiles(drawCtx, cam) {
     drawCtx.fill();
   });
   drawCtx.restore();
+}
+
+function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNote }) {
+  if (deathTimeout || playerVitals.health <= 0) return;
+
+  playerVitals.health -= 1;
+  playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, invulnerability);
+  updateHealthHud();
+
+  if (playerVitals.health <= 0) {
+    handlePlayerDeath(deathNote);
+    return;
+  }
+
+  if (resetPosition) {
+    player.x = playerStart.x;
+    player.y = playerStart.y;
+  }
+
+  if (note) {
+    updateInventoryNote(note);
+  }
+}
+
+function handlePlayerDeath(deathNote) {
+  if (deathTimeout) return;
+  hideInteraction();
+  updateInventoryNote(deathNote || 'Tma tě pohltila. Mise se restartuje...');
+  dialogueTime = 0;
+  deathTimeout = setTimeout(() => window.location.reload(), 900);
+}
+
+function applyDarknessDamage(dt) {
+  if (isLitAt(player.x, player.y)) {
+    darknessTimer = 0;
+    return;
+  }
+
+  darknessTimer += dt;
+  if (darknessTimer >= 1 && playerVitals.invulnerableTime <= 0) {
+    darknessTimer = 0;
+    applyDamage({
+      invulnerability: 1,
+      note: 'Tma pálí! Najdi vypínač a rozsviť část místnosti.',
+      deathNote: 'Tma tě zcela pohltila. Mise se restartuje...',
+    });
+  }
+}
+
+function findNearestLightSwitch() {
+  let best = null;
+  let bestDistance = Infinity;
+  getLightSwitches().forEach((sw) => {
+    const sx = sw.tx * TILE + TILE / 2;
+    const sy = sw.ty * TILE + TILE / 2;
+    const dist = Math.hypot(player.x - sx, player.y - sy);
+    if (dist < bestDistance) {
+      bestDistance = dist;
+      best = sw;
+    }
+  });
+  return { activeSwitch: best, switchDistance: bestDistance };
 }
 
 loop.start();
