@@ -18,8 +18,14 @@ export function createInteractionSystem({
   const npcScripts = level.getNpcScripts();
   const rewards = level.getRewards();
   const questConfigs = level.getQuestConfigs();
-  const questState = prepareQuestState(questConfigs, state.quests ?? (state.quests = {}));
-  const flags = state.flags ?? (state.flags = {});
+  const persistentState = state.persistentState ?? (state.persistentState = {});
+  const sessionState = state.sessionState ?? (state.sessionState = {});
+  const questState = prepareQuestState(questConfigs, persistentState.quests ?? (persistentState.quests = {}));
+  const flags = persistentState.flags ?? (persistentState.flags = {});
+  sessionState.dialogueTime ??= 0;
+  sessionState.activeSpeaker ??= '';
+  sessionState.activeLine ??= '';
+  sessionState.levelAdvanceQueued ??= false;
 
   function findNearestLightSwitch(player) {
     let best = null;
@@ -69,7 +75,7 @@ export function createInteractionSystem({
     return conditions.every((cond) => {
       if (cond.flag) {
         const expected = cond.equals ?? true;
-        const actual = flags[cond.flag] ?? state[cond.flag] ?? false;
+        const actual = flags[cond.flag] ?? false;
         return actual === expected;
       }
       if (cond.questComplete) {
@@ -93,7 +99,10 @@ export function createInteractionSystem({
   function applyStateChanges(nextState = {}) {
     Object.entries(nextState).forEach(([key, value]) => {
       flags[key] = value;
-      state[key] = value;
+      if (persistentState) {
+        persistentState.flags ??= {};
+        persistentState.flags[key] = value;
+      }
     });
   }
 
@@ -107,7 +116,11 @@ export function createInteractionSystem({
 
     if (!actions.length) return { success: true, note: reward?.note };
 
-    const result = runActions(actions, { inventory, renderInventory, level, game, hud, flags, state }, reward);
+    const result = runActions(
+      actions,
+      { inventory, renderInventory, level, game, hud, flags, persistentState, sessionState },
+      reward,
+    );
     if (result.success !== false && reward?.note && !result.note) {
       result.note = reward.note;
     }
@@ -172,18 +185,18 @@ export function createInteractionSystem({
     } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
       state.activeLine = gateState.unlockLine || 'dialogue.gateUnlocked';
-      if (!state.gateKeyUsed) {
+      if (!flags.gateKeyUsed) {
         const consumed = inventory.consumeItem('gate-key', 1);
         if (consumed) {
-          state.gateKeyUsed = true;
+          flags.gateKeyUsed = true;
           renderInventory(inventory);
           showNote(gateState.consumeNote || 'note.gate.consumeKey');
         }
       }
       state.dialogueTime = 3;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
-      if (gateState.nextLevelId && !state.levelAdvanceQueued) {
-        state.levelAdvanceQueued = true;
+      if (gateState.nextLevelId && !sessionState.levelAdvanceQueued) {
+        sessionState.levelAdvanceQueued = true;
         game?.advanceToNextMap?.(gateState.nextLevelId);
       }
     }

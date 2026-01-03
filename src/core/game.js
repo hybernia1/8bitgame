@@ -1,7 +1,7 @@
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 const saveMigrations = new Map();
 
 export function createGame({ inventory, hudSystem } = {}) {
@@ -76,6 +76,7 @@ export function createGame({ inventory, hudSystem } = {}) {
       playerVitals: extraSnapshot.playerVitals ?? null,
       projectiles: extraSnapshot.projectiles ?? [],
       sessionState: extraSnapshot.sessionState ?? null,
+      persistentState: extraSnapshot.persistentState ?? null,
       savedAt: Date.now(),
     };
     progress[currentLevelId] = snapshot;
@@ -166,11 +167,38 @@ export function createGame({ inventory, hudSystem } = {}) {
     'playerVitals',
     'projectiles',
     'sessionState',
+    'persistentState',
     'objectivesCollected',
     'savedAt',
   ];
 
-  saveMigrations.set(0, (payload) => ({ ...payload, version: SAVE_VERSION }));
+  function addPersistentStateToProgress(progress = {}) {
+    const upgraded = {};
+    Object.entries(progress).forEach(([levelId, snapshot]) => {
+      upgraded[levelId] = {
+        persistentState: snapshot?.persistentState ?? {
+          flags: snapshot?.sessionState?.flags ?? {},
+          quests: snapshot?.sessionState?.quests ?? {},
+          areaName: snapshot?.sessionState?.areaName,
+          levelNumber: snapshot?.sessionState?.levelNumber,
+          subtitle: snapshot?.sessionState?.subtitle,
+        },
+        ...snapshot,
+      };
+    });
+    return upgraded;
+  }
+
+  saveMigrations.set(0, (payload) => ({
+    ...payload,
+    progress: addPersistentStateToProgress(payload?.progress ?? {}),
+    version: SAVE_VERSION,
+  }));
+  saveMigrations.set(1, (payload) => ({
+    ...payload,
+    progress: addPersistentStateToProgress(payload?.progress ?? {}),
+    version: SAVE_VERSION,
+  }));
   saveMigrations.set(SAVE_VERSION, (payload) => payload);
 
   function isValidSnapshot(snapshot) {
@@ -244,6 +272,16 @@ export function createGame({ inventory, hudSystem } = {}) {
         'Uložená data postrádají očekávané části. Slot byl resetován.',
       );
     }
+
+    Object.values(migrated.progress).forEach((snapshot) => {
+      if (!snapshot.sessionState) {
+        snapshot.sessionState = {};
+      }
+      snapshot.sessionState.dialogueTime = 0;
+      snapshot.sessionState.activeSpeaker = '';
+      snapshot.sessionState.activeLine = '';
+      snapshot.sessionState.levelAdvanceQueued = false;
+    });
 
     Object.keys(progress).forEach((key) => delete progress[key]);
     Object.assign(progress, migrated.progress);

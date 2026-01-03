@@ -61,14 +61,12 @@ function registerDefaults() {
     return { success: true };
   });
 
-  registerActionType('setFlag', (action, { flags, state }) => {
+  registerActionType('setFlag', (action, { flags, persistentState }) => {
     if (!action?.flag) return { success: true };
     const value = action.value ?? true;
-    if (flags) {
-      flags[action.flag] = value;
-    }
-    if (state) {
-      state[action.flag] = value;
+    const targetFlags = flags ?? persistentState?.flags;
+    if (targetFlags) {
+      targetFlags[action.flag] = value;
     }
     return { success: true, note: action.note };
   });

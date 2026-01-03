@@ -247,8 +247,6 @@ function drawCameraBounds({ width, height }) {
 
 function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let dialogueTime = 0;
-  let activeSpeaker = '';
-  let activeLine = '';
   let objectivesCollected = 0;
   let deathTimeout = null;
   let darknessTimer = 0;
@@ -261,32 +259,89 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     invulnerableTime: 0,
   };
 
-  const state = {
+  const persistentState = {
     flags: {
       technicianGaveKey: false,
       caretakerGaveApple: false,
       gateKeyUsed: false,
     },
-    levelAdvanceQueued: false,
     quests: {},
+    areaName: undefined,
+    levelNumber: undefined,
+    subtitle: undefined,
+  };
+
+  const sessionState = {
+    dialogueTime: 0,
+    activeSpeaker: '',
+    activeLine: '',
+    levelAdvanceQueued: false,
+  };
+
+  function resetSessionState() {
+    sessionState.dialogueTime = 0;
+    sessionState.activeSpeaker = '';
+    sessionState.activeLine = '';
+    sessionState.levelAdvanceQueued = false;
+  }
+
+  const state = {
+    persistentState,
+    sessionState,
     playerVitals,
+    get flags() {
+      return persistentState.flags;
+    },
+    set flags(value) {
+      persistentState.flags = value ?? {};
+    },
+    get quests() {
+      return persistentState.quests;
+    },
+    set quests(value) {
+      persistentState.quests = value ?? {};
+    },
+    get areaName() {
+      return persistentState.areaName;
+    },
+    set areaName(value) {
+      persistentState.areaName = value;
+    },
+    get levelNumber() {
+      return persistentState.levelNumber;
+    },
+    set levelNumber(value) {
+      persistentState.levelNumber = value;
+    },
+    get subtitle() {
+      return persistentState.subtitle;
+    },
+    set subtitle(value) {
+      persistentState.subtitle = value;
+    },
+    get levelAdvanceQueued() {
+      return sessionState.levelAdvanceQueued;
+    },
+    set levelAdvanceQueued(value) {
+      sessionState.levelAdvanceQueued = value;
+    },
     get dialogueTime() {
-      return dialogueTime;
+      return sessionState.dialogueTime;
     },
     set dialogueTime(value) {
-      dialogueTime = value;
+      sessionState.dialogueTime = value;
     },
     get activeSpeaker() {
-      return activeSpeaker;
+      return sessionState.activeSpeaker;
     },
     set activeSpeaker(value) {
-      activeSpeaker = value;
+      sessionState.activeSpeaker = value;
     },
     get activeLine() {
-      return activeLine;
+      return sessionState.activeLine;
     },
     set activeLine(value) {
-      activeLine = value;
+      sessionState.activeLine = value;
     },
     get objectivesCollected() {
       return objectivesCollected;
@@ -317,13 +372,22 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
   }
 
+  function serializePersistentState() {
+    return {
+      flags: { ...persistentState.flags },
+      quests: JSON.parse(JSON.stringify(persistentState.quests ?? {})),
+      areaName: persistentState.areaName,
+      levelNumber: persistentState.levelNumber,
+      subtitle: persistentState.subtitle,
+    };
+  }
+
   function serializeSessionState() {
     return {
-      flags: { ...state.flags },
-      quests: JSON.parse(JSON.stringify(state.quests ?? {})),
-      areaName: state.areaName,
-      levelNumber: state.levelNumber,
-      subtitle: state.subtitle,
+      dialogueTime: 0,
+      activeSpeaker: '',
+      activeLine: '',
+      levelAdvanceQueued: false,
       pushables: serializePushables(pushables ?? []),
     };
   }
@@ -384,12 +448,13 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       Object.assign(playerVitals, savedSnapshot.playerVitals);
     }
 
-    if (savedSnapshot?.sessionState) {
-      Object.assign(state.flags, savedSnapshot.sessionState.flags ?? {});
-      Object.assign(state.quests, savedSnapshot.sessionState.quests ?? {});
-      state.areaName = savedSnapshot.sessionState.areaName ?? state.areaName;
-      state.levelNumber = savedSnapshot.sessionState.levelNumber ?? state.levelNumber;
-      state.subtitle = savedSnapshot.sessionState.subtitle ?? state.subtitle;
+    resetSessionState();
+    if (savedSnapshot?.persistentState) {
+      Object.assign(persistentState.flags, savedSnapshot.persistentState.flags ?? {});
+      Object.assign(persistentState.quests, savedSnapshot.persistentState.quests ?? {});
+      persistentState.areaName = savedSnapshot.persistentState.areaName ?? persistentState.areaName;
+      persistentState.levelNumber = savedSnapshot.persistentState.levelNumber ?? persistentState.levelNumber;
+      persistentState.subtitle = savedSnapshot.persistentState.subtitle ?? persistentState.subtitle;
     }
 
     level.updatePressureSwitches(getSwitchOccupants());
@@ -550,6 +615,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       playerVitals: { ...playerVitals },
       projectiles: projectilesForSave(),
       sessionState: serializeSessionState(),
+      persistentState: serializePersistentState(),
       pickups: serializePickups(pickups),
       npcs: serializeNpcs(npcs),
     }));
@@ -590,7 +656,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     if (deathTimeout) return;
     hudSystem.hideInteraction();
     hudSystem.showNote(deathNote || 'note.death.darkness');
-    dialogueTime = 0;
+    sessionState.dialogueTime = 0;
     const currentLevelId = game.currentLevelId ?? levelId ?? DEFAULT_LEVEL_ID;
     deathTimeout = setTimeout(() => {
       setScene('loading', { levelId: currentLevelId });
