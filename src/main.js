@@ -323,6 +323,14 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     });
   }
 
+  function getSwitchOccupants() {
+    const entities = [{ x: player?.x ?? 0, y: player?.y ?? 0, size: player?.size ?? TILE }];
+    if (Array.isArray(pushables)) {
+      entities.push(...pushables);
+    }
+    return entities;
+  }
+
   function setLevelMeta(meta) {
     const areaName = state.areaName ?? meta.title ?? meta.name ?? 'Unknown Sector';
     const levelNumber = state.levelNumber ?? meta.levelNumber ?? 0;
@@ -357,6 +365,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       state.levelNumber = savedSnapshot.sessionState.levelNumber ?? state.levelNumber;
       state.subtitle = savedSnapshot.sessionState.subtitle ?? state.subtitle;
     }
+
+    level.updatePressureSwitches(getSwitchOccupants());
 
     state.objectivesCollected = game.objectivesCollected ?? savedSnapshot?.objectivesCollected ?? 0;
     objectivesCollected = state.objectivesCollected;
@@ -455,6 +465,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     loop = createGameLoop({
       update(dt) {
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables });
+        level.updatePressureSwitches(getSwitchOccupants());
         level.clampCamera(camera, player, canvas);
 
         if (playerVitals.invulnerableTime > 0) {
@@ -491,6 +502,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       render() {
         drawGrid(ctx, canvas, getLevelDimensions());
         level.drawLevel(ctx, camera, spriteSheet);
+        level.drawPressureSwitches(ctx, camera);
         level.drawLightSwitches(ctx, camera);
         drawPickups(ctx, camera, pickups, spriteSheet);
         drawPushables(ctx, camera, pushables, spriteSheet);

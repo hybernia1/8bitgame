@@ -13,9 +13,9 @@ const baseLayout = [
   1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
   1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1,
   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
-  1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1,
-  1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
+  1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 ];
 
@@ -35,6 +35,19 @@ export const levelOne = {
     collisionUnlocked: padLayer(baseLayout, BASE_WIDTH),
     decor: padLayer(baseLayout, BASE_WIDTH),
     decorUnlocked: padLayer(baseLayout, BASE_WIDTH),
+  },
+  interactables: {
+    pressureSwitches: [
+      {
+        id: 'storage-switch',
+        name: 'Skladový spínač',
+        tx: 9,
+        ty: 8,
+        targets: [{ tx: 11, ty: 9 }],
+        openTile: 0,
+        closedTile: 2,
+      },
+    ],
   },
   lighting: {
     litZones: [{ x: 1, y: 1, w: 14, h: 10 }],
@@ -91,6 +104,17 @@ export const levelOne = {
       x: TILE * 4 + TILE / 2,
       y: TILE * 9 + TILE / 2,
       tint: '#f25c5c',
+      objective: false,
+    },
+    {
+      id: 'ammo',
+      name: 'Náboje',
+      icon: '•',
+      x: TILE * 13 + TILE / 2,
+      y: TILE * 9 + TILE / 2,
+      tint: '#f28f5c',
+      stackable: true,
+      quantity: 8,
       objective: false,
     },
   ],
