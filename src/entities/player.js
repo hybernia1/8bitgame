@@ -24,8 +24,16 @@ export function createPlayer() {
   };
 }
 
-export function updatePlayer(player, dt, collision) {
+export function updatePlayer(player, dt, collision, playerSprite) {
   const { dx, dy } = getInputAxis();
+
+  if (playerSprite) {
+    if (dx === 0 && dy === 0) {
+      playerSprite.reset();
+    } else {
+      playerSprite.update(dt);
+    }
+  }
 
   if (dx === 0 && dy === 0) return;
 
