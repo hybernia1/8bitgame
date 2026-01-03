@@ -224,86 +224,33 @@ export const demoLevel = {
       quantity: 6,
     },
   ],
-  quests: [
-    {
-      id: 'collect-components',
-      name: 'Zajisti komponenty',
-      description: 'Sesbírej energoblok, klíčový fragment a servisní nářadí.',
-      objectiveCount: 3,
-      completionNote: 'note.quest.completed',
-    },
-  ],
-  npcScripts: {
-    caretaker: {
-      defaultDialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
-      lines: [
-        {
-          id: 'give-apple',
-          when: [{ flag: 'caretakerGaveApple', equals: false }],
-          dialogue: 'Tady máš jablko, doplní ti síly. Stiskni číslo slotu nebo na něj klikni v inventáři.',
-          note: 'Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.',
-          rewardId: 'caretaker-apple',
-          setState: { caretakerGaveApple: true },
-        },
-        {
-          id: 'apple-reminder',
-          when: [
-            { flag: 'caretakerGaveApple', equals: true },
-            { hasItem: 'apple' },
-          ],
-          dialogue: 'Jablko máš v inventáři. Klikni na slot nebo stiskni jeho číslo, až budeš potřebovat život.',
-        },
-        {
-          id: 'caretaker-default',
-          dialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
-        },
-      ],
-    },
-    technician: {
-      defaultDialogue: 'Hej, slyšel jsem šumění u zadního skladu. Možná tam něco blýská.',
-      infoNote: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
-      lines: [
-        {
-          id: 'collect-first',
-          when: [{ questIncomplete: 'collect-components' }],
-          dialogue: 'Musíš donést všechny díly. Jakmile je máš, vrátíš se pro klíč a já ti otevřu dveře.',
-        },
-        {
-          id: 'give-key',
-          when: [
-            { questComplete: 'collect-components' },
-            { flag: 'technicianGaveKey', equals: false },
-          ],
-          dialogue: 'Tady máš klíč. Dveře otevřeš směrem na východ do nové mapy.',
-          rewardId: 'technician-gate-key',
-          setState: { technicianGaveKey: true },
-        },
-        {
-          id: 'tech-default',
-          dialogue: 'Dveře už jsou otevřené. Vejdi dál a pozor na nové prostory.',
-        },
-      ],
-    },
-  },
   rewards: {
     'caretaker-apple': {
       id: 'caretaker-apple',
-      item: { id: 'apple', name: 'Jablko', icon: '🍎', tint: '#f25c5c' },
+      actions: [
+        {
+          type: 'giveItem',
+          item: { id: 'apple', name: 'Jablko', icon: '🍎', tint: '#f25c5c' },
+          blockedDialogue: 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.',
+          blockedNote: 'Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.',
+        },
+      ],
       note: 'Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.',
-      blockedDialogue: 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.',
-      blockedNote: 'Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.',
     },
     'technician-gate-key': {
       id: 'technician-gate-key',
-      item: { id: 'gate-key', name: 'Klíč od dveří', icon: '🔑', tint: '#f2d45c' },
+      actions: [
+        {
+          type: 'giveItem',
+          item: { id: 'gate-key', name: 'Klíč od dveří', icon: '🔑', tint: '#f2d45c' },
+          blockedDialogue: 'Tvůj inventář je plný, uvolni si místo na klíč.',
+        },
+        { type: 'unlock', targetId: 'gate' },
+        { type: 'clearObjectives' },
+        { type: 'setArea', name: 'Nové servisní křídlo' },
+        { type: 'setLevelNumber', value: 1 },
+      ],
       note: 'Klíč získán! Východní dveře se odemkly a mapa se rozšířila.',
-      blockedDialogue: 'Tvůj inventář je plný, uvolni si místo na klíč.',
-      actions: {
-        unlockGate: true,
-        clearObjectives: true,
-        setAreaName: 'Nové servisní křídlo',
-        setLevelNumber: 1,
-      },
     },
   },
 };

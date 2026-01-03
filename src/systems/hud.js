@@ -5,6 +5,9 @@ const elements = {
   hudSubtitle: document.querySelector('.subtitle'),
   objectivesCollectedEl: document.querySelector('[data-objectives-collected]'),
   objectivesTotalEl: document.querySelector('[data-objectives-total]'),
+  questTitle: document.querySelector('[data-quest-title]'),
+  questDescription: document.querySelector('[data-quest-description]'),
+  questProgress: document.querySelector('[data-quest-progress]'),
   healthCurrentEl: document.querySelector('.hud-health-current'),
   healthTotalEl: document.querySelector('.hud-health-total'),
   inventoryNote: document.querySelector('.inventory-note'),
@@ -107,11 +110,18 @@ export function createHudSystem() {
     hideBanner();
   }
 
+  function setQuestLog({ title, description, progressText } = {}) {
+    applyText(elements.questTitle, title ?? '');
+    applyText(elements.questDescription, description ?? '');
+    applyText(elements.questProgress, progressText ?? '');
+  }
+
   return {
     setLevelTitle,
     setObjectives,
     setHealth,
     setSubtitle,
+    setQuestLog,
     showNote,
     showToast,
     showSaveToast,
