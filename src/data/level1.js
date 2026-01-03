@@ -42,7 +42,15 @@ export const levelOne = {
   actors: {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
     monsters: [],
-    props: [],
+    props: [
+      {
+        id: 'crate-1',
+        name: 'Krabice',
+        tx: 7,
+        ty: 5,
+        pushable: true,
+      },
+    ],
     npcs: [
       {
         id: 'overseer',
