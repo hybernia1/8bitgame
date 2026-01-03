@@ -1,13 +1,12 @@
 import { TILE } from '../core/constants.js';
-import { getPickupTemplates } from '../world/level.js';
 
 function centerOffset() {
   return TILE / 2;
 }
 
-export function createPickups() {
+export function createPickups(templates = []) {
   const offset = centerOffset();
-  return getPickupTemplates().map((pickup) => ({
+  return templates.map((pickup) => ({
     ...pickup,
     objective: pickup.objective ?? true,
     stackable: pickup.stackable ?? false,

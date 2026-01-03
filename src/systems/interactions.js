@@ -1,36 +1,28 @@
 import { TILE } from '../core/constants.js';
-import {
-  getGateState,
-  unlockGateToNewMap,
-  activateLightSwitch,
-  getLightSwitches,
-  getNpcScripts,
-  getRewards,
-  getQuestConfigs,
-} from '../world/level.js';
-
 export function createInteractionSystem({
   inventory,
   pickups,
   npcs,
   hud,
   state,
+  level,
+  game,
   renderInventory,
   updateInventoryNote: updateNote,
   updateObjectiveHud,
   collectNearbyPickups,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
-  const npcScripts = getNpcScripts();
-  const rewards = getRewards();
-  const questConfigs = getQuestConfigs();
+  const npcScripts = level.getNpcScripts();
+  const rewards = level.getRewards();
+  const questConfigs = level.getQuestConfigs();
   const questState = state.quests ?? (state.quests = {});
   const flags = state.flags ?? (state.flags = {});
 
   function findNearestLightSwitch(player) {
     let best = null;
     let bestDistance = Infinity;
-    getLightSwitches().forEach((sw) => {
+    level.getLightSwitches().forEach((sw) => {
       const sx = sw.tx * TILE + TILE / 2;
       const sy = sw.ty * TILE + TILE / 2;
       const dist = Math.hypot(player.x - sx, player.y - sy);
@@ -115,7 +107,8 @@ export function createInteractionSystem({
     }
 
     if (reward.actions?.unlockGate) {
-      unlockGateToNewMap();
+      level.unlockGate();
+      game?.saveProgress?.();
     }
 
     if (reward.actions?.setAreaName) {
@@ -140,15 +133,16 @@ export function createInteractionSystem({
 
   function handleInteract(player, context) {
     const { nearestNpc, guardCollision } = context;
-    const gateState = getGateState();
+    const gateState = level.getGateState();
     const gateDistance = gateState ? Math.hypot(gateState.x - player.x, gateState.y - player.y) : Infinity;
     const nearGate = gateState ? gateDistance <= 26 : false;
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
 
     if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
-      const toggled = activateLightSwitch(activeSwitch.id);
+      const toggled = level.activateLightSwitch(activeSwitch.id);
       if (toggled) {
         updateNote(`Vypínač ${activeSwitch.name} rozsvítil další část místnosti.`);
+        game?.saveProgress?.();
       } else {
         updateNote('Vypínač už je aktivovaný.');
       }
@@ -210,6 +204,7 @@ export function createInteractionSystem({
         state.objectivesCollected += objectiveLoot;
       }
       updateObjectiveHud(state.objectivesCollected);
+      game?.recordObjectives?.(state.objectivesCollected);
       renderInventory(inventory);
       const names = collected.map((item) => item.name).join(', ');
       updateNote(`Sebráno: ${names}`);

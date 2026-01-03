@@ -59,6 +59,14 @@ export class Inventory {
     if (!slot) return 0;
     return slot.quantity ?? 1;
   }
+
+  serialize() {
+    return this.slots.map((slot) => (slot ? { ...slot } : null));
+  }
+
+  restore(slotState = []) {
+    this.slots = slotState.map((slot) => (slot ? { ...slot } : null));
+  }
 }
 
 export function useInventorySlot({

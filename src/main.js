@@ -1,23 +1,13 @@
 import { init, initKeys } from './kontra.mjs';
 import { COLORS, TILE, WORLD } from './core/constants.js';
+import { createGame } from './core/game.js';
 import { loadSpriteSheet } from './core/sprites.js';
 import { createPlayer, drawPlayer, updatePlayer } from './entities/player.js';
 import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
 import { renderInventory, Inventory, updateInventoryNote } from './ui/inventory.js';
 import { itemHandlers } from './items.js';
-import {
-  clampCamera,
-  drawGrid,
-  drawLevel,
-  drawLighting,
-  drawLightSwitches,
-  getLevelMeta,
-  getObjectiveTotal,
-  canMove,
-  getActorPlacements,
-  isLitAt,
-} from './world/level.js';
+import { drawGrid } from './world/level-instance.js';
 import { createInputSystem } from './systems/input.js';
 import { createCombatSystem } from './systems/combat.js';
 import { createInteractionSystem } from './systems/interactions.js';
@@ -28,15 +18,19 @@ const spriteSheet = await loadSpriteSheet();
 const { canvas, context: ctx } = init('game');
 initKeys();
 
-const camera = { x: 0, y: 0 };
-const player = createPlayer(spriteSheet);
-const pickups = createPickups();
 const inventory = new Inventory(6);
-const npcs = createNpcs(spriteSheet, getActorPlacements());
+const game = createGame({ inventory });
+const level = game.loadLevel();
+const placements = level.getActorPlacements();
+
+const camera = { x: 0, y: 0 };
+const player = createPlayer(spriteSheet, placements);
+const pickups = createPickups(level.getPickupTemplates());
+const npcs = createNpcs(spriteSheet, placements);
 const objectivesCollectedEl = document.querySelector('[data-objectives-collected]');
 const objectivesTotalEl = document.querySelector('[data-objectives-total]');
-const levelMeta = getLevelMeta();
-const objectiveTotal = getObjectiveTotal();
+const levelMeta = level.meta;
+const objectiveTotal = level.getObjectiveTotal();
 const projectiles = [];
 
 let dialogueTime = 0;
@@ -53,7 +47,7 @@ const playerVitals = {
   maxHealth: 3,
   invulnerableTime: 0,
 };
-const playerStart = { x: player.x, y: player.y };
+const playerStart = { x: placements.playerStart?.x ?? player.x, y: placements.playerStart?.y ?? player.y };
 
 const healthCurrentEl = document.querySelector('.hud-health-current');
 const healthTotalEl = document.querySelector('.hud-health-total');
@@ -74,6 +68,7 @@ const hudSystem = createHudSystem({
 
 hudSystem.updateAreaTitle(areaName, levelNumber);
 hudSystem.updateSubtitle(subtitle);
+game.setHud(hudSystem);
 
 const inputSystem = createInputSystem({
   inventory,
@@ -89,6 +84,7 @@ const combatSystem = createCombatSystem({
   projectiles,
   player,
   renderInventory,
+  tileAt: level.tileAt.bind(level),
 });
 
 const interactionState = {
@@ -168,6 +164,8 @@ const interactionSystem = createInteractionSystem({
   npcs,
   hud: hudSystem,
   state: interactionState,
+  level,
+  game,
   renderInventory,
   updateInventoryNote,
   updateObjectiveHud: (count) => hudSystem.updateObjectiveHud(count ?? interactionState.objectivesCollected),
@@ -179,8 +177,8 @@ hudSystem.updateHealthHud(playerVitals);
 
 const loop = createGameLoop({
   update(dt) {
-    updatePlayer(player, dt, { canMove });
-    clampCamera(camera, player, canvas);
+    updatePlayer(player, dt, { canMove: level.canMove.bind(level) });
+    level.clampCamera(camera, player, canvas);
 
     if (playerVitals.invulnerableTime > 0) {
       playerVitals.invulnerableTime = Math.max(0, playerVitals.invulnerableTime - dt);
@@ -211,13 +209,13 @@ const loop = createGameLoop({
   },
   render() {
     drawGrid(ctx, canvas);
-    drawLevel(ctx, camera, spriteSheet);
-    drawLightSwitches(ctx, camera);
+    level.drawLevel(ctx, camera, spriteSheet);
+    level.drawLightSwitches(ctx, camera);
     drawPickups(ctx, camera, pickups, spriteSheet);
     combatSystem.drawProjectiles(ctx, camera);
     drawNpcs(ctx, camera, npcs);
     drawPlayer(ctx, camera, player, spriteSheet);
-    drawLighting(ctx, camera);
+    level.drawLighting(ctx, camera);
     drawCameraBounds();
   },
 });
@@ -267,7 +265,7 @@ function handlePlayerDeath(deathNote) {
 }
 
 function applyDarknessDamage(dt) {
-  if (isLitAt(player.x, player.y)) {
+  if (level.isLitAt(player.x, player.y)) {
     darknessTimer = 0;
     return;
   }
@@ -281,21 +279,6 @@ function applyDarknessDamage(dt) {
       deathNote: 'Tma tě zcela pohltila. Mise se restartuje...',
     });
   }
-}
-
-function findNearestLightSwitch() {
-  let best = null;
-  let bestDistance = Infinity;
-  getLightSwitches().forEach((sw) => {
-    const sx = sw.tx * TILE + TILE / 2;
-    const sy = sw.ty * TILE + TILE / 2;
-    const dist = Math.hypot(player.x - sx, player.y - sy);
-    if (dist < bestDistance) {
-      bestDistance = dist;
-      best = sw;
-    }
-  });
-  return { activeSwitch: best, switchDistance: bestDistance };
 }
 
 loop.start();
