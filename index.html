@@ -15,6 +15,31 @@
           <div class="interaction-title">Interakce</div>
           <div class="interaction-text">Přibliž se k Technikovi Járovi a stiskni E.</div>
         </div>
+        <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
+          <div class="panel-title">Hlavní menu</div>
+          <p class="menu-subtitle">Vyber si akci pro další postup.</p>
+          <div class="menu-actions">
+            <button type="button" class="menu-button" data-menu-start>Start</button>
+            <button type="button" class="menu-button" data-menu-continue>Pokračovat ze savu</button>
+            <div class="menu-row">
+              <input type="text" aria-label="ID levelu" data-level-input placeholder="demo-level" />
+              <button type="button" class="menu-button ghost" data-menu-select>Výběr levelu</button>
+            </div>
+            <button type="button" class="menu-button ghost" data-menu-settings>Nastavení</button>
+          </div>
+        </section>
+        <section class="overlay loading-panel hidden" aria-live="polite">
+          <div class="panel-title">Načítání</div>
+          <p data-loading-text>Načítání...</p>
+        </section>
+        <section class="overlay pause-panel hidden" aria-label="Pauza">
+          <div class="panel-title">Pauza</div>
+          <p class="menu-subtitle">Stiskni Escape nebo vyber možnost.</p>
+          <div class="menu-actions">
+            <button type="button" class="menu-button" data-pause-resume>Pokračovat</button>
+            <button type="button" class="menu-button ghost" data-pause-menu>Hlavní menu</button>
+          </div>
+        </section>
       </div>
     </section>
     <aside class="side-panel" aria-label="Stav mise">

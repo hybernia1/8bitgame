@@ -76,7 +76,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   function advanceToNextMap(nextLevelId) {
     hooks.advanceToMap?.(nextLevelId ?? null);
-    if (nextLevelId) {
+    if (!hooks.advanceToMap && nextLevelId) {
       loadLevel(nextLevelId);
     }
   }
@@ -90,6 +90,9 @@ export function createGame({ inventory, hudSystem } = {}) {
     onAdvanceToMap,
     returnToMenu,
     advanceToNextMap,
+    get currentLevelId() {
+      return currentLevelId;
+    },
     get currentLevel() {
       return currentLevel;
     },

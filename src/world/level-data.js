@@ -1,6 +1,6 @@
 import { demoLevel } from '../data/demoLevel.js';
 
-const DEFAULT_LEVEL_ID = demoLevel.meta?.id ?? 'demo-level';
+export const DEFAULT_LEVEL_ID = demoLevel.meta?.id ?? 'demo-level';
 const registry = {
   [DEFAULT_LEVEL_ID]: demoLevel,
 };

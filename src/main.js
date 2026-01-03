@@ -13,256 +13,414 @@ import { createCombatSystem } from './systems/combat.js';
 import { createInteractionSystem } from './systems/interactions.js';
 import { createHudSystem } from './systems/hud.js';
 import { createGameLoop } from './systems/game-loop.js';
+import { registerScene, resume, setScene, showMenu } from './core/scenes.js';
+import { DEFAULT_LEVEL_ID } from './world/level-data.js';
 
-const spriteSheet = await loadSpriteSheet();
 const { canvas, context: ctx } = init('game');
 initKeys();
 
 const inventory = new Inventory(6);
 const game = createGame({ inventory });
-const level = game.loadLevel();
-const placements = level.getActorPlacements();
+const spriteSheetPromise = loadSpriteSheet();
 
-const camera = { x: 0, y: 0 };
-const player = createPlayer(spriteSheet, placements);
-const pickups = createPickups(level.getPickupTemplates());
-const npcs = createNpcs(spriteSheet, placements);
-const levelMeta = level.meta;
-const objectiveTotal = level.getObjectiveTotal();
-const projectiles = [];
+const menuPanel = document.querySelector('.menu-panel');
+const pausePanel = document.querySelector('.pause-panel');
+const loadingPanel = document.querySelector('.loading-panel');
+const levelSelectInput = document.querySelector('[data-level-input]');
+const menuSubtitle = document.querySelector('.menu-subtitle');
+const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
 
-let dialogueTime = 0;
-let activeSpeaker = '';
-let activeLine = '';
-let objectivesCollected = 0;
-let areaName = levelMeta.title ?? levelMeta.name;
-let levelNumber = levelMeta.levelNumber ?? 0;
-let subtitle = levelMeta.subtitle ?? '';
-let deathTimeout = null;
-let darknessTimer = 0;
-const playerVitals = {
-  health: 3,
-  maxHealth: 3,
-  invulnerableTime: 0,
-};
-const playerStart = { x: placements.playerStart?.x ?? player.x, y: placements.playerStart?.y ?? player.y };
+if (levelSelectInput) {
+  levelSelectInput.value = levelSelectInput.placeholder || DEFAULT_LEVEL_ID;
+}
 
-renderInventory(inventory);
-const hudSystem = createHudSystem();
-hudSystem.showNote('note.inventory.intro');
-hudSystem.setObjectives(objectivesCollected, objectiveTotal);
-hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
-hudSystem.setLevelTitle(areaName, levelNumber);
-hudSystem.setSubtitle(subtitle || 'hud.controls');
-game.setHud(hudSystem);
+function toggleVisibility(element, visible) {
+  if (!element) return;
+  element.classList.toggle('hidden', !visible);
+}
 
-const inputSystem = createInputSystem({
-  inventory,
-  playerVitals,
-  updateHealthHud: () => hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth),
-  renderInventory,
-  showNote: hudSystem.showNote,
-  handlers: itemHandlers,
-});
+function showMenuPanel() {
+  if (menuSubtitle) {
+    menuSubtitle.textContent = defaultMenuSubtitle;
+  }
+  toggleVisibility(menuPanel, true);
+  toggleVisibility(pausePanel, false);
+  toggleVisibility(loadingPanel, false);
+}
 
-const combatSystem = createCombatSystem({
-  inventory,
-  projectiles,
-  player,
-  renderInventory,
-  tileAt: level.tileAt.bind(level),
-  showNote: hudSystem.showNote,
-});
+function showPausePanel() {
+  toggleVisibility(pausePanel, true);
+}
 
-const interactionState = {
-  get dialogueTime() {
-    return dialogueTime;
-  },
-  set dialogueTime(value) {
-    dialogueTime = value;
-  },
-  get activeSpeaker() {
-    return activeSpeaker;
-  },
-  set activeSpeaker(value) {
-    activeSpeaker = value;
-  },
-  get activeLine() {
-    return activeLine;
-  },
-  set activeLine(value) {
-    activeLine = value;
-  },
-  get objectivesCollected() {
-    return objectivesCollected;
-  },
-  set objectivesCollected(value) {
-    objectivesCollected = value;
-  },
-  get areaName() {
-    return areaName;
-  },
-  set areaName(value) {
-    areaName = value;
-  },
-  get levelNumber() {
-    return levelNumber;
-  },
-  set levelNumber(value) {
-    levelNumber = value;
-  },
-  get subtitle() {
-    return subtitle;
-  },
-  set subtitle(value) {
-    subtitle = value;
-  },
-  flags: {
-    technicianGaveKey: false,
-    caretakerGaveApple: false,
-    gateKeyUsed: false,
-  },
-  quests: {},
-  get technicianGaveKey() {
-    return this.flags.technicianGaveKey;
-  },
-  set technicianGaveKey(value) {
-    this.flags.technicianGaveKey = value;
-  },
-  get caretakerGaveApple() {
-    return this.flags.caretakerGaveApple;
-  },
-  set caretakerGaveApple(value) {
-    this.flags.caretakerGaveApple = value;
-  },
-  get gateKeyUsed() {
-    return this.flags.gateKeyUsed;
-  },
-  set gateKeyUsed(value) {
-    this.flags.gateKeyUsed = value;
-  },
-  playerVitals,
-  handlePlayerHit,
-};
+function hidePausePanel() {
+  toggleVisibility(pausePanel, false);
+}
 
-const interactionSystem = createInteractionSystem({
-  inventory,
-  pickups,
-  npcs,
-  hud: hudSystem,
-  state: interactionState,
-  level,
-  game,
-  renderInventory,
-  showNote: hudSystem.showNote,
-  setObjectives: (count) => hudSystem.setObjectives(count ?? interactionState.objectivesCollected),
-  collectNearbyPickups,
-});
+function showLoadingPanel(message = 'Načítání...') {
+  toggleVisibility(menuPanel, false);
+  toggleVisibility(pausePanel, false);
+  toggleVisibility(loadingPanel, true);
+  if (loadingPanel) {
+    loadingPanel.querySelector('[data-loading-text]').textContent = message;
+  }
+}
 
-const loop = createGameLoop({
-  update(dt) {
-    updatePlayer(player, dt, { canMove: level.canMove.bind(level) });
-    level.clampCamera(camera, player, canvas);
+function hideAllPanels() {
+  toggleVisibility(menuPanel, false);
+  toggleVisibility(pausePanel, false);
+  toggleVisibility(loadingPanel, false);
+}
 
-    if (playerVitals.invulnerableTime > 0) {
-      playerVitals.invulnerableTime = Math.max(0, playerVitals.invulnerableTime - dt);
-    }
-
-    const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
-
-    if (guardCollision && playerVitals.invulnerableTime === 0) {
-      handlePlayerHit();
-    }
-
-    const interactContext = interactionSystem.handleInteract(player, {
-      interactRequested: inputSystem.consumeInteractRequest(),
-      nearestNpc,
-      guardCollision,
-    });
-
-    if (inputSystem.consumeShootRequest()) {
-      combatSystem.attemptShoot();
-    }
-    combatSystem.updateProjectiles(dt, npcs);
-    applyDarknessDamage(dt);
-
-    interactionSystem.updateInteractions(player, {
-      ...interactContext,
-      dt,
-    });
-  },
-  render() {
-    drawGrid(ctx, canvas);
-    level.drawLevel(ctx, camera, spriteSheet);
-    level.drawLightSwitches(ctx, camera);
-    drawPickups(ctx, camera, pickups, spriteSheet);
-    combatSystem.drawProjectiles(ctx, camera);
-    drawNpcs(ctx, camera, npcs);
-    drawPlayer(ctx, camera, player, spriteSheet);
-    level.drawLighting(ctx, camera);
-    drawCameraBounds();
-  },
-});
+function togglePauseScene() {
+  if (!currentInGameSession) return;
+  if (!pausePanel?.classList.contains('hidden')) {
+    resume();
+  } else {
+    setScene('pause');
+  }
+}
 
 function drawCameraBounds() {
   ctx.strokeStyle = COLORS.gridBorder;
   ctx.strokeRect(1, 1, WORLD.width * TILE - 2, WORLD.height * TILE - 2);
 }
 
-function handlePlayerHit() {
-  applyDamage({
-    invulnerability: 1.2,
-    resetPosition: true,
-    note: 'note.damage.hit',
-    deathNote: 'note.death.guard',
-  });
-}
+function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
+  let dialogueTime = 0;
+  let activeSpeaker = '';
+  let activeLine = '';
+  let objectivesCollected = 0;
+  let deathTimeout = null;
+  let darknessTimer = 0;
 
-function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNote }) {
-  if (deathTimeout || playerVitals.health <= 0) return;
+  const camera = { x: 0, y: 0 };
+  const projectiles = [];
+  const playerVitals = {
+    health: 3,
+    maxHealth: 3,
+    invulnerableTime: 0,
+  };
 
-  playerVitals.health -= 1;
-  playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, invulnerability);
-  hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
+  const state = {
+    flags: {
+      technicianGaveKey: false,
+      caretakerGaveApple: false,
+      gateKeyUsed: false,
+    },
+    quests: {},
+    playerVitals,
+    get dialogueTime() {
+      return dialogueTime;
+    },
+    set dialogueTime(value) {
+      dialogueTime = value;
+    },
+    get activeSpeaker() {
+      return activeSpeaker;
+    },
+    set activeSpeaker(value) {
+      activeSpeaker = value;
+    },
+    get activeLine() {
+      return activeLine;
+    },
+    set activeLine(value) {
+      activeLine = value;
+    },
+    get objectivesCollected() {
+      return objectivesCollected;
+    },
+    set objectivesCollected(value) {
+      objectivesCollected = value;
+    },
+    handlePlayerHit,
+  };
 
-  if (playerVitals.health <= 0) {
-    handlePlayerDeath(deathNote);
-    return;
+  let loop = null;
+  let inputSystem = null;
+  let hudSystem = null;
+  let playerStart = null;
+  let level = null;
+  let player = null;
+  let npcs = null;
+  let placements = null;
+  let pickups = null;
+  let spriteSheet = null;
+
+  function setLevelMeta(meta) {
+    const areaName = meta.title ?? meta.name ?? 'Unknown Sector';
+    const levelNumber = meta.levelNumber ?? 0;
+    const subtitle = meta.subtitle ?? 'hud.controls';
+    hudSystem.setLevelTitle(areaName, levelNumber);
+    hudSystem.setSubtitle(subtitle);
   }
 
-  if (resetPosition) {
-    player.x = playerStart.x;
-    player.y = playerStart.y;
-  }
+  async function bootstrap() {
+    spriteSheet = await spriteSheetPromise;
+    level = game.loadLevel(levelId);
+    placements = level.getActorPlacements();
+    player = createPlayer(spriteSheet, placements);
+    playerStart = { x: placements.playerStart?.x ?? player.x, y: placements.playerStart?.y ?? player.y };
+    pickups = createPickups(level.getPickupTemplates());
+    npcs = createNpcs(spriteSheet, placements);
 
-  if (note) {
-    hudSystem.showNote(note);
-  }
-}
+    renderInventory(inventory);
+    hudSystem = createHudSystem();
+    game.setHud(hudSystem);
+    hudSystem.showNote('note.inventory.intro');
+    hudSystem.setObjectives(objectivesCollected, level.getObjectiveTotal());
+    hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
+    setLevelMeta(level.meta);
 
-function handlePlayerDeath(deathNote) {
-  if (deathTimeout) return;
-  hudSystem.hideInteraction();
-  hudSystem.showNote(deathNote || 'note.death.darkness');
-  dialogueTime = 0;
-  deathTimeout = setTimeout(() => window.location.reload(), 900);
-}
+    inputSystem = createInputSystem({
+      inventory,
+      playerVitals,
+      updateHealthHud: () => hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth),
+      renderInventory,
+      showNote: hudSystem.showNote,
+      handlers: itemHandlers,
+      onPauseToggle: togglePauseScene,
+    });
 
-function applyDarknessDamage(dt) {
-  if (level.isLitAt(player.x, player.y)) {
-    darknessTimer = 0;
-    return;
-  }
+    const combatSystem = createCombatSystem({
+      inventory,
+      projectiles,
+      player,
+      renderInventory,
+      tileAt: level.tileAt.bind(level),
+      showNote: hudSystem.showNote,
+    });
 
-  darknessTimer += dt;
-  if (darknessTimer >= 1 && playerVitals.invulnerableTime <= 0) {
-    darknessTimer = 0;
-    applyDamage({
-      invulnerability: 1,
-      note: 'note.damage.darkness',
-      deathNote: 'note.death.darkness',
+    const interactionSystem = createInteractionSystem({
+      inventory,
+      pickups,
+      npcs,
+      hud: hudSystem,
+      state,
+      level,
+      game,
+      renderInventory,
+      showNote: hudSystem.showNote,
+      setObjectives: (count) => hudSystem.setObjectives(count ?? state.objectivesCollected, level.getObjectiveTotal()),
+      collectNearbyPickups,
+    });
+
+    loop = createGameLoop({
+      update(dt) {
+        updatePlayer(player, dt, { canMove: level.canMove.bind(level) });
+        level.clampCamera(camera, player, canvas);
+
+        if (playerVitals.invulnerableTime > 0) {
+          playerVitals.invulnerableTime = Math.max(0, playerVitals.invulnerableTime - dt);
+        }
+
+        const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
+
+        if (guardCollision && playerVitals.invulnerableTime === 0) {
+          handlePlayerHit();
+        }
+
+        const interactContext = interactionSystem.handleInteract(player, {
+          interactRequested: inputSystem.consumeInteractRequest(),
+          nearestNpc,
+          guardCollision,
+        });
+
+        if (inputSystem.consumeShootRequest()) {
+          combatSystem.attemptShoot();
+        }
+        combatSystem.updateProjectiles(dt, npcs);
+        applyDarknessDamage(dt);
+
+        interactionSystem.updateInteractions(player, {
+          ...interactContext,
+          dt,
+        });
+      },
+      render() {
+        drawGrid(ctx, canvas);
+        level.drawLevel(ctx, camera, spriteSheet);
+        level.drawLightSwitches(ctx, camera);
+        drawPickups(ctx, camera, pickups, spriteSheet);
+        combatSystem.drawProjectiles(ctx, camera);
+        drawNpcs(ctx, camera, npcs);
+        drawPlayer(ctx, camera, player, spriteSheet);
+        level.drawLighting(ctx, camera);
+        drawCameraBounds();
+      },
     });
   }
+
+  function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNote }) {
+    if (deathTimeout || playerVitals.health <= 0) return;
+
+    playerVitals.health -= 1;
+    playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, invulnerability);
+    hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
+
+    if (playerVitals.health <= 0) {
+      handlePlayerDeath(deathNote);
+      return;
+    }
+
+    if (resetPosition) {
+      player.x = playerStart.x;
+      player.y = playerStart.y;
+    }
+
+    if (note) {
+      hudSystem.showNote(note);
+    }
+  }
+
+  function handlePlayerHit() {
+    applyDamage({
+      invulnerability: 1.2,
+      resetPosition: true,
+      note: 'note.damage.hit',
+      deathNote: 'note.death.guard',
+    });
+  }
+
+  function handlePlayerDeath(deathNote) {
+    if (deathTimeout) return;
+    hudSystem.hideInteraction();
+    hudSystem.showNote(deathNote || 'note.death.darkness');
+    dialogueTime = 0;
+    const currentLevelId = game.currentLevelId ?? levelId ?? DEFAULT_LEVEL_ID;
+    deathTimeout = setTimeout(() => {
+      setScene('loading', { levelId: currentLevelId });
+    }, 900);
+  }
+
+  function applyDarknessDamage(dt) {
+    if (level.isLitAt(player.x, player.y)) {
+      darknessTimer = 0;
+      return;
+    }
+
+    darknessTimer += dt;
+    if (darknessTimer >= 1 && playerVitals.invulnerableTime <= 0) {
+      darknessTimer = 0;
+      applyDamage({
+        invulnerability: 1,
+        note: 'note.damage.darkness',
+        deathNote: 'note.death.darkness',
+      });
+    }
+  }
+
+  function pause() {
+    loop?.stop();
+  }
+
+  function resume() {
+    hidePausePanel();
+    loop?.start();
+  }
+
+  function cleanup() {
+    inputSystem?.destroy?.();
+    loop?.stop();
+    if (deathTimeout) {
+      clearTimeout(deathTimeout);
+      deathTimeout = null;
+    }
+  }
+
+  return {
+    bootstrap,
+    pause,
+    resume,
+    cleanup,
+    levelId: () => level?.meta?.id ?? levelId ?? DEFAULT_LEVEL_ID,
+  };
 }
 
-loop.start();
+let currentInGameSession = null;
+
+registerScene('menu', {
+  async onEnter() {
+    showMenuPanel();
+  },
+});
+
+registerScene('loading', {
+  async onEnter({ params }) {
+    showLoadingPanel('Načítání levelu...');
+    const nextLevelId = params?.levelId || levelSelectInput?.value || game.currentLevelId || DEFAULT_LEVEL_ID;
+    currentInGameSession?.cleanup?.();
+    currentInGameSession = createInGameSession(nextLevelId);
+    await currentInGameSession.bootstrap();
+    hideAllPanels();
+    await setScene('inGame');
+  },
+});
+
+registerScene('inGame', {
+  async onEnter() {
+    hideAllPanels();
+    currentInGameSession?.resume?.();
+  },
+  async onPause() {
+    currentInGameSession?.pause?.();
+    showPausePanel();
+  },
+  async onResume() {
+    hidePausePanel();
+    currentInGameSession?.resume?.();
+  },
+  async onExit() {
+    currentInGameSession?.cleanup?.();
+    currentInGameSession = null;
+  },
+});
+
+registerScene('pause', {
+  async onEnter() {
+    showPausePanel();
+  },
+  async onExit() {
+    hidePausePanel();
+  },
+});
+
+const startButton = document.querySelector('[data-menu-start]');
+const continueButton = document.querySelector('[data-menu-continue]');
+const selectButton = document.querySelector('[data-menu-select]');
+const settingsButton = document.querySelector('[data-menu-settings]');
+const pauseResumeButton = document.querySelector('[data-pause-resume]');
+const pauseMenuButton = document.querySelector('[data-pause-menu]');
+
+startButton?.addEventListener('click', () => setScene('loading', { levelId: DEFAULT_LEVEL_ID }));
+continueButton?.addEventListener('click', () =>
+  setScene('loading', { levelId: game.currentLevelId ?? DEFAULT_LEVEL_ID }),
+);
+selectButton?.addEventListener('click', () => {
+  const chosen = levelSelectInput?.value || DEFAULT_LEVEL_ID;
+  setScene('loading', { levelId: chosen });
+});
+settingsButton?.addEventListener('click', () => {
+  if (menuSubtitle) {
+    menuSubtitle.textContent = 'Nastavení budou brzy dostupná.';
+  }
+});
+pauseResumeButton?.addEventListener('click', () => {
+  if (pausePanel?.classList.contains('hidden')) {
+    togglePauseScene();
+  } else {
+    resume();
+  }
+});
+pauseMenuButton?.addEventListener('click', () => showMenu());
+
+game.onReturnToMenu(() => showMenu());
+game.onAdvanceToMap((nextLevelId) => {
+  if (nextLevelId) {
+    setScene('loading', { levelId: nextLevelId });
+    return;
+  }
+  showMenu();
+});
+
+setScene('menu');

@@ -7,6 +7,7 @@ export function createInputSystem({
   renderInventory,
   showNote,
   handlers,
+  onPauseToggle,
 }) {
   let interactRequested = false;
   let shootRequested = false;
@@ -25,8 +26,7 @@ export function createInputSystem({
 
   function onKeyDown(event) {
     if (event.key === 'Escape') {
-      const inventoryPanel = document.querySelector('.inventory');
-      inventoryPanel?.classList.toggle('hidden');
+      onPauseToggle?.();
       return;
     }
     if (event.key.toLowerCase() === 'e') {
@@ -55,6 +55,11 @@ export function createInputSystem({
   document.addEventListener('keydown', onKeyDown);
   document.querySelector('.inventory-grid')?.addEventListener('click', onInventoryClick);
 
+  function destroy() {
+    document.removeEventListener('keydown', onKeyDown);
+    document.querySelector('.inventory-grid')?.removeEventListener('click', onInventoryClick);
+  }
+
   function consumeInteractRequest() {
     const requested = interactRequested;
     interactRequested = false;
@@ -70,5 +75,6 @@ export function createInputSystem({
   return {
     consumeInteractRequest,
     consumeShootRequest,
+    destroy,
   };
 }
