@@ -28,7 +28,7 @@ const { canvas, context: ctx } = init('game');
 initKeys();
 
 const camera = { x: 0, y: 0 };
-const player = createPlayer();
+const player = createPlayer(spriteSheet);
 const pickups = createPickups();
 const inventory = new Inventory(6);
 const npcs = createNpcs(spriteSheet, getActorPlacements());
