@@ -1,6 +1,9 @@
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 
+const SAVE_VERSION = 1;
+const saveMigrations = new Map();
+
 export function createGame({ inventory, hudSystem } = {}) {
   const progress = {};
   const hooks = {
@@ -84,6 +87,7 @@ export function createGame({ inventory, hudSystem } = {}) {
         currentLevelId,
         savedAt: snapshot.savedAt,
         progress,
+        version: SAVE_VERSION,
       };
       if (storage) {
         try {
@@ -155,23 +159,106 @@ export function createGame({ inventory, hudSystem } = {}) {
     return saves.sort((a, b) => (b.savedAt ?? 0) - (a.savedAt ?? 0));
   }
 
+  const expectedSnapshotKeys = [
+    'inventory',
+    'levelState',
+    'playerState',
+    'playerVitals',
+    'projectiles',
+    'sessionState',
+    'objectivesCollected',
+    'savedAt',
+  ];
+
+  saveMigrations.set(0, (payload) => ({ ...payload, version: SAVE_VERSION }));
+  saveMigrations.set(SAVE_VERSION, (payload) => payload);
+
+  function isValidSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return false;
+    return expectedSnapshotKeys.every((key) => Object.prototype.hasOwnProperty.call(snapshot, key));
+  }
+
+  function isValidPayload(payload) {
+    if (!payload || typeof payload !== 'object') return false;
+    if (!payload.progress || typeof payload.progress !== 'object') return false;
+    return Object.values(payload.progress).every((entry) => isValidSnapshot(entry));
+  }
+
+  function applyMigrations(payload) {
+    let migrated = payload;
+    let currentVersion = migrated?.version ?? 0;
+    const visited = new Set();
+    while (currentVersion < SAVE_VERSION) {
+      if (visited.has(currentVersion)) return null;
+      visited.add(currentVersion);
+      const migrator = saveMigrations.get(currentVersion);
+      if (!migrator) {
+        return null;
+      }
+      migrated = migrator(migrated) ?? migrated;
+      currentVersion = migrated.version ?? currentVersion + 1;
+    }
+    return currentVersion === SAVE_VERSION ? migrated : null;
+  }
+
+  function resetCorruptedSlot(slotId, message, error) {
+    if (error) {
+      console.error(message, error);
+    } else {
+      console.error(message);
+    }
+    hud?.showToast?.(message);
+    deleteSave(slotId);
+    setSaveSlot(slotId, { resetProgress: true });
+    return null;
+  }
+
   function loadFromSlot(slotId) {
     if (!slotId) return null;
     const storage = getStorage();
     if (!storage) return null;
     const raw = storage.getItem(getStorageKey(slotId));
     if (!raw) return null;
+    let parsed = null;
     try {
-      const parsed = JSON.parse(raw);
-      Object.keys(progress).forEach((key) => delete progress[key]);
-      Object.assign(progress, parsed.progress ?? {});
-      currentLevelId = parsed.currentLevelId ?? null;
-      saveSlotId = parsed.slotId ?? slotId;
-      return parsed;
+      parsed = JSON.parse(raw);
     } catch (err) {
-      console.error('Failed to load save', err);
-      return null;
+      return resetCorruptedSlot(
+        slotId,
+        'Uložená data jsou poškozená a byla vymazána. (neplatný JSON)',
+        err,
+      );
     }
+
+    const migrated = applyMigrations(parsed);
+    if (!migrated) {
+      return resetCorruptedSlot(
+        slotId,
+        'Uložená data nesedí k aktuální verzi. Slot byl resetován.',
+      );
+    }
+
+    if (!isValidPayload(migrated)) {
+      return resetCorruptedSlot(
+        slotId,
+        'Uložená data postrádají očekávané části. Slot byl resetován.',
+      );
+    }
+
+    Object.keys(progress).forEach((key) => delete progress[key]);
+    Object.assign(progress, migrated.progress);
+    currentLevelId = migrated.currentLevelId ?? null;
+    saveSlotId = migrated.slotId ?? slotId;
+
+    if (migrated.version !== parsed.version) {
+      try {
+        storage.setItem(getStorageKey(saveSlotId), JSON.stringify(migrated));
+      } catch (err) {
+        console.warn('Failed to persist migrated save', err);
+      }
+    }
+
+    return migrated;
   }
 
   function deleteSave(slotId) {
