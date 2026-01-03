@@ -61,7 +61,6 @@ export function updateNpcStates(npcs, player, dt) {
     if (npc.defeated) return;
 
     updatePatrol(npc, dt);
-    if (npc.animation) npc.animation.update?.(dt);
 
     const distance = Math.hypot(npc.x - player.x, npc.y - player.y);
     npc.nearby = distance <= TALK_RADIUS;
