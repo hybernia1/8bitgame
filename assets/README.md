@@ -5,7 +5,7 @@ This project will generate procedural sprites when no external textures are pres
 - `assets/tiles/floor.png` – base floor tile for the demo map.
 - `assets/walls/wall.png` – wall tile for level geometry.
 - `assets/doors/door.png` – closed-door tile used on the gate.
-- `assets/hero/hero.png` – main playable character.
+- `assets/hero/hero.png` – main playable character. Use a 32×32 PNG spritesheet laid out in a single row. Provide 4 frames for a simple walk cycle (two-step loop is fine). Keep the silhouette readable at tile scale (helmet, visor strip, backpack) and use a limited palette that matches the UI teal glow (`#5cf2cc`) with darker trim and visor tones. Align limbs consistently from frame to frame so animation stays centered.
 - `assets/npc/npc.png` – friendly NPCs in the level.
 - `assets/npc/monster.png` – optional hostile NPC variant.
 - `assets/items/pickup.png` – collectibles/objectives in the level.
