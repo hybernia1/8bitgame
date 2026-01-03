@@ -1,23 +1,16 @@
 import { GameLoop } from '../kontra.mjs';
 
-export function createGameLoop({ update, render }) {
-  let paused = false;
-
+export function createGameLoop({ getScene }) {
   const loop = GameLoop({
     update(dt) {
-      if (!paused && update) {
-        update(dt);
-      }
+      const scene = getScene?.();
+      scene?.handlers?.onUpdate?.(dt);
     },
-    render,
+    render() {
+      const scene = getScene?.();
+      scene?.handlers?.onRender?.();
+    },
   });
 
-  return Object.assign(loop, {
-    pauseUpdates() {
-      paused = true;
-    },
-    resumeUpdates() {
-      paused = false;
-    },
-  });
+  return loop;
 }
