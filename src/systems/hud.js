@@ -114,10 +114,11 @@ export function createHudSystem() {
     hideBanner();
   }
 
-  function setQuestLog({ title, description, progressText } = {}) {
-    applyText(elements.questTitle, title ?? '');
-    applyText(elements.questDescription, description ?? '');
-    applyText(elements.questProgress, progressText ?? '');
+  function setQuestLog(questLog) {
+    const { title = '', description = '', progressText = '' } = questLog ?? {};
+    applyText(elements.questTitle, title);
+    applyText(elements.questDescription, description);
+    applyText(elements.questProgress, progressText);
   }
 
   function setControlsHint({ interact, shoot, inventory, pause } = {}) {
