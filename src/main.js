@@ -37,6 +37,7 @@ const objectivesCollectedEl = document.querySelector('[data-objectives-collected
 const objectivesTotalEl = document.querySelector('[data-objectives-total]');
 const objectiveTotal = pickups.filter((pickup) => pickup.objective !== false).length;
 const projectiles = [];
+let gateKeyUsed = false;
 
 let interactRequested = false;
 let dialogueTime = 0;
@@ -59,7 +60,7 @@ const playerStart = { x: player.x, y: player.y };
 const healthCurrentEl = document.querySelector('.hud-health-current');
 const healthTotalEl = document.querySelector('.hud-health-total');
 
-const hudTitle = document.querySelector('.title');
+const hudTitle = document.querySelector('.level-title');
 hudTitle.textContent = `Level 0: ${areaName}`;
 renderInventory(inventory);
 updateInventoryNote('Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.');
@@ -82,7 +83,8 @@ function updateHealthHud() {
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
-    document.querySelector('.panel').classList.toggle('hidden');
+    const inventoryPanel = document.querySelector('.inventory');
+    inventoryPanel?.classList.toggle('hidden');
     return;
   }
   if (event.key.toLowerCase() === 'e') {
@@ -201,6 +203,14 @@ const loop = GameLoop({
     } else if (interactRequested && nearGate && !gateState.locked) {
       activeSpeaker = 'Systém Dveří';
       activeLine = 'Vstup potvrzen. Přecházíš do nového mapového křídla.';
+      if (!gateKeyUsed) {
+        const consumed = inventory.consumeItem('gate-key', 1);
+        if (consumed) {
+          gateKeyUsed = true;
+          renderInventory(inventory);
+          updateInventoryNote('Klíč se zasunul do zámku a zmizel z inventáře.');
+        }
+      }
       dialogueTime = 3;
       showDialogue(activeSpeaker, activeLine);
     }
