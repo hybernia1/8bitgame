@@ -2,7 +2,7 @@ import { init, initKeys } from './kontra.mjs';
 import { COLORS, TILE, WORLD } from './core/constants.js';
 import { createGame } from './core/game.js';
 import { loadSpriteSheet } from './core/sprites.js';
-import { createPlayer, drawPlayer, updatePlayer } from './entities/player.js';
+import { createPlayer, drawPlayer, restorePlayer, serializePlayer, updatePlayer } from './entities/player.js';
 import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
 import { renderInventory, Inventory } from './ui/inventory.js';
@@ -14,7 +14,8 @@ import { createInteractionSystem } from './systems/interactions.js';
 import { createHudSystem } from './systems/hud.js';
 import { createGameLoop } from './systems/game-loop.js';
 import { registerScene, resume, setScene, showMenu } from './core/scenes.js';
-import { DEFAULT_LEVEL_ID } from './world/level-data.js';
+import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta } from './world/level-data.js';
+import { format } from './ui/messages.js';
 
 const { canvas, context: ctx } = init('game');
 initKeys();
@@ -27,11 +28,16 @@ const menuPanel = document.querySelector('.menu-panel');
 const pausePanel = document.querySelector('.pause-panel');
 const loadingPanel = document.querySelector('.loading-panel');
 const levelSelectInput = document.querySelector('[data-level-input]');
+const slotInput = document.querySelector('[data-slot-input]');
 const menuSubtitle = document.querySelector('.menu-subtitle');
+const saveSlotList = document.querySelector('[data-save-slot-list]');
 const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
 
 if (levelSelectInput) {
   levelSelectInput.value = levelSelectInput.placeholder || DEFAULT_LEVEL_ID;
+}
+if (slotInput) {
+  slotInput.value = slotInput.placeholder || 'slot-1';
 }
 
 function toggleVisibility(element, visible) {
@@ -39,10 +45,91 @@ function toggleVisibility(element, visible) {
   element.classList.toggle('hidden', !visible);
 }
 
+function resolveSlotId() {
+  if (!slotInput) return 'slot-1';
+  return slotInput.value.trim() || slotInput.placeholder || 'slot-1';
+}
+
+function setSlotInputValue(value) {
+  if (!slotInput || !value) return;
+  slotInput.value = value;
+}
+
+function formatSaveDate(timestamp) {
+  if (!timestamp) return '';
+  try {
+    return new Date(timestamp).toLocaleString('cs-CZ', { hour12: false });
+  } catch {
+    return '';
+  }
+}
+
+function refreshSaveSlotList() {
+  if (!saveSlotList) return;
+  const saves = game.listSaves();
+  saveSlotList.innerHTML = '';
+  if (!saves.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = format('menu.save.empty');
+    saveSlotList.appendChild(empty);
+    return;
+  }
+
+  saves.forEach((save) => {
+    const card = document.createElement('div');
+    card.className = 'save-slot';
+
+    const header = document.createElement('div');
+    header.className = 'save-slot-header';
+    const slotLabel = document.createElement('strong');
+    slotLabel.textContent = save.slotId;
+    const levelMeta = getLevelMeta(getLevelConfig(save.currentLevelId ?? DEFAULT_LEVEL_ID));
+    const levelName = levelMeta.title ?? levelMeta.name ?? save.currentLevelId ?? 'Neznámý sektor';
+    const timestamp = formatSaveDate(save.savedAt);
+    const subtitle = document.createElement('div');
+    subtitle.className = 'save-slot-meta';
+    subtitle.textContent = `${levelName}${timestamp ? ` · ${timestamp}` : ''}`;
+    header.append(slotLabel, subtitle);
+
+    const actions = document.createElement('div');
+    actions.className = 'save-slot-actions';
+    const loadButton = document.createElement('button');
+    loadButton.className = 'menu-button';
+    loadButton.type = 'button';
+    loadButton.textContent = 'Načíst';
+    loadButton.addEventListener('click', () => {
+      setSlotInputValue(save.slotId);
+      setScene('loading', { levelId: save.currentLevelId, slotId: save.slotId, loadSlot: true });
+    });
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'menu-button ghost';
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'Smazat';
+    deleteButton.addEventListener('click', () => {
+      game.deleteSave(save.slotId);
+      refreshSaveSlotList();
+    });
+
+    actions.append(loadButton, deleteButton);
+    card.append(header, actions);
+    saveSlotList.appendChild(card);
+  });
+}
+
+function setActiveSlot(slotId, { resetProgress = false } = {}) {
+  const target = slotId || resolveSlotId();
+  game.setSaveSlot(target, { resetProgress });
+  setSlotInputValue(target);
+  return target;
+}
+
 function showMenuPanel() {
   if (menuSubtitle) {
     menuSubtitle.textContent = defaultMenuSubtitle;
   }
+  refreshSaveSlotList();
   toggleVisibility(menuPanel, true);
   toggleVisibility(pausePanel, false);
   toggleVisibility(loadingPanel, false);
@@ -146,11 +233,41 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let placements = null;
   let pickups = null;
   let spriteSheet = null;
+  let savedSnapshot = null;
+
+  function serializeSessionState() {
+    return {
+      flags: { ...state.flags },
+      quests: JSON.parse(JSON.stringify(state.quests ?? {})),
+      areaName: state.areaName,
+      levelNumber: state.levelNumber,
+      subtitle: state.subtitle,
+    };
+  }
+
+  function projectilesForSave() {
+    const maxX = WORLD.width * TILE + TILE;
+    const maxY = WORLD.height * TILE + TILE;
+    return projectiles
+      .filter((bullet) => Math.abs(bullet.x) <= maxX && Math.abs(bullet.y) <= maxY)
+      .map((bullet) => ({ ...bullet }));
+  }
+
+  function restoreProjectiles(savedProjectiles = []) {
+    projectiles.splice(0, projectiles.length);
+    const maxX = WORLD.width * TILE + TILE;
+    const maxY = WORLD.height * TILE + TILE;
+    savedProjectiles.forEach((bullet) => {
+      if (!bullet || typeof bullet.x !== 'number' || typeof bullet.y !== 'number') return;
+      if (Math.abs(bullet.x) > maxX || Math.abs(bullet.y) > maxY) return;
+      projectiles.push({ ...bullet });
+    });
+  }
 
   function setLevelMeta(meta) {
-    const areaName = meta.title ?? meta.name ?? 'Unknown Sector';
-    const levelNumber = meta.levelNumber ?? 0;
-    const subtitle = meta.subtitle ?? 'hud.controls';
+    const areaName = state.areaName ?? meta.title ?? meta.name ?? 'Unknown Sector';
+    const levelNumber = state.levelNumber ?? meta.levelNumber ?? 0;
+    const subtitle = state.subtitle ?? meta.subtitle ?? 'hud.controls';
     hudSystem.setLevelTitle(areaName, levelNumber);
     hudSystem.setSubtitle(subtitle);
   }
@@ -158,11 +275,29 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   async function bootstrap() {
     spriteSheet = await spriteSheetPromise;
     level = game.loadLevel(levelId);
+    savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
     placements = level.getActorPlacements();
     player = createPlayer(spriteSheet, placements);
-    playerStart = { x: placements.playerStart?.x ?? player.x, y: placements.playerStart?.y ?? player.y };
+    restorePlayer(player, savedSnapshot?.playerState, placements.playerStart ?? player);
+    playerStart = { x: player.x, y: player.y };
     pickups = createPickups(level.getPickupTemplates());
     npcs = createNpcs(spriteSheet, placements);
+
+    if (savedSnapshot?.playerVitals) {
+      Object.assign(playerVitals, savedSnapshot.playerVitals);
+    }
+
+    if (savedSnapshot?.sessionState) {
+      Object.assign(state.flags, savedSnapshot.sessionState.flags ?? {});
+      Object.assign(state.quests, savedSnapshot.sessionState.quests ?? {});
+      state.areaName = savedSnapshot.sessionState.areaName ?? state.areaName;
+      state.levelNumber = savedSnapshot.sessionState.levelNumber ?? state.levelNumber;
+      state.subtitle = savedSnapshot.sessionState.subtitle ?? state.subtitle;
+    }
+
+    state.objectivesCollected = game.objectivesCollected ?? savedSnapshot?.objectivesCollected ?? 0;
+    objectivesCollected = state.objectivesCollected;
+    restoreProjectiles(savedSnapshot?.projectiles);
 
     renderInventory(inventory);
     hudSystem = createHudSystem();
@@ -249,6 +384,13 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
         drawCameraBounds();
       },
     });
+
+    game.setSnapshotProvider(() => ({
+      playerState: serializePlayer(player),
+      playerVitals: { ...playerVitals },
+      projectiles: projectilesForSave(),
+      sessionState: serializeSessionState(),
+    }));
   }
 
   function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNote }) {
@@ -310,6 +452,15 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     }
   }
 
+  function manualSave() {
+    if (!game.saveSlotId) {
+      hudSystem?.showToast?.('note.save.missingSlot');
+      return;
+    }
+    game.saveProgress({ manual: true });
+    refreshSaveSlotList();
+  }
+
   function pause() {
     loop?.stop();
   }
@@ -326,6 +477,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       clearTimeout(deathTimeout);
       deathTimeout = null;
     }
+    game.setSnapshotProvider(null);
+    hudSystem?.hideToast?.();
   }
 
   return {
@@ -333,6 +486,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     pause,
     resume,
     cleanup,
+    manualSave,
     levelId: () => level?.meta?.id ?? levelId ?? DEFAULT_LEVEL_ID,
   };
 }
@@ -348,7 +502,20 @@ registerScene('menu', {
 registerScene('loading', {
   async onEnter({ params }) {
     showLoadingPanel('Načítání levelu...');
-    const nextLevelId = params?.levelId || levelSelectInput?.value || game.currentLevelId || DEFAULT_LEVEL_ID;
+    const requestedSlot = params?.slotId || resolveSlotId();
+    if (params?.freshStart) {
+      setActiveSlot(requestedSlot, { resetProgress: true });
+    } else if (params?.loadSlot && requestedSlot) {
+      const loaded = game.loadFromSlot(requestedSlot);
+      setActiveSlot(requestedSlot);
+      if (loaded?.currentLevelId) {
+        params.levelId = loaded.currentLevelId;
+      }
+    } else if (requestedSlot) {
+      setActiveSlot(requestedSlot);
+    }
+
+    const nextLevelId = params?.levelId || game.currentLevelId || levelSelectInput?.value || DEFAULT_LEVEL_ID;
     currentInGameSession?.cleanup?.();
     currentInGameSession = createInGameSession(nextLevelId);
     await currentInGameSession.bootstrap();
@@ -390,15 +557,24 @@ const continueButton = document.querySelector('[data-menu-continue]');
 const selectButton = document.querySelector('[data-menu-select]');
 const settingsButton = document.querySelector('[data-menu-settings]');
 const pauseResumeButton = document.querySelector('[data-pause-resume]');
+const pauseSaveButton = document.querySelector('[data-pause-save]');
 const pauseMenuButton = document.querySelector('[data-pause-menu]');
 
-startButton?.addEventListener('click', () => setScene('loading', { levelId: DEFAULT_LEVEL_ID }));
-continueButton?.addEventListener('click', () =>
-  setScene('loading', { levelId: game.currentLevelId ?? DEFAULT_LEVEL_ID }),
+startButton?.addEventListener('click', () =>
+  setScene('loading', { levelId: DEFAULT_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
 );
+continueButton?.addEventListener('click', () => {
+  const saves = game.listSaves();
+  const latest = saves[0];
+  if (latest) {
+    setScene('loading', { levelId: latest.currentLevelId, slotId: latest.slotId, loadSlot: true });
+    return;
+  }
+  setScene('loading', { levelId: game.currentLevelId ?? DEFAULT_LEVEL_ID, slotId: resolveSlotId() });
+});
 selectButton?.addEventListener('click', () => {
   const chosen = levelSelectInput?.value || DEFAULT_LEVEL_ID;
-  setScene('loading', { levelId: chosen });
+  setScene('loading', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
 });
 settingsButton?.addEventListener('click', () => {
   if (menuSubtitle) {
@@ -412,9 +588,13 @@ pauseResumeButton?.addEventListener('click', () => {
     resume();
   }
 });
+pauseSaveButton?.addEventListener('click', () => currentInGameSession?.manualSave?.());
 pauseMenuButton?.addEventListener('click', () => showMenu());
 
-game.onReturnToMenu(() => showMenu());
+game.onReturnToMenu(() => {
+  showMenu();
+  refreshSaveSlotList();
+});
 game.onAdvanceToMap((nextLevelId) => {
   if (nextLevelId) {
     setScene('loading', { levelId: nextLevelId });

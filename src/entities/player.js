@@ -103,3 +103,26 @@ export function drawPlayer(ctx, camera, player, spriteSheet) {
     });
   }
 }
+
+export function serializePlayer(player) {
+  return {
+    x: player.x,
+    y: player.y,
+    facing: player.facing,
+    lastDirection: player.lastDirection,
+    speed: player.speed,
+    size: player.size,
+    color: player.color,
+  };
+}
+
+export function restorePlayer(player, snapshot, fallbackPosition = { x: 0, y: 0 }) {
+  const safeSnapshot = snapshot ?? {};
+  player.x = safeSnapshot.x ?? fallbackPosition.x ?? player.x;
+  player.y = safeSnapshot.y ?? fallbackPosition.y ?? player.y;
+  player.facing = safeSnapshot.facing ?? player.facing;
+  player.lastDirection = safeSnapshot.lastDirection ?? player.lastDirection;
+  player.speed = safeSnapshot.speed ?? player.speed;
+  player.size = safeSnapshot.size ?? player.size;
+  player.color = safeSnapshot.color ?? player.color;
+}

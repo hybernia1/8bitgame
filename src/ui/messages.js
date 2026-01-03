@@ -28,6 +28,10 @@ export const messages = {
   'note.death.guard': 'Hlídač klíče tě zneškodnil. Mise se restartuje...',
   'note.damage.darkness': 'Tma pálí! Najdi vypínač a rozsviť část místnosti.',
   'note.death.darkness': 'Tma tě zcela pohltila. Mise se restartuje...',
+  'note.save.auto': 'Auto-save dokončen (slot {slot}).',
+  'note.save.manual': 'Uloženo do slotu {slot}.',
+  'note.save.missingSlot': 'Vyber slot, do kterého chceš uložit.',
+  'menu.save.empty': 'Žádné uložené pozice.',
   __missing: '[[{key}]]',
 };
 
