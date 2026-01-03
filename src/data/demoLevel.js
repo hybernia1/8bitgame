@@ -39,6 +39,60 @@ export const demoLevel = {
     1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
+  lighting: {
+    litZones: [
+      {
+        x: 1,
+        y: 1,
+        w: 5,
+        h: 4,
+      },
+    ],
+    switches: [
+      {
+        id: 'entry-switch',
+        name: 'Vstupní vypínač',
+        tx: 5,
+        ty: 2,
+        lights: [
+          {
+            x: 1,
+            y: 1,
+            w: 10,
+            h: 7,
+          },
+        ],
+      },
+      {
+        id: 'storage-switch',
+        name: 'Skladový vypínač',
+        tx: 13,
+        ty: 5,
+        lights: [
+          {
+            x: 9,
+            y: 4,
+            w: 7,
+            h: 7,
+          },
+        ],
+      },
+      {
+        id: 'lab-switch',
+        name: 'Laboratorní vypínač',
+        tx: 17,
+        ty: 9,
+        lights: [
+          {
+            x: 13,
+            y: 7,
+            w: 6,
+            h: 6,
+          },
+        ],
+      },
+    ],
+  },
   actors: {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
     monsters: [],
