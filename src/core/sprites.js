@@ -16,32 +16,40 @@ const TEXTURE_PATHS = {
 };
 
 const SPRITE_ANIMATIONS = {
-  player: getPlayerAnimationDefs,
+  player: (frameCount) => getDirectionalAnimationDefs('player', frameCount, { includeLegacyDefault: true }),
+  npc: (frameCount) => getDirectionalAnimationDefs('npc', frameCount, { includeLegacyDefault: true }),
+  monster: (frameCount) => getDirectionalAnimationDefs('monster', frameCount, { includeLegacyDefault: true }),
 };
 
-function getPlayerAnimationDefs(frameCount) {
+function getDirectionalAnimationDefs(baseName, frameCount, { includeLegacyDefault = false } = {}) {
+  const addLegacy = (frame) => includeLegacyDefault && { name: baseName, frames: [frame] };
+
   // Prefer 3x4 directional sheets (down, left, right, up) with three frames each.
   if (frameCount >= 12) {
     return [
-      { name: 'playerWalkDown', frames: '0..2', frameRate: 8 },
-      { name: 'playerIdleDown', frames: [1] },
-      { name: 'playerWalkLeft', frames: '3..5', frameRate: 8 },
-      { name: 'playerIdleLeft', frames: [4] },
-      { name: 'playerWalkRight', frames: '6..8', frameRate: 8 },
-      { name: 'playerIdleRight', frames: [7] },
-      { name: 'playerWalkUp', frames: '9..11', frameRate: 8 },
-      { name: 'playerIdleUp', frames: [10] },
+      { name: `${baseName}WalkDown`, frames: '0..2', frameRate: 8 },
+      { name: `${baseName}IdleDown`, frames: [1] },
+      { name: `${baseName}WalkLeft`, frames: '3..5', frameRate: 8 },
+      { name: `${baseName}IdleLeft`, frames: [4] },
+      { name: `${baseName}WalkRight`, frames: '6..8', frameRate: 8 },
+      { name: `${baseName}IdleRight`, frames: [7] },
+      { name: `${baseName}WalkUp`, frames: '9..11', frameRate: 8 },
+      { name: `${baseName}IdleUp`, frames: [10] },
       // Keep a legacy single-frame animation for compatibility with existing lookups
-      { name: 'player', frames: [1] },
-    ];
+      addLegacy(1),
+    ].filter(Boolean);
   }
 
-  return [
-    { name: 'playerWalk', frames: '0..3', frameRate: 8 },
-    { name: 'playerIdle', frames: [4] },
-    // Keep a legacy single-frame animation for compatibility with existing lookups
-    { name: 'player', frames: [0] },
-  ];
+  if (frameCount >= 5) {
+    return [
+      { name: `${baseName}Walk`, frames: '0..3', frameRate: 8 },
+      { name: `${baseName}Idle`, frames: [4] },
+      // Keep a legacy single-frame animation for compatibility with existing lookups
+      addLegacy(0),
+    ].filter(Boolean);
+  }
+
+  return [{ name: `${baseName}Idle`, frames: [0] }, addLegacy(0)].filter(Boolean);
 }
 
 function makeCanvas(frames) {
