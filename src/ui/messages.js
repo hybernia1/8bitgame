@@ -9,6 +9,9 @@ export const messages = {
   'dialogue.gateUnlocked': 'Vstup potvrzen. Přecházíš do nového mapového křídla.',
   'speaker.gateSystem': 'Systém Dveří',
   'hud.levelTitle': 'Level {level}: {name}',
+  'loading.transition': 'Načítám level {name}...',
+  'loading.ready': 'Level {name} je připraven.',
+  'loading.pressAnyKey': 'Stiskni libovolnou klávesu pro pokračování.',
   'hud.controls':
     'Pohyb: WASD/šipky · Interakce: {interact} · Střelba: {shoot} · Inventář: {inventory} · Pauza: {pause}',
   'note.inventory.intro': 'Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.',

@@ -97,18 +97,19 @@ export function createInteractionSystem({
     });
   }
 
-  function applyActions(actionsOrRewardId) {
-    if (!actionsOrRewardId) return { success: true };
+  function applyActions(step) {
+    if (!step?.actions && !step?.rewardId) return { success: true };
 
-    const reward = rewards[actionsOrRewardId];
-    const actions = Array.isArray(actionsOrRewardId) ? actionsOrRewardId : reward?.actions;
-    if (!actions?.length) return { success: true, note: reward?.note };
+    const reward = step.rewardId ? rewards[step.rewardId] : undefined;
+    const baseActions = Array.isArray(step.actions) ? step.actions : step.actions ? [step.actions] : [];
+    const rewardActions = reward?.actions ?? [];
+    const actions = [...baseActions, ...rewardActions];
+
+    if (!actions.length) return { success: true, note: reward?.note };
 
     const result = runActions(actions, { inventory, renderInventory, level, game, hud, flags, state }, reward);
-    if (result.success !== false) {
-      if (reward?.note && !result.note) {
-        result.note = reward.note;
-      }
+    if (result.success !== false && reward?.note && !result.note) {
+      result.note = reward.note;
     }
     return result;
   }
@@ -137,7 +138,7 @@ export function createInteractionSystem({
       let rewardBlocked = false;
 
       if (pickedLine?.actions || pickedLine?.rewardId) {
-        const rewardResult = applyActions(pickedLine.actions || pickedLine.rewardId);
+        const rewardResult = applyActions(pickedLine);
         rewardBlocked = rewardResult.success === false;
         if (rewardBlocked) {
           dialogue = rewardResult.blockedDialogue || script?.defaultDialogue || dialogue;
@@ -181,6 +182,10 @@ export function createInteractionSystem({
       }
       state.dialogueTime = 3;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
+      if (gateState.nextLevelId && !state.levelAdvanceQueued) {
+        state.levelAdvanceQueued = true;
+        game?.advanceToNextMap?.(gateState.nextLevelId);
+      }
     }
 
     const collected = collectNearbyPickups(player, pickups, inventory);

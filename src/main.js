@@ -28,6 +28,10 @@ const spriteSheetPromise = loadSpriteSheet();
 const menuPanel = document.querySelector('.menu-panel');
 const pausePanel = document.querySelector('.pause-panel');
 const loadingPanel = document.querySelector('.loading-panel');
+const continuePanel = document.querySelector('.continue-panel');
+const continueTitle = document.querySelector('[data-continue-title]');
+const continueSubtitle = document.querySelector('[data-continue-subtitle]');
+const continueDetail = document.querySelector('[data-continue-detail]');
 const levelSelectInput = document.querySelector('[data-level-input]');
 const slotInput = document.querySelector('[data-slot-input]');
 const menuSubtitle = document.querySelector('.menu-subtitle');
@@ -131,6 +135,7 @@ function showMenuPanel() {
     menuSubtitle.textContent = defaultMenuSubtitle;
   }
   refreshSaveSlotList();
+  hideContinuePanel();
   toggleVisibility(menuPanel, true);
   toggleVisibility(pausePanel, false);
   toggleVisibility(loadingPanel, false);
@@ -153,10 +158,50 @@ function showLoadingPanel(message = 'Načítání...') {
   }
 }
 
+function hideContinuePanel() {
+  toggleVisibility(continuePanel, false);
+  if (continueDetail) {
+    continueDetail.classList.add('hidden');
+  }
+}
+
+function showContinuePanel({ title, subtitle, detail } = {}) {
+  toggleVisibility(menuPanel, false);
+  toggleVisibility(pausePanel, false);
+  toggleVisibility(loadingPanel, false);
+  toggleVisibility(continuePanel, true);
+  if (continueTitle) {
+    continueTitle.textContent = title ?? '';
+  }
+  if (continueSubtitle) {
+    continueSubtitle.textContent = subtitle ?? format('loading.pressAnyKey');
+  }
+  if (continueDetail) {
+    continueDetail.textContent = detail ?? '';
+    continueDetail.classList.toggle('hidden', !detail);
+  }
+}
+
+function waitForContinuePrompt(content = {}) {
+  if (!continuePanel) return Promise.resolve();
+  showContinuePanel(content);
+  return new Promise((resolve) => {
+    const events = ['keydown', 'mousedown', 'touchstart'];
+    const cleanup = () => {
+      events.forEach((event) => window.removeEventListener(event, handler));
+      hideContinuePanel();
+      resolve();
+    };
+    const handler = () => cleanup();
+    events.forEach((event) => window.addEventListener(event, handler, { once: true }));
+  });
+}
+
 function hideAllPanels() {
   toggleVisibility(menuPanel, false);
   toggleVisibility(pausePanel, false);
   toggleVisibility(loadingPanel, false);
+  hideContinuePanel();
 }
 
 function togglePauseScene() {
@@ -195,6 +240,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       caretakerGaveApple: false,
       gateKeyUsed: false,
     },
+    levelAdvanceQueued: false,
     quests: {},
     playerVitals,
     get dialogueTime() {
@@ -572,7 +618,7 @@ registerScene('menu', {
 
 registerScene('loading', {
   async onEnter({ params }) {
-    showLoadingPanel('Načítání levelu...');
+    const loadStarted = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const requestedSlot = params?.slotId || resolveSlotId();
     if (params?.freshStart) {
       setActiveSlot(requestedSlot, { resetProgress: true });
@@ -586,10 +632,31 @@ registerScene('loading', {
       setActiveSlot(requestedSlot);
     }
 
-    const nextLevelId = params?.levelId || game.currentLevelId || levelSelectInput?.value || DEFAULT_LEVEL_ID;
+    const targetLevelId = params?.levelId || game.currentLevelId || levelSelectInput?.value || DEFAULT_LEVEL_ID;
+    const targetMeta = getLevelMeta(getLevelConfig(targetLevelId));
+    showLoadingPanel(format('loading.transition', { name: targetMeta.title ?? targetMeta.name ?? targetLevelId }));
+    const nextLevelId = targetLevelId;
     currentInGameSession?.cleanup?.();
     currentInGameSession = createInGameSession(nextLevelId);
     await currentInGameSession.bootstrap();
+    const minLoadDuration = 600;
+    const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - loadStarted;
+    if (elapsed < minLoadDuration) {
+      await new Promise((resolve) => setTimeout(resolve, minLoadDuration - elapsed));
+    }
+
+    if (params?.waitForContinue) {
+      const continueTitle = format('hud.levelTitle', {
+        name: targetMeta.title ?? targetMeta.name ?? targetLevelId,
+        level: targetMeta.levelNumber ?? 0,
+      });
+      const continueSubtitle = format('loading.ready', { name: targetMeta.title ?? targetMeta.name ?? targetLevelId });
+      await waitForContinuePrompt({
+        title: continueTitle,
+        subtitle: continueSubtitle,
+        detail: format('loading.pressAnyKey'),
+      });
+    }
     hideAllPanels();
     await setScene('inGame');
   },
@@ -668,7 +735,7 @@ game.onReturnToMenu(() => {
 });
 game.onAdvanceToMap((nextLevelId) => {
   if (nextLevelId) {
-    setScene('loading', { levelId: nextLevelId });
+    setScene('loading', { levelId: nextLevelId, waitForContinue: true });
     return;
   }
   showMenu();
