@@ -7,52 +7,32 @@
   <link rel="stylesheet" href="src/style.css" />
 </head>
 <body>
-  <main class="layout">
-    <section class="game-shell">
-      <header class="hud">
-        <div class="title">Level 0: Demo Facility</div>
-        <div class="subtitle">Move with WASD or Arrow Keys</div>
-      </header>
+  <main class="game-shell">
+    <header class="hud-bar">
+      <div class="hud-heading">
+        <div class="eyebrow">Ops zóna</div>
+        <div class="title level-title">Level 0: Demo Facility</div>
+        <div class="subtitle">WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
+      </div>
+      <div class="hud-pills" aria-live="polite">
+        <div class="hud-pill">❤ <span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></div>
+        <div class="hud-pill">🎯 Úkoly: <span data-objectives-collected>0</span>/<span data-objectives-total>0</span></div>
+      </div>
+    </header>
+    <div class="game-frame">
       <canvas id="game" width="640" height="480" aria-label="Demo level canvas"></canvas>
       <div class="interaction-banner hidden" aria-live="polite">
         <div class="interaction-title">Interakce</div>
         <div class="interaction-text">Přibliž se k Technikovi Járovi a stiskni E.</div>
       </div>
-      <footer class="hud hud-row">
-        <div>❤ <span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></div>
-        <div>Keys: <span class="hud-keys">0</span></div>
-        <div aria-live="polite">Objectives: <span data-objectives-collected>0</span> / <span data-objectives-total>0</span></div>
-      </footer>
-      <section class="inventory" aria-label="Inventory with six slots">
-        <div class="inventory-header">
-          <div class="title">Inventory</div>
-          <div class="inventory-note">Collect items to fill your kit.</div>
-        </div>
-        <div class="inventory-grid" role="list"></div>
-      </section>
+    </div>
+    <section class="inventory" aria-label="Inventář se šesti sloty">
+      <div class="inventory-header">
+        <div class="title">Výbava</div>
+        <div class="inventory-note">Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
+      </div>
+      <div class="inventory-grid" role="list"></div>
     </section>
-    <aside class="panel">
-      <h1>8-bit Top-Down Demo</h1>
-      <p>
-        This prototype demonstrates the basic feel of the game: a top-down 8-bit
-        view where the player can walk around a compact level. Obstacles block
-        the character, letting you test collision, camera, and movement speed.
-      </p>
-      <p>
-        Input handling and the fixed-step loop are powered by the lightweight
-        <strong>Kontra.js</strong> game toolkit that now ships from the local
-        <code>src</code> folder. The demo level also includes simple pickups and
-        a six-slot inventory UI to test item collection.
-      </p>
-      <ul>
-        <li>WASD or Arrow Keys to move</li>
-        <li>Bump into walls to feel collision</li>
-        <li>Walk over glowing diamonds to collect items</li>
-        <li>Talk to Technician Jára to finish the quest and unlock the next map</li>
-        <li>Use number keys 1–6 or click an inventory slot to consume usable items (jablko)</li>
-        <li>Escape closes this overlay</li>
-      </ul>
-    </aside>
   </main>
   <script type="module" src="src/main.js"></script>
 </body>
