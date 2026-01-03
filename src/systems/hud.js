@@ -10,7 +10,7 @@ const elements = {
   questProgress: document.querySelector('[data-quest-progress]'),
   healthCurrentEl: document.querySelector('.hud-health-current'),
   healthTotalEl: document.querySelector('.hud-health-total'),
-  inventoryNote: document.querySelector('.inventory-note'),
+  inventoryNote: document.querySelector('[data-inventory-note]'),
   inventoryBinding: document.querySelector('[data-inventory-binding]'),
   inventoryStatus: document.querySelector('[data-inventory-status]'),
   toast: document.querySelector('.hud-toast'),

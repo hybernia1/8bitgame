@@ -130,8 +130,8 @@ export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
 
   function updateBindings(nextBindings) {
     if (!nextBindings) return;
-    bindings = nextBindings;
-    saveInputBindings(bindings);
+    saveInputBindings(nextBindings);
+    bindings = loadInputBindings();
   }
 
   return {

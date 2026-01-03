@@ -237,7 +237,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let savedSnapshot = null;
   let interactQueued = false;
   let shootQueued = false;
-  let inventoryCollapsed = false;
+  let inventoryCollapsed = true;
 
   function getLevelDimensions() {
     return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
@@ -334,6 +334,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     function setInventoryCollapsed(collapsed) {
       inventoryCollapsed = Boolean(collapsed);
       inventoryElement?.classList.toggle('collapsed', inventoryCollapsed);
+      inventoryElement?.setAttribute('aria-hidden', inventoryCollapsed ? 'true' : 'false');
       const bindingLabel = formatBinding(inputSystem.getBindings(), 'toggle-inventory');
       hudSystem.setInventoryStatus(inventoryCollapsed, bindingLabel);
     }
@@ -373,6 +374,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     hudSystem.setControlsHint(controlsHint);
     hudSystem.setInventoryBindingHint(controlsHint.inventory);
     hudSystem.setInventoryStatus(inventoryCollapsed, controlsHint.inventory);
+    setInventoryCollapsed(true);
 
     const combatSystem = createCombatSystem({
       inventory,

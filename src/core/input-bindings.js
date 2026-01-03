@@ -28,10 +28,40 @@ function getStorage() {
   return localStorage;
 }
 
+function uniq(values = []) {
+  return Array.from(new Set(values));
+}
+
 function sanitizeBindings(bindings = {}) {
+  const allowedKeyboard = defaultBindings.keyboard;
+  const allowedGamepad = defaultBindings.gamepad;
+
+  const sanitizeList = (list, allowed) => {
+    if (!Array.isArray(list)) return [...allowed];
+    const filtered = list.filter((value) => allowed.includes(value));
+    return filtered.length ? uniq(filtered) : [...allowed];
+  };
+
   return {
-    keyboard: bindings.keyboard ?? {},
-    gamepad: bindings.gamepad ?? {},
+    keyboard: {
+      interact: sanitizeList(bindings.keyboard?.interact, allowedKeyboard.interact),
+      shoot: sanitizeList(bindings.keyboard?.shoot, allowedKeyboard.shoot),
+      'toggle-pause': sanitizeList(bindings.keyboard?.['toggle-pause'], allowedKeyboard['toggle-pause']),
+      'toggle-inventory': sanitizeList(
+        bindings.keyboard?.['toggle-inventory'],
+        allowedKeyboard['toggle-inventory'],
+      ),
+      'use-slot': sanitizeList(bindings.keyboard?.['use-slot'], allowedKeyboard['use-slot']),
+    },
+    gamepad: {
+      interact: sanitizeList(bindings.gamepad?.interact, allowedGamepad.interact),
+      shoot: sanitizeList(bindings.gamepad?.shoot, allowedGamepad.shoot),
+      'toggle-pause': sanitizeList(bindings.gamepad?.['toggle-pause'], allowedGamepad['toggle-pause']),
+      'toggle-inventory': sanitizeList(
+        bindings.gamepad?.['toggle-inventory'],
+        allowedGamepad['toggle-inventory'],
+      ),
+    },
   };
 }
 
@@ -54,8 +84,9 @@ export function loadInputBindings() {
 export function saveInputBindings(bindings) {
   const storage = getStorage();
   if (!storage) return;
+  const sanitized = sanitizeBindings(bindings);
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(sanitizeBindings(bindings)));
+    storage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
   } catch (error) {
     console.warn('Failed to save input bindings', error);
   }
