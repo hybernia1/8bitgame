@@ -1,5 +1,6 @@
 import { keyPressed } from '../kontra.mjs';
 import { COLORS } from '../core/constants.js';
+import { attemptPush, findBlockingPushable } from './pushables.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
 function getInputAxis() {
@@ -34,7 +35,9 @@ export function createPlayer(spriteSheet, placements = {}) {
   };
 }
 
-export function updatePlayer(player, dt, collision) {
+export function updatePlayer(player, dt, collision = {}) {
+  const canMove = typeof collision?.canMove === 'function' ? collision.canMove : () => true;
+  const pushables = collision?.pushables ?? [];
   const { dx, dy } = getInputAxis();
   const moving = dx !== 0 || dy !== 0;
   const len = Math.hypot(dx, dy) || 1;
@@ -42,14 +45,34 @@ export function updatePlayer(player, dt, collision) {
 
   if (moving) {
     const step = player.speed * dt;
-    const nx = player.x + (dx / len) * step;
-    const ny = player.y + (dy / len) * step;
+    const moveX = (dx / len) * step;
+    const moveY = (dy / len) * step;
 
     player.lastDirection = { x: dx / len, y: dy / len };
     player.facing = direction;
 
-    if (collision.canMove(player.size, nx, player.y)) player.x = nx;
-    if (collision.canMove(player.size, player.x, ny)) player.y = ny;
+    const attemptAxisMove = (axis, delta) => {
+      if (delta === 0) return;
+      const nx = axis === 'x' ? player.x + delta : player.x;
+      const ny = axis === 'y' ? player.y + delta : player.y;
+      const blocking = findBlockingPushable(pushables, player.size, nx, ny);
+      if (blocking) {
+        const pushed = attemptPush(pushables, blocking, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0, canMove);
+        if (!pushed) return;
+      }
+      if (canMove(player.size, nx, ny)) {
+        const overlapAfterMove = findBlockingPushable(pushables, player.size, nx, ny);
+        if (overlapAfterMove) return;
+        if (axis === 'x') {
+          player.x = nx;
+        } else {
+          player.y = ny;
+        }
+      }
+    };
+
+    attemptAxisMove('x', moveX);
+    attemptAxisMove('y', moveY);
   }
 
   const nextState = moving ? 'walk' : 'idle';

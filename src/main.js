@@ -5,6 +5,7 @@ import { loadSpriteSheet } from './core/sprites.js';
 import { createPlayer, drawPlayer, restorePlayer, serializePlayer, updatePlayer } from './entities/player.js';
 import { collectNearbyPickups, createPickups, drawPickups } from './entities/pickups.js';
 import { createNpcs, drawNpcs, updateNpcStates } from './entities/npc.js';
+import { createPushables, drawPushables, restorePushables, serializePushables } from './entities/pushables.js';
 import { renderInventory, Inventory, useInventorySlot } from './ui/inventory.js';
 import { itemHandlers } from './items.js';
 import { drawGrid } from './world/level-instance.js';
@@ -279,6 +280,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let npcs = null;
   let placements = null;
   let pickups = null;
+  let pushables = null;
   let spriteSheet = null;
   let savedSnapshot = null;
   let interactQueued = false;
@@ -296,6 +298,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       areaName: state.areaName,
       levelNumber: state.levelNumber,
       subtitle: state.subtitle,
+      pushables: serializePushables(pushables ?? []),
     };
   }
 
@@ -338,6 +341,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     playerStart = { x: player.x, y: player.y };
     pickups = createPickups(level.getPickupTemplates());
     npcs = createNpcs(spriteSheet, placements);
+    pushables = createPushables(placements);
+    restorePushables(pushables, savedSnapshot?.sessionState?.pushables);
 
     if (savedSnapshot?.playerVitals) {
       Object.assign(playerVitals, savedSnapshot.playerVitals);
@@ -447,7 +452,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
 
     loop = createGameLoop({
       update(dt) {
-        updatePlayer(player, dt, { canMove: level.canMove.bind(level) });
+        updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables });
         level.clampCamera(camera, player, canvas);
 
         if (playerVitals.invulnerableTime > 0) {
@@ -486,6 +491,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
         level.drawLevel(ctx, camera, spriteSheet);
         level.drawLightSwitches(ctx, camera);
         drawPickups(ctx, camera, pickups, spriteSheet);
+        drawPushables(ctx, camera, pushables, spriteSheet);
         combatSystem.drawProjectiles(ctx, camera);
         drawNpcs(ctx, camera, npcs);
         drawPlayer(ctx, camera, player, spriteSheet);
