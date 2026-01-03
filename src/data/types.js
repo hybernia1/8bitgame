@@ -3,6 +3,7 @@
  * @property {string} id
  * @property {string} name
  * @property {string} [description]
+ * @property {'collect'|'defeat'|'escort'} [type]
  * @property {number} [objectiveCount]
  * @property {string[]} [objectiveItemIds]
  * @property {string} [completionNote]
@@ -18,22 +19,24 @@
  */
 
 /**
- * @typedef {Object} RewardActions
- * @property {boolean} [unlockGate]
- * @property {boolean} [clearObjectives]
- * @property {string} [setAreaName]
- * @property {number} [setLevelNumber]
- * @property {string} [setSubtitle]
+ * @typedef {Object} ActionDefinition
+ * @property {string} type
+ * @property {Record<string, any>} [item]
+ * @property {string} [note]
+ * @property {string} [targetId]
+ * @property {string} [flag]
+ * @property {boolean|number|string} [value]
+ * @property {string} [blockedDialogue]
+ * @property {string} [blockedNote]
  */
 
 /**
  * @typedef {Object} RewardConfig
  * @property {string} id
- * @property {{ id: string, name: string, icon: string, tint?: string, objective?: boolean, stackable?: boolean, quantity?: number }} [item]
  * @property {string} [note]
  * @property {string} [blockedDialogue]
  * @property {string} [blockedNote]
- * @property {RewardActions} [actions]
+ * @property {ActionDefinition[]} [actions]
  */
 
 /**
@@ -44,6 +47,7 @@
  * @property {string} [note]
  * @property {string} [rewardId]
  * @property {Record<string, any>} [setState]
+ * @property {ActionDefinition[]} [actions]
  */
 
 /**
@@ -51,6 +55,10 @@
  * @property {string} [defaultDialogue]
  * @property {string} [infoNote]
  * @property {NpcScriptStep[]} [lines]
+ */
+
+/**
+ * @typedef {Record<string, NpcScript>} NpcScriptCollection
  */
 
 /**

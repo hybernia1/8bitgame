@@ -1,4 +1,6 @@
 import { TILE } from '../core/constants.js';
+import { runActions } from '../core/actions.js';
+import { evaluateQuestBatch, getActiveQuestSummary, prepareQuestState } from '../core/quests.js';
 export function createInteractionSystem({
   inventory,
   pickups,
@@ -16,7 +18,7 @@ export function createInteractionSystem({
   const npcScripts = level.getNpcScripts();
   const rewards = level.getRewards();
   const questConfigs = level.getQuestConfigs();
-  const questState = state.quests ?? (state.quests = {});
+  const questState = prepareQuestState(questConfigs, state.quests ?? (state.quests = {}));
   const flags = state.flags ?? (state.flags = {});
 
   function findNearestLightSwitch(player) {
@@ -34,22 +36,33 @@ export function createInteractionSystem({
     return { activeSwitch: best, switchDistance: bestDistance };
   }
 
-  function evaluateQuestCompletion() {
-    questConfigs.forEach((quest) => {
-      const entry = questState[quest.id] ?? (questState[quest.id] = { completed: false });
-      if (entry.completed) return;
+  function refreshQuestLog() {
+    const summary = getActiveQuestSummary(questConfigs, questState);
+    hud.setQuestLog?.(summary);
+    if (summary?.progress) {
+      hud.setObjectives?.(summary.progress.current ?? 0, summary.progress.total ?? level.getObjectiveTotal());
+    }
+  }
 
-      const hasEnough = quest.objectiveCount == null || state.objectivesCollected >= quest.objectiveCount;
-      const itemsReady =
-        !quest.objectiveItemIds || quest.objectiveItemIds.every((itemId) => inventory.getItemCount(itemId) > 0);
-
-      if (hasEnough && itemsReady) {
-        entry.completed = true;
-        if (quest.completionNote) {
-          showNote(quest.completionNote);
-        }
-      }
+  function evaluateQuestCompletion(context = {}) {
+    const { silent = false } = context;
+    const results = evaluateQuestBatch(questConfigs, questState, {
+      ...context,
+      flags,
+      state,
+      inventory,
+      objectivesCollected: state.objectivesCollected,
     });
+
+    if (!silent) {
+      results.completed.forEach((entry) => {
+        if (entry.note) {
+          showNote(entry.note);
+        }
+      });
+    }
+
+    refreshQuestLog();
   }
 
   function evaluateLineConditions(conditions = []) {
@@ -84,51 +97,20 @@ export function createInteractionSystem({
     });
   }
 
-  function applyReward(rewardId) {
-    if (!rewardId) return { success: true };
-    const reward = rewards[rewardId];
-    if (!reward) return { success: true };
+  function applyActions(actionsOrRewardId) {
+    if (!actionsOrRewardId) return { success: true };
 
-    if (reward.item) {
-      const stored = inventory.addItem({ ...reward.item });
-      if (!stored) {
-        return {
-          success: false,
-          blockedDialogue: reward.blockedDialogue,
-          blockedNote: reward.blockedNote,
-        };
+    const reward = rewards[actionsOrRewardId];
+    const actions = Array.isArray(actionsOrRewardId) ? actionsOrRewardId : reward?.actions;
+    if (!actions?.length) return { success: true, note: reward?.note };
+
+    const result = runActions(actions, { inventory, renderInventory, level, game, hud, flags, state }, reward);
+    if (result.success !== false) {
+      if (reward?.note && !result.note) {
+        result.note = reward.note;
       }
-      renderInventory(inventory);
     }
-
-    if (reward.actions?.clearObjectives) {
-      inventory.clearObjectiveItems();
-      renderInventory(inventory);
-    }
-
-    if (reward.actions?.unlockGate) {
-      level.unlockGate();
-      game?.saveProgress?.();
-    }
-
-    if (reward.actions?.setAreaName) {
-      state.areaName = reward.actions.setAreaName;
-    }
-
-    if (typeof reward.actions?.setLevelNumber === 'number') {
-      state.levelNumber = reward.actions.setLevelNumber;
-    }
-
-    if (reward.actions?.setSubtitle) {
-      state.subtitle = reward.actions.setSubtitle;
-      hud.setSubtitle?.(state.subtitle);
-    }
-
-    if (reward.actions?.setAreaName || typeof reward.actions?.setLevelNumber === 'number') {
-      hud.setLevelTitle?.(state.areaName, state.levelNumber ?? 0);
-    }
-
-    return { success: true, note: reward.note };
+    return result;
   }
 
   function handleInteract(player, context) {
@@ -154,10 +136,10 @@ export function createInteractionSystem({
       let note = pickedLine?.note;
       let rewardBlocked = false;
 
-      if (pickedLine?.rewardId) {
-        const rewardResult = applyReward(pickedLine.rewardId);
-        rewardBlocked = !rewardResult.success;
-        if (!rewardResult.success) {
+      if (pickedLine?.actions || pickedLine?.rewardId) {
+        const rewardResult = applyActions(pickedLine.actions || pickedLine.rewardId);
+        rewardBlocked = rewardResult.success === false;
+        if (rewardBlocked) {
           dialogue = rewardResult.blockedDialogue || script?.defaultDialogue || dialogue;
           note = rewardResult.blockedNote ?? note;
         } else if (rewardResult.note) {
@@ -167,6 +149,10 @@ export function createInteractionSystem({
 
       if (pickedLine?.setState && !rewardBlocked) {
         applyStateChanges(pickedLine.setState);
+      }
+
+      if (!rewardBlocked && (pickedLine?.actions || pickedLine?.rewardId)) {
+        evaluateQuestCompletion({ reason: 'interaction' });
       }
 
       if (note) {
@@ -208,7 +194,7 @@ export function createInteractionSystem({
       renderInventory(inventory);
       const names = collected.map((item) => item.name).join(', ');
       showNote('note.pickup.collected', { items: names });
-      evaluateQuestCompletion();
+      evaluateQuestCompletion({ reason: 'pickup' });
     }
 
     return {
@@ -240,6 +226,9 @@ export function createInteractionSystem({
       hud.hideInteraction();
     }
   }
+
+  evaluateQuestCompletion({ silent: true });
+  refreshQuestLog();
 
   return {
     handleInteract,

@@ -251,6 +251,42 @@ canvas {
   gap: 8px;
 }
 
+.quest-log {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #23232e;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.quest-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quest-log-body {
+  display: grid;
+  gap: 4px;
+}
+
+.quest-progress {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.quest-title {
+  font-size: 14px;
+  color: #f2f2f7;
+}
+
+.quest-description {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
 .inventory-note {
   font-size: 10px;
   opacity: 0.8;

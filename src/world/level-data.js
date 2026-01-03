@@ -1,4 +1,6 @@
 import { demoLevel } from '../data/demoLevel.js';
+import { getDialoguesForLevel } from '../data/dialogues/index.js';
+import { getQuestsForLevel } from '../data/quests/index.js';
 
 export const DEFAULT_LEVEL_ID = demoLevel.meta?.id ?? 'demo-level';
 const registry = {
@@ -6,7 +8,13 @@ const registry = {
 };
 
 export function getLevelConfig(id = DEFAULT_LEVEL_ID) {
-  return registry[id] ?? demoLevel;
+  const base = registry[id] ?? demoLevel;
+  const levelId = base.meta?.id ?? id;
+  return {
+    ...base,
+    quests: base.quests ?? getQuestsForLevel(levelId),
+    npcScripts: base.npcScripts ?? getDialoguesForLevel(levelId),
+  };
 }
 
 export function getLevelMeta(config = getLevelConfig()) {
