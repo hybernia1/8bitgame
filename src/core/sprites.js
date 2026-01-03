@@ -17,6 +17,24 @@ const TEXTURE_PATHS = {
   prop: ['assets/props/prop.png', 'assets/prop.png', 'prop.png'],
 };
 
+const PLAYER_VARIANT_PATHS = {
+  idle: ['assets/hero/hero_idle.png', 'assets/hero_idle.png', 'hero_idle.png'],
+  idleLeft: ['assets/hero/hero_idle_left.png', 'assets/hero_idle_left.png', 'hero_idle_left.png'],
+  idleRight: ['assets/hero/hero_idle_right.png', 'assets/hero_idle_right.png', 'hero_idle_right.png'],
+  left: ['assets/hero/hero_left.png', 'assets/hero_left.png', 'hero_left.png'],
+  right: ['assets/hero/hero_right.png', 'assets/hero_right.png', 'hero_right.png'],
+  walk: ['assets/hero/hero_walk.png', 'assets/hero_walk.png', 'hero_walk.png'],
+};
+
+const PLAYER_VARIANT_ANIMATIONS = {
+  idle: { name: 'playerIdle' },
+  idleLeft: { name: 'playerIdleLeft' },
+  idleRight: { name: 'playerIdleRight' },
+  left: { name: 'playerWalkLeft', frameRate: 8 },
+  right: { name: 'playerWalkRight', frameRate: 8 },
+  walk: { name: 'playerWalk', frameRate: 8 },
+};
+
 const SPRITE_ANIMATIONS = {
   player: [
     { name: 'playerWalk', frames: '0..3', frameRate: 8 },
@@ -82,30 +100,50 @@ function loadTextureImage(path) {
   });
 }
 
+function expandTexturePaths(paths) {
+  return (Array.isArray(paths) ? paths : [paths]).reduce((expanded, candidate) => {
+    if (!candidate) return expanded;
+
+    expanded.push(candidate);
+
+    // Some tools export textures with an uppercase extension (e.g., `hero.PNG`).
+    // Try both versions so drop-in assets load on case-sensitive hosts as well.
+    const pngIndex = candidate.toLowerCase().lastIndexOf('.png');
+    if (pngIndex !== -1) {
+      const upperVariant = `${candidate.slice(0, pngIndex)}.PNG`;
+      if (!expanded.includes(upperVariant)) {
+        expanded.push(upperVariant);
+      }
+    }
+
+    return expanded;
+  }, []);
+}
+
+async function loadPlayerVariantTextures() {
+  const entries = await Promise.all(
+    Object.entries(PLAYER_VARIANT_PATHS).map(async ([variant, paths]) => {
+      const candidates = expandTexturePaths(paths);
+      const image = await candidates.reduce(async (foundPromise, candidate) => {
+        const found = await foundPromise;
+        if (found) return found;
+        return loadTextureImage(candidate);
+      }, Promise.resolve(null));
+
+      return [variant, image];
+    }),
+  );
+
+  return entries.reduce((map, [variant, image]) => {
+    if (image) map[variant] = image;
+    return map;
+  }, {});
+}
+
 async function loadTextureMap() {
   const entries = await Promise.all(
     Object.entries(TEXTURE_PATHS).map(async ([name, paths]) => {
-      const candidates = (Array.isArray(paths) ? paths : [paths]).reduce(
-        (expanded, candidate) => {
-          if (!candidate) return expanded;
-
-          expanded.push(candidate);
-
-          // Some tools export textures with an uppercase extension (e.g.,
-          // `hero.PNG`). Try both versions so drop-in assets load on
-          // case-sensitive hosts as well.
-          const pngIndex = candidate.toLowerCase().lastIndexOf('.png');
-          if (pngIndex !== -1) {
-            const upperVariant = `${candidate.slice(0, pngIndex)}.PNG`;
-            if (!expanded.includes(upperVariant)) {
-              expanded.push(upperVariant);
-            }
-          }
-
-          return expanded;
-        },
-        [],
-      );
+      const candidates = expandTexturePaths(paths);
       const image = await candidates.reduce(async (foundPromise, candidate) => {
         const found = await foundPromise;
         if (found) return found;
@@ -196,6 +234,10 @@ function buildSpriteFrames(name, texture) {
   }
 
   return frames;
+}
+
+function buildFrameRange(startIndex, count) {
+  return Array.from({ length: count }, (_, index) => startIndex + index);
 }
 
 function expandFrameSpec(frameSpec, offset) {
@@ -336,6 +378,7 @@ const DRAWERS = {
 
 export async function loadSpriteSheet() {
   const textures = await loadTextureMap();
+  const playerVariants = await loadPlayerVariantTextures();
   const frames = [];
   const animations = {};
 
@@ -360,6 +403,24 @@ export async function loadSpriteSheet() {
     } else {
       animations[name] = { frames: [startIndex] };
     }
+  });
+
+  Object.entries(playerVariants).forEach(([variant, texture]) => {
+    if (!texture) return;
+    const startIndex = frames.length;
+    const spriteFrames = buildSpriteFrames('player', texture);
+    frames.push(...spriteFrames);
+
+    const definition = PLAYER_VARIANT_ANIMATIONS[variant];
+    if (!definition?.name) return;
+    const animation = {
+      frames: buildFrameRange(startIndex, spriteFrames.length),
+      loop: true,
+    };
+    if (definition.frameRate && spriteFrames.length > 1) {
+      animation.frameRate = definition.frameRate;
+    }
+    animations[definition.name] = animation;
   });
 
   const image = await canvasToImage(makeCanvas(frames));
