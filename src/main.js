@@ -167,9 +167,9 @@ function togglePauseScene() {
   }
 }
 
-function drawCameraBounds() {
+function drawCameraBounds({ width, height }) {
   ctx.strokeStyle = COLORS.gridBorder;
-  ctx.strokeRect(1, 1, WORLD.width * TILE - 2, WORLD.height * TILE - 2);
+  ctx.strokeRect(1, 1, width * TILE - 2, height * TILE - 2);
 }
 
 function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
@@ -235,6 +235,10 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let spriteSheet = null;
   let savedSnapshot = null;
 
+  function getLevelDimensions() {
+    return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
+  }
+
   function serializeSessionState() {
     return {
       flags: { ...state.flags },
@@ -246,8 +250,9 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   }
 
   function projectilesForSave() {
-    const maxX = WORLD.width * TILE + TILE;
-    const maxY = WORLD.height * TILE + TILE;
+    const { width, height } = getLevelDimensions();
+    const maxX = width * TILE + TILE;
+    const maxY = height * TILE + TILE;
     return projectiles
       .filter((bullet) => Math.abs(bullet.x) <= maxX && Math.abs(bullet.y) <= maxY)
       .map((bullet) => ({ ...bullet }));
@@ -255,8 +260,9 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
 
   function restoreProjectiles(savedProjectiles = []) {
     projectiles.splice(0, projectiles.length);
-    const maxX = WORLD.width * TILE + TILE;
-    const maxY = WORLD.height * TILE + TILE;
+    const { width, height } = getLevelDimensions();
+    const maxX = width * TILE + TILE;
+    const maxY = height * TILE + TILE;
     savedProjectiles.forEach((bullet) => {
       if (!bullet || typeof bullet.x !== 'number' || typeof bullet.y !== 'number') return;
       if (Math.abs(bullet.x) > maxX || Math.abs(bullet.y) > maxY) return;
@@ -274,7 +280,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
 
   async function bootstrap() {
     spriteSheet = await spriteSheetPromise;
-    level = game.loadLevel(levelId);
+    level = await game.loadLevel(levelId);
     savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
     placements = level.getActorPlacements();
     player = createPlayer(spriteSheet, placements);
@@ -373,7 +379,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
         });
       },
       render() {
-        drawGrid(ctx, canvas);
+        drawGrid(ctx, canvas, getLevelDimensions());
         level.drawLevel(ctx, camera, spriteSheet);
         level.drawLightSwitches(ctx, camera);
         drawPickups(ctx, camera, pickups, spriteSheet);
@@ -381,7 +387,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
         drawNpcs(ctx, camera, npcs);
         drawPlayer(ctx, camera, player, spriteSheet);
         level.drawLighting(ctx, camera);
-        drawCameraBounds();
+        drawCameraBounds(getLevelDimensions());
       },
     });
 
