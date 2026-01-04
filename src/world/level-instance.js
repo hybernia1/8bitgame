@@ -4,8 +4,11 @@
  */
 
 import { COLORS, TILE, WORLD } from '../core/constants.js';
+import { getTileDefinition, isBlockingTileId, TILE_IDS } from './tile-registry.js';
 
-const DOOR_TILE = 2;
+const DOOR_TILE = TILE_IDS.DOOR_CLOSED;
+const FLOOR_TILE = TILE_IDS.FLOOR_PLAIN;
+const DEFAULT_COLLISION_TILE = TILE_IDS.WALL_SOLID;
 
 function isOccupyingTile(entity, tx, ty) {
   if (!entity || typeof entity.x !== 'number' || typeof entity.y !== 'number') return false;
@@ -116,13 +119,15 @@ export class LevelInstance {
         }
       : null;
     this.gateIndex = this.gate ? this.gate.ty * this.mapWidth + this.gate.tx : null;
-    this.gateOpenTile = this.gate?.openTile ?? 0;
+    this.gateOpenTile = this.gate?.openTile ?? FLOOR_TILE;
     this.sealedTiles = this.gate?.sealedTiles ?? [];
     this.sealedTileIndices = this.gateIndex === null ? [] : this.sealedTiles.map(([tx, ty]) => ty * this.mapWidth + tx);
     this.sealedCollisionOriginals =
-      this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.collisionUnlocked[index] ?? 0);
+      this.gateIndex === null
+        ? []
+        : this.sealedTileIndices.map((index) => this.collisionUnlocked[index] ?? FLOOR_TILE);
     this.sealedDecorOriginals =
-      this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.decorUnlocked[index] ?? 0);
+      this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.decorUnlocked[index] ?? FLOOR_TILE);
 
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
@@ -183,7 +188,7 @@ export class LevelInstance {
     const tx = Math.floor(x / TILE);
     const ty = Math.floor(y / TILE);
     if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) {
-      return 1;
+      return DEFAULT_COLLISION_TILE;
     }
     return this.collisionTiles[ty * this.mapWidth + tx];
   }
@@ -196,7 +201,7 @@ export class LevelInstance {
       [nx - half, ny + half],
       [nx + half, ny + half],
     ];
-    return corners.every(([x, y]) => this.tileAt(x, y) === 0);
+    return corners.every(([x, y]) => !isBlockingTileId(this.tileAt(x, y)));
   }
 
   drawLevel(ctx, camera, spriteSheet) {
@@ -286,8 +291,8 @@ export class LevelInstance {
       this.decorTiles[this.gateIndex] = this.gateOpenTile;
     }
     this.sealedTileIndices.forEach((index, i) => {
-      this.collisionTiles[index] = this.sealedCollisionOriginals[i] ?? 0;
-      this.decorTiles[index] = this.sealedDecorOriginals[i] ?? 0;
+      this.collisionTiles[index] = this.sealedCollisionOriginals[i] ?? FLOOR_TILE;
+      this.decorTiles[index] = this.sealedDecorOriginals[i] ?? FLOOR_TILE;
     });
 
     const changed = [this.gateIndex, ...this.sealedTileIndices].filter((idx) => Number.isInteger(idx));
@@ -335,7 +340,7 @@ export class LevelInstance {
       const targets = Array.isArray(plate.targets) ? plate.targets : [];
       return {
         ...plate,
-        openTile: plate.openTile ?? 0,
+        openTile: plate.openTile ?? FLOOR_TILE,
         closedTile: plate.closedTile ?? DOOR_TILE,
         targetIndices: targets
           .map(({ tx, ty }) => ty * this.mapWidth + tx)
@@ -536,6 +541,8 @@ export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.heig
 }
 
 function drawTile(context, tile, x, y, spriteSheet) {
+  const def = getTileDefinition(tile);
+  const category = def.category ?? 'floor';
   const useSprites = Boolean(spriteSheet);
   const floorSprite = spriteSheet?.animations?.floor;
   const wallSprite = spriteSheet?.animations?.wall;
@@ -543,16 +550,27 @@ function drawTile(context, tile, x, y, spriteSheet) {
 
   context.clearRect(x, y, TILE, TILE);
 
-  if (tile === 1) {
+  if (category === 'wall') {
+    const innerInset = 2;
     context.fillStyle = COLORS.wall;
     context.fillRect(x, y, TILE, TILE);
-    context.fillStyle = COLORS.wallInner;
-    context.fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
+    context.fillStyle = def.transparent ? 'rgba(255, 255, 255, 0.08)' : COLORS.wallInner;
+    context.fillRect(x + innerInset, y + innerInset, TILE - innerInset * 2, TILE - innerInset * 2);
+
+    if (def.variant === 'wall_cracked') {
+      context.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(x + 4, y + TILE / 2);
+      context.lineTo(x + TILE / 2, y + TILE / 2 + 3);
+      context.lineTo(x + TILE - 5, y + TILE - 6);
+      context.stroke();
+    }
 
     if (wallSprite && useSprites) {
       wallSprite.render({ context, x, y, width: TILE, height: TILE });
     }
-  } else if (tile === DOOR_TILE) {
+  } else if (category === 'door') {
     context.fillStyle = COLORS.doorClosed;
     context.fillRect(x, y, TILE, TILE);
     context.strokeStyle = COLORS.doorAccent;
@@ -562,9 +580,10 @@ function drawTile(context, tile, x, y, spriteSheet) {
       doorSprite.render({ context, x, y, width: TILE, height: TILE });
     }
   } else {
-    context.fillStyle = COLORS.floor;
+    const brightFloor = def.variant === 'floor_lit';
+    context.fillStyle = brightFloor ? '#344159' : COLORS.floor;
     context.fillRect(x, y, TILE, TILE);
-    context.fillStyle = COLORS.floorGlow;
+    context.fillStyle = brightFloor ? '#6ef2a4' : COLORS.floorGlow;
     context.fillRect(x, y + TILE - 6, TILE, 6);
 
     if (floorSprite && useSprites) {

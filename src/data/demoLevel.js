@@ -1,9 +1,11 @@
 import { TILE } from '../core/constants.js';
 import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
+import { TILE_IDS } from '../world/tile-registry.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
 const { width: TARGET_WIDTH, height: TARGET_HEIGHT } = WIDESCREEN_DIMENSIONS;
+const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
 
 const baseSwitches = [
   {
@@ -52,39 +54,39 @@ const baseSwitches = [
 
 /** @type {import('./types.js').LevelConfig} */
 const baseMap = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
+  W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
+  W, F, FL, FL, FL, W, W, W, W, F, F, F, F, W, F, F, F, F, F, W,
+  W, F, F, F, F, WW, F, F, W, F, F, F, F, W, F, W, W, WC, F, W,
+  W, F, F, F, F, W, F, F, W, F, F, F, F, W, F, F, F, W, F, W,
+  W, F, F, F, F, W, F, F, W, FL, FL, F, F, WW, W, W, F, W, F, W,
+  W, F, F, F, F, W, F, F, W, F, F, F, F, FL, F, F, F, W, F, W,
+  W, F, F, F, F, W, F, F, WW, W, W, F, F, F, F, WC, F, W, F, W,
+  W, F, F, F, F, W, F, F, F, F, W, FL, FL, W, F, W, F, F, F, W,
+  W, F, F, F, F, W, FL, F, F, F, W, F, F, W, W, W, W, W, F, W,
+  W, F, F, F, F, W, F, F, F, F, F, F, F, W, D, W, W, W, F, W,
+  W, F, F, F, F, W, F, W, W, W, W, W, F, W, F, W, W, W, F, W,
+  W, F, F, F, F, F, F, F, F, F, F, W, F, F, F, W, W, WC, F, W,
+  W, F, F, F, F, W, W, W, W, W, F, W, F, F, F, W, F, F, F, W,
+  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
 
 const unlockedMap = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
+  W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
+  W, F, FL, FL, FL, W, W, W, W, F, F, F, F, W, F, F, F, F, F, W,
+  W, F, F, F, F, WW, F, F, W, F, F, F, F, W, F, W, W, WC, F, W,
+  W, F, F, F, F, W, F, F, W, F, F, F, F, W, F, F, F, W, F, W,
+  W, F, F, F, F, W, F, F, W, FL, FL, F, F, WW, W, W, F, W, F, W,
+  W, F, F, F, F, W, F, F, W, F, F, F, F, FL, F, F, F, W, F, W,
+  W, F, F, F, F, W, F, F, WW, W, W, F, F, F, F, WC, F, W, F, W,
+  W, F, F, F, F, W, F, F, F, F, W, FL, FL, W, F, W, F, W, F, W,
+  W, F, F, F, F, W, FL, F, F, F, W, F, F, W, F, W, F, W, F, W,
+  W, F, F, F, F, W, F, F, F, F, F, F, F, W, F, W, F, W, F, W,
+  W, F, F, F, F, W, F, W, W, W, W, W, F, W, F, W, F, W, F, W,
+  W, F, F, F, F, F, F, F, F, F, F, W, F, F, F, W, F, WC, F, W,
+  W, F, F, F, F, W, W, W, W, W, F, W, F, F, F, W, F, F, F, W,
+  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
 
 export const demoLevel = {
@@ -126,7 +128,7 @@ export const demoLevel = {
       tx: 14,
       ty: 10,
       locked: true,
-      openTile: 0,
+      openTile: F,
       nextLevelId: 'level-1',
       sealedTiles: [
         [14, 9],
