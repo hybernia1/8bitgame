@@ -1,4 +1,4 @@
-import { abandonedLaboratoryLevel, northernWingLevel } from '../data/levels/index.js';
+import { abandonedLaboratoryLevel, northernWingLevel, rooftopCorridorLevel } from '../data/levels/index.js';
 import { getDialoguesForLevel } from '../data/dialogues/index.js';
 import { getQuestsForLevel } from '../data/quests/index.js';
 import { facilitySample } from '../data/maps/facility-sample.js';
@@ -40,6 +40,7 @@ export function registerLevelModule(id, modulePath) {
 
 registerLevelConfig(defaultLevelId, defaultLevel);
 registerLevelConfig(northernWingLevel.meta?.id ?? 'level-2', northernWingLevel);
+registerLevelConfig(rooftopCorridorLevel.meta?.id ?? 'level-3', rooftopCorridorLevel);
 registerLevelConfig(facilitySample.meta?.id ?? 'tiled-facility', facilitySample);
 
 export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {

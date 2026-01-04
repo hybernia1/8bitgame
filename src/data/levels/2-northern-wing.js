@@ -14,7 +14,7 @@ const {
 } = TILE_IDS;
 
 const baseLayout = [
-  W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W,
+  W, W, W, WW, W, W, W, W, D, W, W, W, WW, W, W, W,
   W, F, FL, FL, FL, F, F, F, F, F, F, F, F, F, F, W,
   W, F, F, W, W, W, F, F, F, W, W, W, F, F, F, W,
   W, F, F, W, F, F, F, F, F, WC, F, F, F, F, F, W,
@@ -62,6 +62,21 @@ export const northernWingLevel = {
         closedTile: D,
       },
     ],
+    gate: {
+      id: 'north-gate',
+      tx: 8,
+      ty: 0,
+      locked: true,
+      openTile: DO,
+      nextLevelId: 'level-3',
+      promptLocked: 'Dveře drží maličký klíček z obojku.',
+      promptUnlocked: 'Dveře jsou odjistěné, projdi dál.',
+      speaker: 'systém dveří',
+      unlockLine: 'Zámek cvakne a dveře k severnímu východu povolí.',
+      consumeNote: 'Klíček zůstal v zámku, dál už ho nepotřebuješ.',
+      requiredItemId: 'collar-key',
+      consumeFlag: 'catCollarKeyUsed',
+    },
   },
   lighting: {
     litZones: [
@@ -92,6 +107,26 @@ export const northernWingLevel = {
         tx: 10,
         ty: 9,
         lights: [{ x: 6, y: 8, w: 6, h: 3 }],
+      },
+      {
+        id: 'atrium-switch',
+        name: 'Chodba ke skladu',
+        tx: 2,
+        ty: 7,
+        lights: [
+          { x: 1, y: 6, w: 6, h: 4 },
+          { x: 0, y: 9, w: 8, h: 2 },
+        ],
+      },
+      {
+        id: 'north-exit-switch',
+        name: 'Severní východ',
+        tx: 13,
+        ty: 1,
+        lights: [
+          { x: 6, y: 0, w: 5, h: 3 },
+          { x: 9, y: 1, w: 6, h: 3 },
+        ],
       },
     ],
   },
@@ -219,11 +254,52 @@ export const northernWingLevel = {
       ],
       note: 'note.videotape.found',
     },
+    'cat-collar-key': {
+      id: 'cat-collar-key',
+      actions: [
+        {
+          type: 'giveItem',
+          item: { id: 'collar-key', name: 'Klíček z obojku', icon: '🗝️', tint: '#f2d45c' },
+          blockedDialogue: 'Bez volného slotu si klíček z obojku nevezmeš.',
+          blockedNote: 'Uvolni slot, ať můžeš vzít klíček z kočičího obojku.',
+        },
+        { type: 'unlock', targetId: 'north-gate' },
+        { type: 'setFlag', flag: 'northGateUnlocked', value: true },
+        { type: 'setArea', name: 'Únikový koridor' },
+        { type: 'setLevelNumber', value: 3 },
+      ],
+      note: 'Našel jsi klíček na kočičím obojku. Severní dveře by se měly odjistit.',
+    },
   },
   quests: [],
   npcScripts: {
     cat: {
       defaultDialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
+      lines: [
+        {
+          id: 'cat-collar-key',
+          when: [{ flag: 'catCollarKeyFound', equals: false }],
+          dialogue:
+            'Podrbeš kočku a na obojku zahlédneš malý klíček. Kočka ti nastaví hlavu a klíček ti nechá.',
+          rewardId: 'cat-collar-key',
+          actions: [{ type: 'setFlag', flag: 'catCollarKeyFound', value: true }],
+          note: 'Klíček z kočičího obojku získán.',
+        },
+        {
+          id: 'cat-thanks',
+          when: [
+            { flag: 'catCollarKeyFound', equals: true },
+            { flag: 'catThanked', equals: false },
+          ],
+          dialogue:
+            'Díky za klíček, kočičko. Mám doma čtyři kočky – poznám, kdy někdo nosí poklad! Kočka ti olízne ruku a spokojeně přede.',
+          actions: [{ type: 'setFlag', flag: 'catThanked', value: true }],
+        },
+        {
+          id: 'cat-purr',
+          dialogue: 'Kočka se otře o tvoji nohu a olízne ti ruku.',
+        },
+      ],
     },
     'recording-cabinet': {
       defaultDialogue: 'Skříň je plná prázdných šuplíků.',

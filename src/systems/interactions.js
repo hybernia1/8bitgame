@@ -126,7 +126,7 @@ export function createInteractionSystem({
 
     const result = runActions(
       actions,
-      { inventory, renderInventory, level, game, hud, flags, persistentState, sessionState },
+      { inventory, renderInventory, level, game, hud, flags, persistentState, sessionState, state },
       reward,
     );
     if (result.success !== false && reward?.note && !result.note) {
@@ -201,10 +201,16 @@ export function createInteractionSystem({
     } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
       state.activeLine = gateState.unlockLine || 'dialogue.gateUnlocked';
-      if (!flags.gateKeyUsed) {
-        const consumed = inventory.consumeItem('gate-key', 1);
+      const requiredItemId = gateState.requiredItemId || 'gate-key';
+      const gateConsumeFlag = gateState.consumeFlag || 'gateKeyUsed';
+      if (!flags[gateConsumeFlag]) {
+        const consumed = inventory.consumeItem(requiredItemId, 1);
         if (consumed) {
-          flags.gateKeyUsed = true;
+          flags[gateConsumeFlag] = true;
+          if (persistentState) {
+            persistentState.flags ??= {};
+            persistentState.flags[gateConsumeFlag] = true;
+          }
           renderInventory(inventory);
           showNote(gateState.consumeNote || 'note.gate.consumeKey');
         }
