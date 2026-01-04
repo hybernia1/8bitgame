@@ -10,6 +10,9 @@ const DOOR_TILE = TILE_IDS.DOOR_CLOSED;
 const FLOOR_TILE = TILE_IDS.FLOOR_PLAIN;
 const DEFAULT_COLLISION_TILE = TILE_IDS.WALL_SOLID;
 const DEFAULT_DESTRUCTIBLE_HP = 1;
+const LIGHTING_SHADOW_COLOR = 'rgba(4, 6, 14, 0.78)';
+const LIGHTING_TINT_COLOR = 'rgba(255, 221, 164, 0.12)';
+const DEFAULT_LIGHT_COLOR = 'rgba(255, 214, 153, 0.32)';
 
 function toIndex(entry, width) {
   if (Number.isInteger(entry?.index)) return entry.index;
@@ -940,14 +943,23 @@ function renderTilesToContext(context, tiles, width, spriteSheet, indices) {
 function renderLightingToContext(context, lightTiles, width, height, tileEffects = null, indices) {
   if (!context) return;
   const fullRedraw = !indices || !indices.length || Boolean(tileEffects);
-  context.fillStyle = 'rgba(4, 6, 14, 0.78)';
 
   if (fullRedraw) {
     context.clearRect(0, 0, width * TILE, height * TILE);
+    context.fillStyle = LIGHTING_SHADOW_COLOR;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
         if (lightTiles[index]) continue;
+        context.fillRect(x * TILE, y * TILE, TILE, TILE);
+      }
+    }
+
+    context.fillStyle = LIGHTING_TINT_COLOR;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        if (!lightTiles[index]) continue;
         context.fillRect(x * TILE, y * TILE, TILE, TILE);
       }
     }
@@ -956,7 +968,7 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
       const x = index % width;
       const y = Math.floor(index / width);
       context.clearRect(x * TILE, y * TILE, TILE, TILE);
-      if (lightTiles[index]) return;
+      context.fillStyle = lightTiles[index] ? LIGHTING_TINT_COLOR : LIGHTING_SHADOW_COLOR;
       context.fillRect(x * TILE, y * TILE, TILE, TILE);
     });
   }
@@ -978,7 +990,7 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
 }
 
 function drawLightingEffect(context, effect, x, y) {
-  const color = effect.color ?? 'rgba(142, 214, 255, 0.34)';
+  const color = effect.color ?? DEFAULT_LIGHT_COLOR;
   const intensity = Math.min(1, Math.max(0, effect.intensity ?? 0.6));
   context.globalAlpha = intensity;
 
