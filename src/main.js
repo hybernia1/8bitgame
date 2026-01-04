@@ -43,11 +43,33 @@ const continueSubtitle = documentRoot?.querySelector('[data-continue-subtitle]')
 const continueDetail = documentRoot?.querySelector('[data-continue-detail]');
 const prologuePanel = documentRoot?.querySelector('.prologue-panel');
 const prologueContinueButton = documentRoot?.querySelector('[data-prologue-continue]');
+const prologueStepTitle = documentRoot?.querySelector('[data-prologue-step-title]');
+const prologueStepBody = documentRoot?.querySelector('[data-prologue-body]');
+const prologueProgress = documentRoot?.querySelector('[data-prologue-progress]');
 const levelSelectInput = documentRoot?.querySelector('[data-level-input]');
 const slotInput = documentRoot?.querySelector('[data-slot-input]');
 const menuSubtitle = documentRoot?.querySelector('.menu-subtitle');
 const saveSlotList = documentRoot?.querySelector('[data-save-slot-list]');
-const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
+const defaultMenuSubtitle = 'Zvol si novou misi, načti poslední save, nebo skoč na konkrétní level.';
+
+const PROLOGUE_STEPS = [
+  {
+    title: 'Návrat snu',
+    actionLabel: 'Probudit se',
+    body: [
+      'Zase se mi vrací sen o rodině – dětský smích, ruce, které už nedržím, a pak jen ticho prořezané sirénou.',
+      'Probudím se s hlavou těžkou od léků, které mají ty obrazy utlumit. Ale místo klidu cítím jen stín, který mě žene dál.',
+    ],
+  },
+  {
+    title: 'Telefonát ve tmě',
+    actionLabel: 'Vyrazit do vesnice',
+    body: [
+      'Telefon zazvoní uprostřed noci. Starostka Hana sotva skrývá paniku: během měsíce zmizely tři děti a policie tápe.',
+      '„Potřebuju tě,“ šeptá. „Všechny stopy vedou k opuštěné laboratoři na kopci.“ Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.',
+    ],
+  },
+];
 
 if (canvas) {
   canvas.width = BASE_CANVAS.width;
@@ -85,6 +107,8 @@ function getFullscreenElement(root = documentRoot) {
   return root.fullscreenElement || root.webkitFullscreenElement || null;
 }
 
+let fullscreenEnabled = false;
+
 function setFullscreenUi(active) {
   gameShell?.classList.toggle('is-fullscreen', active);
   if (fullscreenButton) {
@@ -95,6 +119,17 @@ function setFullscreenUi(active) {
       active ? 'Zavřít celou obrazovku' : 'Celá obrazovka',
     );
   }
+}
+
+function setFullscreenAvailability(enabled) {
+  fullscreenEnabled = Boolean(enabled);
+  if (!fullscreenButton) return;
+  fullscreenButton.disabled = !fullscreenEnabled;
+  fullscreenButton.setAttribute('aria-disabled', fullscreenEnabled ? 'false' : 'true');
+  fullscreenButton.classList.toggle('is-disabled', !fullscreenEnabled);
+  const label = fullscreenEnabled ? 'Celá obrazovka' : 'Celá obrazovka (dostupná až po startu)';
+  fullscreenButton.setAttribute('aria-label', label);
+  fullscreenButton.title = label;
 }
 
 function requestFullscreen() {
@@ -119,6 +154,7 @@ function exitFullscreen() {
 }
 
 function toggleFullscreen() {
+  if (!fullscreenEnabled) return;
   const active = Boolean(getFullscreenElement());
   if (active) {
     exitFullscreen();
@@ -134,6 +170,7 @@ if (documentRoot) {
 }
 fullscreenButton?.addEventListener('click', toggleFullscreen);
 setFullscreenUi(Boolean(getFullscreenElement()));
+setFullscreenAvailability(false);
 if (documentRoot) {
   syncCanvasCssDimensions();
   updateGameScale();
@@ -265,6 +302,7 @@ function showMenuPanel() {
   if (menuSubtitle) {
     menuSubtitle.textContent = defaultMenuSubtitle;
   }
+  setFullscreenAvailability(false);
   refreshSaveSlotList();
   hideContinuePanel();
   toggleVisibility(menuPanel, true);
@@ -329,9 +367,32 @@ function waitForContinuePrompt(content = {}) {
   });
 }
 
+function renderPrologueStep(index = 0) {
+  const step = PROLOGUE_STEPS[index] ?? PROLOGUE_STEPS[0];
+  const total = PROLOGUE_STEPS.length;
+  if (prologueStepTitle) {
+    prologueStepTitle.textContent = step?.title ?? 'Prolog';
+  }
+  if (prologueProgress) {
+    prologueProgress.textContent = `${Math.min(index + 1, total)} / ${total}`;
+  }
+  if (prologueContinueButton && step?.actionLabel) {
+    prologueContinueButton.textContent = step.actionLabel;
+  }
+  if (prologueStepBody) {
+    prologueStepBody.innerHTML = '';
+    (step?.body ?? []).forEach((paragraph) => {
+      const p = document.createElement('p');
+      p.textContent = paragraph;
+      prologueStepBody.appendChild(p);
+    });
+  }
+}
+
 function showProloguePanel() {
   hideAllPanels();
   toggleVisibility(prologuePanel, true);
+  setFullscreenAvailability(false);
   prologueContinueButton?.focus?.();
 }
 
@@ -341,6 +402,8 @@ function hideProloguePanel() {
 
 function waitForPrologueContinue() {
   if (!prologuePanel) return Promise.resolve();
+  let stepIndex = 0;
+  renderPrologueStep(stepIndex);
   showProloguePanel();
   return new Promise((resolve) => {
     const cleanup = () => {
@@ -351,12 +414,21 @@ function waitForPrologueContinue() {
       hideProloguePanel();
       resolve();
     };
-    const keyHandler = () => cleanup();
-    const clickHandler = () => cleanup();
+    const advance = (event) => {
+      if (event?.type === 'keydown' && event.key === 'Tab') return;
+      if (stepIndex < PROLOGUE_STEPS.length - 1) {
+        stepIndex += 1;
+        renderPrologueStep(stepIndex);
+        return;
+      }
+      cleanup();
+    };
+    const keyHandler = (event) => advance(event);
+    const clickHandler = (event) => advance(event);
     ['keydown', 'mousedown', 'touchstart'].forEach((event) =>
-      window.addEventListener(event, keyHandler, { once: true }),
+      window.addEventListener(event, keyHandler),
     );
-    prologueContinueButton?.addEventListener('click', clickHandler, { once: true });
+    prologueContinueButton?.addEventListener('click', clickHandler);
   });
 }
 
@@ -403,6 +475,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       technicianGaveKey: false,
       caretakerGaveApple: false,
       gateKeyUsed: false,
+      technicianLightOn: false,
+      technicianQuestioned: false,
     },
     quests: {},
     areaName: undefined,
@@ -914,6 +988,7 @@ let currentInGameSession = null;
 
 registerScene('menu', {
   async onEnter() {
+    setFullscreenAvailability(false);
     showMenuPanel();
   },
   onRender() {
@@ -924,6 +999,7 @@ registerScene('menu', {
 
 registerScene('prologue', {
   async onEnter({ params }) {
+    setFullscreenAvailability(false);
     const targetParams = {
       levelId: params?.levelId || DEFAULT_LEVEL_ID,
       slotId: params?.slotId || resolveSlotId(),
@@ -943,6 +1019,7 @@ registerScene('prologue', {
 
 registerScene('loading', {
   async onEnter({ params }) {
+    setFullscreenAvailability(true);
     const loadStarted = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const requestedSlot = params?.slotId || resolveSlotId();
     if (params?.freshStart) {
@@ -995,6 +1072,7 @@ registerScene('loading', {
 registerScene('inGame', {
   async onEnter() {
     hideAllPanels();
+    setFullscreenAvailability(true);
     currentInGameSession?.resume?.();
   },
   async onPause() {
@@ -1075,6 +1153,7 @@ pauseMenuButton?.addEventListener('click', () => showMenu());
 
 game.onReturnToMenu(() => {
   showMenu();
+  setFullscreenAvailability(false);
   refreshSaveSlotList();
 });
 game.onAdvanceToMap((nextLevelId) => {
