@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { abandonedLaboratoryLevel, northernWingLevel } from '../src/data/levels/index.js';
+import { abandonedLaboratoryLevel, northernWingLevel, rooftopCorridorLevel } from '../src/data/levels/index.js';
 import { facilitySample } from '../src/data/maps/facility-sample.js';
 
 function resolveTileLayers(config) {
@@ -57,6 +57,10 @@ test('abandoned laboratory level layers match declared dimensions', () => {
 
 test('northern wing level layers match declared dimensions', () => {
   validateLevelDimensions('northernWingLevel', northernWingLevel);
+});
+
+test('rooftop corridor level layers match declared dimensions', () => {
+  validateLevelDimensions('rooftopCorridorLevel', rooftopCorridorLevel);
 });
 
 test('tiled facility layers match declared dimensions', () => {

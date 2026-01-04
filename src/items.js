@@ -11,6 +11,12 @@ export const items = {
     icon: '📼',
     tint: '#f2d45c',
   },
+  collarKey: {
+    id: 'collar-key',
+    name: 'Klíček z obojku',
+    icon: '🗝️',
+    tint: '#f2d45c',
+  },
 };
 
 export const itemHandlers = {
