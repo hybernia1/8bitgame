@@ -1,4 +1,12 @@
-export const TILE = 32;
+// Rendered tile size in the world (pixels on canvas)
+export const TILE = 64;
+
+// Source texture size (pixels in the sprite sheet). Keep this at 32 if your
+// images stay 32x32 but you want to upscale them to the rendered TILE size.
+export const TEXTURE_TILE = 32;
+
+// Ratio between rendered tile pixels and source texture pixels.
+export const TEXTURE_SCALE = TILE / TEXTURE_TILE;
 
 export const WORLD = {
   width: 32,
