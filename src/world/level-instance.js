@@ -132,6 +132,7 @@ export class LevelInstance {
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
     this.pressureSwitches = [];
+    this.tileEffects = new Array(this.mapWidth * this.mapHeight).fill(null);
 
     this.applyLightingZones(this.lightingConfig.litZones ?? []);
     this.invalidateAllLayers();
@@ -145,6 +146,7 @@ export class LevelInstance {
       }
     }
 
+    this.rebuildTileEffects();
     this.initializePressureSwitches();
   }
 
@@ -160,6 +162,7 @@ export class LevelInstance {
     this.lightingDirtyAll = true;
     this.dirtyTileIndices = new Set();
     this.dirtyLightingIndices = new Set();
+    this.rebuildTileEffects();
   }
 
   applyLightingZones(zones = []) {
@@ -356,6 +359,14 @@ export class LevelInstance {
         this.decorTiles[index] = tileValue;
       });
     });
+
+    const changed = new Set();
+    this.pressureSwitches.forEach((plate) => {
+      plate.targetIndices?.forEach((index) => changed.add(index));
+    });
+    if (changed.size) {
+      this.rebuildTileEffects(Array.from(changed));
+    }
   }
 
   applyPressureSwitchState(plate) {
@@ -447,6 +458,9 @@ export class LevelInstance {
       if (!Number.isInteger(index)) return;
       if (index < 0 || index >= this.decorTiles.length) return;
       this.dirtyTileIndices.add(index);
+      if (this.updateTileEffect(index)) {
+        this.lightingDirtyAll = true;
+      }
     });
   }
 
@@ -456,6 +470,39 @@ export class LevelInstance {
       if (index < 0 || index >= this.lightTiles.length) return;
       this.dirtyLightingIndices.add(index);
     });
+  }
+
+  rebuildTileEffects(indices) {
+    const targets = indices && indices.length ? indices : this.tileEffects.map((_, index) => index);
+    let changed = false;
+    targets.forEach((index) => {
+      if (!Number.isInteger(index)) return;
+      if (index < 0 || index >= this.tileEffects.length) return;
+      const updated = this.computeTileEffect(index);
+      if (updated !== this.tileEffects[index]) {
+        this.tileEffects[index] = updated;
+        changed = true;
+      }
+    });
+    if (changed) {
+      this.lightingDirtyAll = true;
+    }
+  }
+
+  updateTileEffect(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.tileEffects.length) return false;
+    const updated = this.computeTileEffect(index);
+    if (updated === this.tileEffects[index]) return false;
+    this.tileEffects[index] = updated;
+    return true;
+  }
+
+  computeTileEffect(index) {
+    const decorTile = this.decorTiles[index];
+    const collisionTile = this.collisionTiles[index];
+    const def = getTileDefinition(Number.isInteger(decorTile) ? decorTile : collisionTile);
+    if (!def.lighting) return null;
+    return { ...def.lighting };
   }
 
   createLayerCanvas(tiles, spriteSheet) {
@@ -497,7 +544,7 @@ export class LevelInstance {
       canvas.width = this.mapWidth * TILE;
       canvas.height = this.mapHeight * TILE;
       const context = canvas.getContext('2d');
-      renderLightingToContext(context, this.lightTiles, this.mapWidth, this.mapHeight);
+      renderLightingToContext(context, this.lightTiles, this.mapWidth, this.mapHeight, this.tileEffects);
       this.lightingLayer = { canvas, context };
       this.lightingDirtyAll = false;
       this.dirtyLightingIndices.clear();
@@ -511,6 +558,7 @@ export class LevelInstance {
         this.lightTiles,
         this.mapWidth,
         this.mapHeight,
+        this.tileEffects,
         dirtyArray,
       );
       this.dirtyLightingIndices.clear();
@@ -543,52 +591,92 @@ export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.heig
 function drawTile(context, tile, x, y, spriteSheet) {
   const def = getTileDefinition(tile);
   const category = def.category ?? 'floor';
-  const useSprites = Boolean(spriteSheet);
-  const floorSprite = spriteSheet?.animations?.floor;
-  const wallSprite = spriteSheet?.animations?.wall;
-  const doorSprite = spriteSheet?.animations?.door;
+  const sprite = resolveSpriteForTile(def, spriteSheet);
+  const hasSprite = Boolean(sprite);
 
   context.clearRect(x, y, TILE, TILE);
 
+  context.save();
   if (category === 'wall') {
-    const innerInset = 2;
-    context.fillStyle = COLORS.wall;
-    context.fillRect(x, y, TILE, TILE);
-    context.fillStyle = def.transparent ? 'rgba(255, 255, 255, 0.08)' : COLORS.wallInner;
-    context.fillRect(x + innerInset, y + innerInset, TILE - innerInset * 2, TILE - innerInset * 2);
-
-    if (def.variant === 'wall_cracked') {
-      context.strokeStyle = 'rgba(0, 0, 0, 0.28)';
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(x + 4, y + TILE / 2);
-      context.lineTo(x + TILE / 2, y + TILE / 2 + 3);
-      context.lineTo(x + TILE - 5, y + TILE - 6);
-      context.stroke();
-    }
-
-    if (wallSprite && useSprites) {
-      wallSprite.render({ context, x, y, width: TILE, height: TILE });
-    }
+    drawWallTile(context, def, x, y);
   } else if (category === 'door') {
-    context.fillStyle = COLORS.doorClosed;
-    context.fillRect(x, y, TILE, TILE);
-    context.strokeStyle = COLORS.doorAccent;
-    context.strokeRect(x + 4, y + 4, TILE - 8, TILE - 8);
-
-    if (doorSprite && useSprites) {
-      doorSprite.render({ context, x, y, width: TILE, height: TILE });
-    }
+    drawDoorTile(context, def, x, y);
   } else {
-    const brightFloor = def.variant === 'floor_lit';
-    context.fillStyle = brightFloor ? '#344159' : COLORS.floor;
-    context.fillRect(x, y, TILE, TILE);
-    context.fillStyle = brightFloor ? '#6ef2a4' : COLORS.floorGlow;
-    context.fillRect(x, y + TILE - 6, TILE, 6);
+    drawFloorTile(context, def, x, y);
+  }
 
-    if (floorSprite && useSprites) {
-      floorSprite.render({ context, x, y, width: TILE, height: TILE });
-    }
+  if (hasSprite) {
+    sprite.render({ context, x, y, width: TILE, height: TILE });
+  }
+  context.restore();
+}
+
+function resolveSpriteForTile(definition, spriteSheet) {
+  if (!spriteSheet?.animations) return null;
+  const keys = [
+    definition.spriteKey,
+    definition.variant,
+    definition.category,
+    definition.category === 'floor' ? 'floor' : null,
+  ].filter(Boolean);
+
+  for (let i = 0; i < keys.length; i += 1) {
+    const animation = spriteSheet.animations[keys[i]];
+    if (animation) return animation;
+  }
+  return null;
+}
+
+function drawWallTile(context, def, x, y) {
+  const innerInset = 2;
+  context.fillStyle = COLORS.wall;
+  context.fillRect(x, y, TILE, TILE);
+  context.fillStyle = def.transparent ? 'rgba(255, 255, 255, 0.08)' : COLORS.wallInner;
+  context.fillRect(x + innerInset, y + innerInset, TILE - innerInset * 2, TILE - innerInset * 2);
+
+  if (def.variant?.includes('window')) {
+    context.fillStyle = 'rgba(110, 242, 164, 0.16)';
+    context.fillRect(x + 4, y + 4, TILE - 8, TILE - 10);
+    context.strokeStyle = 'rgba(110, 242, 164, 0.35)';
+    context.strokeRect(x + 3.5, y + 3.5, TILE - 7, TILE - 9);
+  }
+
+  if (def.variant?.includes('cracked')) {
+    context.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(x + 4, y + TILE / 2);
+    context.lineTo(x + TILE / 2, y + TILE / 2 + 3);
+    context.lineTo(x + TILE - 5, y + TILE - 6);
+    context.stroke();
+  }
+}
+
+function drawDoorTile(context, def, x, y) {
+  context.fillStyle = COLORS.doorClosed;
+  context.fillRect(x, y, TILE, TILE);
+  context.strokeStyle = COLORS.doorAccent;
+  context.strokeRect(x + 4, y + 4, TILE - 8, TILE - 8);
+
+  if (def.variant?.includes('open')) {
+    context.fillStyle = 'rgba(110, 242, 164, 0.14)';
+    context.fillRect(x + 6, y + 6, TILE - 12, TILE - 12);
+  }
+}
+
+function drawFloorTile(context, def, x, y) {
+  const brightFloor = def.variant === 'floor_lit';
+  const hasWindowLight = def.variant?.includes('window');
+  context.fillStyle = brightFloor ? '#344159' : COLORS.floor;
+  context.fillRect(x, y, TILE, TILE);
+  context.fillStyle = brightFloor ? '#6ef2a4' : COLORS.floorGlow;
+  context.fillRect(x, y + TILE - 6, TILE, 6);
+
+  if (hasWindowLight) {
+    context.fillStyle = 'rgba(110, 242, 164, 0.2)';
+    context.fillRect(x + 4, y + 4, TILE - 8, TILE - 8);
+    context.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    context.fillRect(x + TILE / 3, y + 6, TILE / 3, TILE / 3);
   }
 }
 
@@ -612,26 +700,81 @@ function renderTilesToContext(context, tiles, width, spriteSheet, indices) {
   });
 }
 
-function renderLightingToContext(context, lightTiles, width, height, indices) {
+function renderLightingToContext(context, lightTiles, width, height, tileEffects = null, indices) {
   if (!context) return;
+  const fullRedraw = !indices || !indices.length || Boolean(tileEffects);
   context.fillStyle = 'rgba(4, 6, 14, 0.78)';
-  if (!indices || !indices.length) {
+
+  if (fullRedraw) {
     context.clearRect(0, 0, width * TILE, height * TILE);
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
-        const lit = lightTiles[y * width + x];
-        if (lit) continue;
+        const index = y * width + x;
+        if (lightTiles[index]) continue;
         context.fillRect(x * TILE, y * TILE, TILE, TILE);
       }
     }
+  } else {
+    indices.forEach((index) => {
+      const x = index % width;
+      const y = Math.floor(index / width);
+      context.clearRect(x * TILE, y * TILE, TILE, TILE);
+      if (lightTiles[index]) return;
+      context.fillRect(x * TILE, y * TILE, TILE, TILE);
+    });
+  }
+
+  if (!tileEffects) return;
+
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+  context.globalAlpha = 1;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      const effect = tileEffects[index];
+      if (!effect) continue;
+      drawLightingEffect(context, effect, x * TILE, y * TILE);
+    }
+  }
+  context.restore();
+}
+
+function drawLightingEffect(context, effect, x, y) {
+  const color = effect.color ?? 'rgba(110, 242, 164, 0.3)';
+  const intensity = Math.min(1, Math.max(0, effect.intensity ?? 0.6));
+  context.globalAlpha = intensity;
+
+  if (effect.mask === 'windowCone') {
+    const length = (effect.length ?? 1.3) * TILE;
+    const spread = (effect.spread ?? 1) * TILE;
+    const offsetY = (effect.offsetY ?? 0) * TILE;
+    const startX = x + TILE / 2;
+    const startY = y + offsetY;
+    const halfSpread = spread / 2;
+
+    const gradient = context.createLinearGradient(startX, startY, startX, startY + length);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+    context.beginPath();
+    context.moveTo(startX, startY);
+    context.lineTo(startX - halfSpread, startY + length);
+    context.lineTo(startX + halfSpread, startY + length);
+    context.closePath();
+    context.fillStyle = gradient;
+    context.fill();
+    context.globalAlpha = 1;
     return;
   }
 
-  indices.forEach((index) => {
-    const x = index % width;
-    const y = Math.floor(index / width);
-    context.clearRect(x * TILE, y * TILE, TILE, TILE);
-    if (lightTiles[index]) return;
-    context.fillRect(x * TILE, y * TILE, TILE, TILE);
-  });
+  const radius = Math.max(TILE / 2, (effect.radius ?? 1.1) * TILE);
+  const centerX = x + TILE / 2;
+  const centerY = y + TILE / 2;
+  const gradient = context.createRadialGradient(centerX, centerY, TILE * 0.2, centerX, centerY, radius);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  context.fillStyle = gradient;
+  context.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+  context.globalAlpha = 1;
 }

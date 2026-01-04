@@ -1,7 +1,9 @@
 import { SpriteSheet } from '../kontra.mjs';
 import { TILE, TEXTURE_TILE, COLORS } from './constants.js';
 
-const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'cat', 'monster', 'prop'];
+const BASE_SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'cat', 'monster', 'prop'];
+const VARIANT_SPRITE_ORDER = ['floor.window_light', 'floor.lit', 'wall.cracked', 'wall.window', 'decor.console'];
+const SPRITE_ORDER = [...BASE_SPRITE_ORDER, ...VARIANT_SPRITE_ORDER];
 const TEXTURE_SEED = 1337;
 // Textures are loaded only from their canonical subfolders under assets/.
 const TEXTURE_PATHS = {
@@ -14,6 +16,14 @@ const TEXTURE_PATHS = {
   cat: ['assets/npc/cat.png', 'assets/npc/npc.png'],
   monster: 'assets/npc/monster.png',
   prop: 'assets/props/prop.png',
+};
+
+const VARIANT_TEXTURE_PATHS = {
+  'floor.window_light': ['assets/tiles/floor.window_light.png', 'assets/floor.window_light.png'],
+  'floor.lit': ['assets/tiles/floor.lit.png', 'assets/floor.lit.png'],
+  'wall.cracked': ['assets/walls/wall.cracked.png', 'assets/wall.cracked.png'],
+  'wall.window': ['assets/walls/wall.window.png', 'assets/wall.window.png'],
+  'decor.console': ['assets/props/console.png', 'assets/console.png'],
 };
 
 const SPRITE_ANIMATIONS = {
@@ -112,7 +122,7 @@ function loadTextureImage(path) {
 
 async function loadTextureMap() {
   const entries = await Promise.all(
-    Object.entries(TEXTURE_PATHS).map(async ([name, paths]) => {
+    [...Object.entries(TEXTURE_PATHS), ...Object.entries(VARIANT_TEXTURE_PATHS)].map(async ([name, paths]) => {
       const candidates = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
       const image = await candidates.reduce(async (foundPromise, candidate) => {
         const found = await foundPromise;
@@ -354,6 +364,51 @@ function drawProp(ctx, random) {
   ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 7);
 }
 
+function drawFloorWindowLight(ctx, random) {
+  drawFloor(ctx, random);
+  ctx.fillStyle = 'rgba(110, 242, 164, 0.22)';
+  ctx.fillRect(3, 3, TILE - 6, TILE - 6);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fillRect(TILE / 3, 6, TILE / 3, TILE / 3);
+}
+
+function drawFloorLit(ctx, random) {
+  drawFloor(ctx, random);
+  ctx.fillStyle = 'rgba(110, 242, 164, 0.18)';
+  ctx.fillRect(2, 2, TILE - 4, TILE - 4);
+  ctx.strokeStyle = 'rgba(110, 242, 164, 0.3)';
+  ctx.strokeRect(1.5, 1.5, TILE - 3, TILE - 3);
+}
+
+function drawWallCracked(ctx, random) {
+  drawWall(ctx, random);
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(4, TILE / 2);
+  ctx.lineTo(TILE / 2, TILE / 2 + 3);
+  ctx.lineTo(TILE - 5, TILE - 6);
+  ctx.stroke();
+}
+
+function drawWallWindow(ctx, random) {
+  drawWall(ctx, random);
+  ctx.fillStyle = 'rgba(110, 242, 164, 0.18)';
+  ctx.fillRect(4, 4, TILE - 8, TILE - 10);
+  ctx.strokeStyle = 'rgba(110, 242, 164, 0.35)';
+  ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 9);
+}
+
+function drawConsole(ctx, random) {
+  drawProp(ctx, random);
+  ctx.fillStyle = '#22283a';
+  ctx.fillRect(6, 6, TILE - 12, TILE - 12);
+  ctx.fillStyle = '#6ef2a4';
+  ctx.fillRect(8, 8, TILE - 16, 6);
+  ctx.fillStyle = '#f2d45c';
+  ctx.fillRect(8, TILE - 12, TILE / 2 - 8, 6);
+}
+
 function getAnimationDefs(name, frameCount) {
   const definitions = SPRITE_ANIMATIONS[name];
   if (!definitions) return null;
@@ -362,7 +417,11 @@ function getAnimationDefs(name, frameCount) {
 
 const DRAWERS = {
   floor: drawFloor,
+  'floor.window_light': drawFloorWindowLight,
+  'floor.lit': drawFloorLit,
   wall: drawWall,
+  'wall.cracked': drawWallCracked,
+  'wall.window': drawWallWindow,
   door: drawDoor,
   player: drawPlayer,
   pickup: drawPickup,
@@ -370,6 +429,7 @@ const DRAWERS = {
   cat: drawCat,
   monster: drawMonster,
   prop: drawProp,
+  'decor.console': drawConsole,
 };
 
 export async function loadSpriteSheet() {
@@ -413,7 +473,11 @@ export async function loadSpriteSheet() {
 
 export const SPRITE_NAMES = {
   floor: 'floor',
+  floorWindowLight: 'floor.window_light',
+  floorLit: 'floor.lit',
   wall: 'wall',
+  wallCracked: 'wall.cracked',
+  wallWindow: 'wall.window',
   door: 'door',
   player: 'player',
   pickup: 'pickup',
@@ -421,4 +485,5 @@ export const SPRITE_NAMES = {
   cat: 'cat',
   monster: 'monster',
   prop: 'prop',
+  decorConsole: 'decor.console',
 };

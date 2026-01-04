@@ -109,8 +109,10 @@
  * @property {'wall'|'floor'|'door'|'decor'} category
  * @property {string} id Stable identifier, e.g. "wall_window".
  * @property {string} [variant] Optional sprite/variant label for rendering.
+ * @property {string} [spriteKey] Optional animation key used to pick a sprite-sheet frame.
  * @property {boolean} [blocksMovement] Whether entities can move through this tile.
  * @property {boolean} [transparent] Whether the tile should be treated as see-through (e.g. window).
+ * @property {{ mask?: 'glow'|'windowCone', color?: string, intensity?: number, radius?: number, length?: number, spread?: number, offsetY?: number }} [lighting]
  */
 
 /**
