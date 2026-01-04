@@ -3,15 +3,9 @@
  * @typedef {import('../data/types.js').TileLayers} TileLayers
  */
 
-import { COLORS, TILE, TILE_SCALE, WORLD } from '../core/constants.js';
+import { COLORS, TILE, WORLD } from '../core/constants.js';
 
 const DOOR_TILE = 2;
-const SCALE = TILE_SCALE;
-const SWITCH_HALF = 5 * SCALE;
-const SWITCH_OUTER_HALF = 6 * SCALE;
-const PRESSURE_MARGIN = 6 * SCALE;
-const PRESSURE_INNER_MARGIN = 12 * SCALE;
-const PRESSURE_LINE_WIDTH = 2 * SCALE;
 
 function isOccupyingTile(entity, tx, ty) {
   if (!entity || typeof entity.x !== 'number' || typeof entity.y !== 'number') return false;
@@ -223,14 +217,9 @@ export class LevelInstance {
       const x = sw.tx * TILE - camera.x;
       const y = sw.ty * TILE - camera.y;
       ctx.fillStyle = sw.activated ? '#6ef2a4' : '#f2d45c';
-      ctx.fillRect(x + TILE / 2 - SWITCH_HALF, y + TILE / 2 - SWITCH_HALF, SWITCH_HALF * 2, SWITCH_HALF * 2);
+      ctx.fillRect(x + TILE / 2 - 5, y + TILE / 2 - 5, 10, 10);
       ctx.strokeStyle = sw.activated ? '#1d5c3b' : '#7a5a1d';
-      ctx.strokeRect(
-        x + TILE / 2 - SWITCH_OUTER_HALF,
-        y + TILE / 2 - SWITCH_OUTER_HALF,
-        SWITCH_OUTER_HALF * 2,
-        SWITCH_OUTER_HALF * 2,
-      );
+      ctx.strokeRect(x + TILE / 2 - 6, y + TILE / 2 - 6, 12, 12);
     });
     ctx.restore();
   }
@@ -242,19 +231,17 @@ export class LevelInstance {
       const px = plate.tx * TILE - camera.x;
       const py = plate.ty * TILE - camera.y;
       const active = plate.activated;
+      const margin = 6;
+      const innerMargin = 12;
+
       ctx.fillStyle = active ? 'rgba(110, 242, 164, 0.14)' : 'rgba(242, 212, 92, 0.12)';
       ctx.strokeStyle = active ? '#6ef2a4' : COLORS.doorAccent;
-      ctx.lineWidth = PRESSURE_LINE_WIDTH;
-      ctx.fillRect(px + PRESSURE_MARGIN, py + PRESSURE_MARGIN, TILE - PRESSURE_MARGIN * 2, TILE - PRESSURE_MARGIN * 2);
-      ctx.strokeRect(px + PRESSURE_MARGIN, py + PRESSURE_MARGIN, TILE - PRESSURE_MARGIN * 2, TILE - PRESSURE_MARGIN * 2);
+      ctx.lineWidth = 2;
+      ctx.fillRect(px + margin, py + margin, TILE - margin * 2, TILE - margin * 2);
+      ctx.strokeRect(px + margin, py + margin, TILE - margin * 2, TILE - margin * 2);
 
       ctx.fillStyle = active ? '#6ef2a4' : '#f28f5c';
-      ctx.fillRect(
-        px + PRESSURE_INNER_MARGIN,
-        py + PRESSURE_INNER_MARGIN,
-        TILE - PRESSURE_INNER_MARGIN * 2,
-        TILE - PRESSURE_INNER_MARGIN * 2,
-      );
+      ctx.fillRect(px + innerMargin, py + innerMargin, TILE - innerMargin * 2, TILE - innerMargin * 2);
     });
     ctx.restore();
   }
@@ -553,9 +540,6 @@ function drawTile(context, tile, x, y, spriteSheet) {
   const floorSprite = spriteSheet?.animations?.floor;
   const wallSprite = spriteSheet?.animations?.wall;
   const doorSprite = spriteSheet?.animations?.door;
-  const inset = 2 * SCALE;
-  const floorGlow = 6 * SCALE;
-  const doorInset = 4 * SCALE;
 
   context.clearRect(x, y, TILE, TILE);
 
@@ -563,7 +547,7 @@ function drawTile(context, tile, x, y, spriteSheet) {
     context.fillStyle = COLORS.wall;
     context.fillRect(x, y, TILE, TILE);
     context.fillStyle = COLORS.wallInner;
-    context.fillRect(x + inset, y + inset, TILE - inset * 2, TILE - inset * 2);
+    context.fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
 
     if (wallSprite && useSprites) {
       wallSprite.render({ context, x, y, width: TILE, height: TILE });
@@ -572,7 +556,7 @@ function drawTile(context, tile, x, y, spriteSheet) {
     context.fillStyle = COLORS.doorClosed;
     context.fillRect(x, y, TILE, TILE);
     context.strokeStyle = COLORS.doorAccent;
-    context.strokeRect(x + doorInset, y + doorInset, TILE - doorInset * 2, TILE - doorInset * 2);
+    context.strokeRect(x + 4, y + 4, TILE - 8, TILE - 8);
 
     if (doorSprite && useSprites) {
       doorSprite.render({ context, x, y, width: TILE, height: TILE });
@@ -581,7 +565,7 @@ function drawTile(context, tile, x, y, spriteSheet) {
     context.fillStyle = COLORS.floor;
     context.fillRect(x, y, TILE, TILE);
     context.fillStyle = COLORS.floorGlow;
-    context.fillRect(x, y + TILE - floorGlow, TILE, floorGlow);
+    context.fillRect(x, y + TILE - 6, TILE, 6);
 
     if (floorSprite && useSprites) {
       floorSprite.render({ context, x, y, width: TILE, height: TILE });

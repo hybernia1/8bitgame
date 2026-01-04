@@ -1,9 +1,4 @@
-import { TILE, TILE_SCALE } from '../core/constants.js';
-
-const SCALE = TILE_SCALE;
-const PICKUP_OFFSET = 10 * SCALE;
-const PICKUP_RADIUS = 12 * SCALE;
-const SPRITE_PADDING = 2 * SCALE;
+import { TILE } from '../core/constants.js';
 
 function centerOffset() {
   return TILE / 2;
@@ -31,20 +26,14 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
     ctx.save();
     ctx.translate(px, py);
     if (pickupSprite) {
-      pickupSprite.render({
-        context: ctx,
-        x: -TILE / 2 + SPRITE_PADDING,
-        y: -TILE / 2 + SPRITE_PADDING,
-        width: TILE - SPRITE_PADDING * 2,
-        height: TILE - SPRITE_PADDING * 2,
-      });
+      pickupSprite.render({ context: ctx, x: -TILE / 2 + 2, y: -TILE / 2 + 2, width: TILE - 4, height: TILE - 4 });
     }
     ctx.fillStyle = pickup.tint || '#f2d45c';
     ctx.beginPath();
-    ctx.moveTo(0, -PICKUP_OFFSET);
-    ctx.lineTo(PICKUP_OFFSET, 0);
-    ctx.lineTo(0, PICKUP_OFFSET);
-    ctx.lineTo(-PICKUP_OFFSET, 0);
+    ctx.moveTo(0, -10);
+    ctx.lineTo(10, 0);
+    ctx.lineTo(0, 10);
+    ctx.lineTo(-10, 0);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#0b0b10';
@@ -63,7 +52,7 @@ export function collectNearbyPickups(player, pickups, inventory) {
     const dx = pickup.x - player.x;
     const dy = pickup.y - player.y;
     const distance = Math.hypot(dx, dy);
-    if (distance <= player.size / 2 + PICKUP_RADIUS) {
+    if (distance <= player.size / 2 + 12) {
       const stored = inventory.addItem({
         id: pickup.id,
         name: pickup.name,

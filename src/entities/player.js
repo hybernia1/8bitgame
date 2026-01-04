@@ -1,14 +1,7 @@
 import { keyPressed } from '../kontra.mjs';
-import { COLORS, TILE_SCALE } from '../core/constants.js';
+import { COLORS } from '../core/constants.js';
 import { attemptPush, findBlockingPushable, findNearbyPushable } from './pushables.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
-
-const SCALE = TILE_SCALE;
-const PLAYER_BASE_SPEED = 120;
-const PLAYER_BASE_SIZE = 22;
-const GRAB_PADDING = 6;
-const OUTLINE = 1;
-const FOOT_HEIGHT = 4;
 
 function getInputAxis() {
   let dx = 0;
@@ -31,8 +24,8 @@ export function createPlayer(spriteSheet, placements = {}) {
   return {
     x: playerStart.x,
     y: playerStart.y,
-    speed: PLAYER_BASE_SPEED * SCALE,
-    size: PLAYER_BASE_SIZE * SCALE,
+    speed: 120,
+    size: 22,
     color: '#5cf2cc',
     lastDirection: { x: 1, y: 0 },
     facing,
@@ -53,7 +46,7 @@ export function updatePlayer(player, dt, collision = {}) {
   const actionJustPressed = actionPressed && !player.interactPressedLastFrame;
   const len = Math.hypot(dx, dy) || 1;
   const direction = resolveDirection(dx, dy, player.facing);
-  const grabPadding = GRAB_PADDING * SCALE;
+  const grabPadding = 6;
 
   const releaseGrab = () => {
     player.grabbedPushableId = null;
@@ -151,11 +144,11 @@ export function drawPlayer(ctx, camera, player, spriteSheet) {
 
   if (!hasSprite) {
     ctx.fillStyle = COLORS.gridBorder;
-    ctx.fillRect(px - half - OUTLINE * SCALE, py - half - OUTLINE * SCALE, player.size + OUTLINE * SCALE * 2, player.size + OUTLINE * SCALE * 2);
+    ctx.fillRect(px - half - 1, py - half - 1, player.size + 2, player.size + 2);
     ctx.fillStyle = player.color;
     ctx.fillRect(px - half, py - half, player.size, player.size);
     ctx.fillStyle = '#183e35';
-    ctx.fillRect(px - half, py + half - FOOT_HEIGHT * SCALE, player.size, FOOT_HEIGHT * SCALE);
+    ctx.fillRect(px - half, py + half - 4, player.size, 4);
   }
 
   if (player.currentAnimation) {

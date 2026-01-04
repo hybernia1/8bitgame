@@ -1,6 +1,4 @@
-export const TILE_SCALE = 2;
-export const BASE_TILE = 32;
-export const TILE = BASE_TILE * TILE_SCALE;
+export const TILE = 32;
 
 export const WORLD = {
   width: 32,

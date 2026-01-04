@@ -38,7 +38,7 @@ body {
   padding: 18px;
   display: flex;
   position: relative;
-  width: min(2240px, 100%);
+  width: min(1120px, 100%);
   justify-content: center;
 }
 
