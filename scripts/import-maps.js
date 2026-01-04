@@ -38,10 +38,8 @@ function validateDimensions(name, config) {
   const expectedSize = width * height;
   const layers = config.tileLayers ?? {};
 
-  const collision = layers.collision ?? config.map ?? [];
+  const collision = layers.collision ?? [];
   const decor = layers.decor ?? collision;
-  const collisionUnlocked = layers.collisionUnlocked ?? layers.collision ?? config.unlockedMap ?? collision;
-  const decorUnlocked = layers.decorUnlocked ?? decor ?? collisionUnlocked;
 
   if (!expectedSize || !Number.isInteger(expectedSize)) {
     throw new Error(`${name}: map is missing width/height metadata`);
@@ -50,13 +48,25 @@ function validateDimensions(name, config) {
   const checks = [
     ['collision', collision],
     ['decor', decor],
-    ['collisionUnlocked', collisionUnlocked],
-    ['decorUnlocked', decorUnlocked],
   ];
 
   checks.forEach(([label, values]) => {
     if (!Array.isArray(values) || values.length !== expectedSize) {
       throw new Error(`${name}: ${label} has ${values.length} entries, expected ${expectedSize}`);
+    }
+  });
+
+  (layers.unlockMask ?? []).forEach((entry, idx) => {
+    const index = Number.isInteger(entry?.index)
+      ? entry.index
+      : Number.isInteger(entry?.tx) && Number.isInteger(entry?.ty)
+        ? entry.ty * width + entry.tx
+        : null;
+    if (!Number.isInteger(index)) {
+      throw new Error(`${name}: unlockMask entry #${idx} is missing a valid index/tx/ty`);
+    }
+    if (index < 0 || index >= expectedSize) {
+      throw new Error(`${name}: unlockMask entry #${idx} points outside the map (index ${index})`);
     }
   });
 }

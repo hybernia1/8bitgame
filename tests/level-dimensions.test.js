@@ -7,14 +7,12 @@ import { facilitySample } from '../src/data/maps/facility-sample.js';
 function resolveTileLayers(config) {
   const layers = config.tileLayers ?? {};
   const fallback = config.map ?? [];
-  const fallbackUnlocked = config.unlockedMap ?? fallback;
   const collision = layers.collision ?? fallback;
   const decor = layers.decor ?? collision;
   return {
     collision: [...collision],
     decor: [...decor],
-    collisionUnlocked: [...(layers.collisionUnlocked ?? fallbackUnlocked ?? collision)],
-    decorUnlocked: [...(layers.decorUnlocked ?? decor ?? fallbackUnlocked)],
+    unlockMask: layers.unlockMask ?? config.unlockMask ?? [],
   };
 }
 
@@ -34,21 +32,17 @@ function validateLevelDimensions(name, config) {
     expectedSize,
     `${name}: collision layer length ${layers.collision.length} does not match ${expectedSize}`,
   );
-  assert.equal(
-    layers.decor.length,
-    expectedSize,
-    `${name}: decor layer length ${layers.decor.length} does not match ${expectedSize}`,
-  );
-  assert.equal(
-    layers.collisionUnlocked.length,
-    expectedSize,
-    `${name}: collisionUnlocked layer length ${layers.collisionUnlocked.length} does not match ${expectedSize}`,
-  );
-  assert.equal(
-    layers.decorUnlocked.length,
-    expectedSize,
-    `${name}: decorUnlocked layer length ${layers.decorUnlocked.length} does not match ${expectedSize}`,
-  );
+  assert.equal(layers.decor.length, expectedSize, `${name}: decor layer length ${layers.decor.length} does not match ${expectedSize}`);
+
+  layers.unlockMask.forEach((entry, idx) => {
+    const index = Number.isInteger(entry?.index)
+      ? entry.index
+      : Number.isInteger(entry?.tx) && Number.isInteger(entry?.ty)
+        ? entry.ty * width + entry.tx
+        : null;
+    assert.ok(Number.isInteger(index), `${name}: unlockMask entry #${idx} is missing index/tx/ty`);
+    assert.ok(index >= 0 && index < expectedSize, `${name}: unlockMask entry #${idx} points outside the map`);
+  });
 }
 
 test('abandoned laboratory level layers match declared dimensions', () => {

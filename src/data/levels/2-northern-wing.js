@@ -46,9 +46,7 @@ export const northernWingLevel = {
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
     collision: [...layoutWithVcrRoom],
-    collisionUnlocked: [...layoutWithVcrRoom],
     decor: [...layoutWithVcrRoom],
-    decorUnlocked: [...layoutWithVcrRoom],
   },
   interactables: {
     pressureSwitches: [

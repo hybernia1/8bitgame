@@ -21,3 +21,13 @@ Then visit `http://localhost:8000`.
 
 ## Sprites
 The game ships with procedurally generated placeholder sprites that cover the floor, walls, player, pickups, NPCs, monsters, and props. External sprite sheets are not currently loaded; all textures come from the built-in generator to keep the demo lightweight.
+
+## Importing levels from Tiled
+Levels can be authored in [Tiled](https://www.mapeditor.org/) and converted straight into the game data:
+
+1. Create your map in Tiled with `collision` and `decor` tile layers (the importer defaults are in `src/data/tiled-presets.js`).
+2. Export the map as a `.tmj` file into `assets/maps/`.
+3. Run `npm run import` (alias for `npm run import:maps`) to generate matching modules under `src/data/maps/` and update the index.
+4. Register the exported level in `src/world/level-data.js` via `registerLevelConfig` (for eager imports) or `registerLevelModule` (for lazy loading).
+
+To define tiles that change once a gate unlocks without duplicating whole layers, use `tileLayers.unlockMask` with `{ tx, ty, tile }` entries instead of maintaining separate unlocked maps.
