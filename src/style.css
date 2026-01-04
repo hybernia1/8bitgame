@@ -312,11 +312,6 @@ canvas {
   transition: transform 0.08s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
-.menu-button.small {
-  padding: 8px 10px;
-  font-size: 10px;
-}
-
 .menu-button:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
@@ -583,93 +578,6 @@ canvas {
 
 .play-column {
   min-width: 0;
-}
-
-.editor-overlay {
-  grid-template-rows: auto auto 1fr auto auto;
-  gap: 10px;
-  z-index: 8;
-}
-
-.editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.editor-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  align-items: center;
-}
-
-.editor-field {
-  display: grid;
-  gap: 6px;
-  font-size: 11px;
-}
-
-.editor-field select,
-.editor-field textarea {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #2c2c38;
-  border-radius: 8px;
-  color: var(--text);
-  padding: 8px 10px;
-  font-family: inherit;
-}
-
-.editor-field textarea {
-  font-family: "JetBrains Mono", "Courier New", monospace;
-  min-height: 150px;
-  resize: vertical;
-}
-
-.editor-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.editor-tile-field select {
-  min-width: 210px;
-}
-
-.editor-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 16px;
-}
-
-.editor-toggle input {
-  accent-color: var(--accent);
-}
-
-.editor-canvas-shell {
-  background: rgba(6, 8, 12, 0.7);
-  border: 1px solid #2a2a34;
-  border-radius: 12px;
-  padding: 10px;
-  overflow: auto;
-  max-height: 55vh;
-}
-
-.editor-canvas-shell canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  image-rendering: pixelated;
-  border-radius: 8px;
-}
-
-.editor-io span {
-  opacity: 0.8;
 }
 
 .sr-only {
