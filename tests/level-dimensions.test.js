@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { demoLevel } from '../src/data/demoLevel.js';
+import { facilitySample } from '../src/data/maps/facility-sample.js';
 import { levelOne } from '../src/data/level1.js';
 
 function resolveTileLayers(config) {
@@ -57,4 +58,8 @@ test('demo level layers match declared dimensions', () => {
 
 test('level one layers match declared dimensions', () => {
   validateLevelDimensions('levelOne', levelOne);
+});
+
+test('tiled facility layers match declared dimensions', () => {
+  validateLevelDimensions('facilitySample', facilitySample);
 });

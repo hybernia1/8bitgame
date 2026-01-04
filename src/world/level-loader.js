@@ -4,7 +4,8 @@
  */
 
 import { TILE } from '../core/constants.js';
-import { TILE_IDS } from './tile-registry.js';
+import { DEFAULT_TILED_IMPORT_OPTIONS } from '../data/tiled-presets.js';
+import { TILE_DEFINITIONS, TILE_IDS } from './tile-registry.js';
 
 const DEFAULT_LAYER_NAMES = {
   collision: 'collision',
@@ -14,9 +15,102 @@ const DEFAULT_LAYER_NAMES = {
 };
 
 const { FLOOR_PLAIN: FLOOR_TILE, WALL_SOLID: WALL_TILE, DOOR_CLOSED: DOOR_TILE } = TILE_IDS;
+const DEFAULT_PROPERTY_KEYS = DEFAULT_TILED_IMPORT_OPTIONS.propertyKeys ?? [];
+const DEFAULT_TILESET_PRESETS = DEFAULT_TILED_IMPORT_OPTIONS.tilesetDefaults ?? [];
+const DEFAULT_VARIANT_MAP = DEFAULT_TILED_IMPORT_OPTIONS.variantMap ?? {};
+const DEFAULT_CATEGORY_DEFAULTS = DEFAULT_TILED_IMPORT_OPTIONS.categoryDefaults ?? {};
 
 function isTiledMap(payload) {
   return Boolean(payload && payload.type === 'map' && Array.isArray(payload.layers));
+}
+
+function normalizeVariantToken(token) {
+  if (typeof token === 'number') return token;
+  const numeric = Number.parseInt(token, 10);
+  if (!Number.isNaN(numeric)) return numeric;
+  return String(token).toLowerCase();
+}
+
+function buildVariantLookup(custom = {}) {
+  const entries = new Map();
+  Object.values(TILE_DEFINITIONS).forEach((def) => {
+    if (def.variant) entries.set(def.variant.toLowerCase(), def.tileId);
+    if (def.id) entries.set(def.id.toLowerCase(), def.tileId);
+    entries.set(def.tileId, def.tileId);
+  });
+
+  Object.entries(custom).forEach(([token, value]) => {
+    entries.set(normalizeVariantToken(token), normalizeVariantToken(value));
+  });
+
+  return entries;
+}
+
+function buildCategoryDefaults(categoryDefaults, variantLookup) {
+  const defaults = new Map();
+  Object.entries(categoryDefaults ?? {}).forEach(([category, variant]) => {
+    const normalized = normalizeVariantToken(variant);
+    const tileId = typeof normalized === 'number' ? normalized : variantLookup.get(normalized);
+    if (tileId != null) defaults.set(category.toLowerCase(), tileId);
+  });
+  if (!defaults.has('wall')) defaults.set('wall', variantLookup.get('wall') ?? WALL_TILE);
+  if (!defaults.has('floor')) defaults.set('floor', variantLookup.get('floor') ?? FLOOR_TILE);
+  if (!defaults.has('door')) defaults.set('door', variantLookup.get('door') ?? DOOR_TILE);
+  if (!defaults.has('decor')) defaults.set('decor', variantLookup.get('decor') ?? variantLookup.get('decor_console') ?? FLOOR_TILE);
+  return defaults;
+}
+
+function resolveTilesetMatch(tileset, preset) {
+  if (!preset) return false;
+  const name = tileset.name?.toLowerCase() ?? '';
+  const source = tileset.source?.toLowerCase() ?? '';
+  if (preset.name && name.includes(preset.name.toLowerCase())) return true;
+  if (preset.source && source.includes(preset.source.toLowerCase())) return true;
+  if (typeof preset.match === 'function') return Boolean(preset.match(tileset));
+  return false;
+}
+
+function buildTilesetDefaults(tilesets, presets = []) {
+  const defaults = new Map();
+
+  tilesets.forEach((tileset) => {
+    const preset = presets.find((candidate) => resolveTilesetMatch(tileset, candidate));
+    const properties = readProperties(tileset.properties);
+    const merged = {
+      ...preset,
+      ...properties,
+    };
+    if (merged.category) merged.category = `${merged.category}`.toLowerCase();
+    if (merged.variant) merged.variant = `${merged.variant}`.toLowerCase();
+    defaults.set(tileset, merged);
+  });
+
+  return defaults;
+}
+
+function resolveTileFromProperties(props = {}, { propertyKeys, variantLookup, categoryDefaults }) {
+  const keys = propertyKeys ?? DEFAULT_PROPERTY_KEYS;
+  for (let i = 0; i < keys.length; i += 1) {
+    const value = props[keys[i]];
+    if (value == null) continue;
+    const normalized = normalizeVariantToken(value);
+    const resolved = typeof normalized === 'number' ? normalized : variantLookup.get(normalized);
+    if (resolved != null) return resolved;
+  }
+
+  const category = props.category ?? props.type;
+  if (category) {
+    const resolvedCategory = categoryDefaults.get(String(category).toLowerCase());
+    if (resolvedCategory != null) return resolvedCategory;
+  }
+
+  const variant = props.variant ?? props.material;
+  if (variant) {
+    const resolvedVariant = variantLookup.get(normalizeVariantToken(variant));
+    if (resolvedVariant != null) return resolvedVariant;
+  }
+
+  return null;
 }
 
 function readProperties(properties = []) {
@@ -67,26 +161,62 @@ function normalizeTileId(gid, tilesets = []) {
   return gid - tileset.firstgid;
 }
 
-function normalizeTileValue(gid, { tilesets, tileMappings, floorIds, wallIds, doorIds }) {
-  if (!gid) return FLOOR_TILE;
-  const mapped = tileMappings.get(gid);
-  if (mapped != null) return mapped;
-
-  const normalizedId = normalizeTileId(gid, tilesets);
-  const normalizedMapped = tileMappings.get(normalizedId);
-  if (normalizedMapped != null) return normalizedMapped;
-
-  if (floorIds.has(gid) || floorIds.has(normalizedId)) return FLOOR_TILE;
-  if (doorIds.has(gid) || doorIds.has(normalizedId)) return DOOR_TILE;
-  if (wallIds.size === 0) return WALL_TILE;
-  if (wallIds.has(gid) || wallIds.has(normalizedId)) return WALL_TILE;
-  return FLOOR_TILE;
-}
-
 function buildTileMappingMap(mapping = {}) {
   return new Map(
     Object.entries(mapping).map(([key, value]) => [Number.parseInt(key, 10) || key, Number.parseInt(value, 10) || value]),
   );
+}
+
+function createTileResolver(mapData, options = {}) {
+  const tilesets = mapData.tilesets ?? [];
+  const variantLookup = buildVariantLookup(options.variantMap ?? DEFAULT_VARIANT_MAP);
+  const categoryDefaults = buildCategoryDefaults(options.categoryDefaults ?? DEFAULT_CATEGORY_DEFAULTS, variantLookup);
+  const tilesetDefaults = buildTilesetDefaults(tilesets, options.tilesetDefaults ?? DEFAULT_TILESET_PRESETS);
+  const tileMappings = buildTileMappingMap(options.tileMappings ?? {});
+  const floorIds = new Set(options.floorTileIds ?? [categoryDefaults.get('floor') ?? FLOOR_TILE]);
+  const wallIds = new Set(options.wallTileIds ?? []);
+  const doorIds = new Set(options.doorTileIds ?? [categoryDefaults.get('door') ?? DOOR_TILE]);
+  const propertyKeys = options.propertyKeys ?? DEFAULT_PROPERTY_KEYS;
+
+  const propertyCache = new Map();
+
+  function getTileProperties(gid, normalizedId, tileset) {
+    if (!tileset) return {};
+    const cacheKey = `${tileset.firstgid ?? 0}:${normalizedId}`;
+    if (propertyCache.has(cacheKey)) return propertyCache.get(cacheKey);
+
+    const tileProps = tileset.tiles?.find((tile) => tile.id === normalizedId)?.properties;
+    const merged = { ...(tilesetDefaults.get(tileset) ?? {}), ...readProperties(tileProps) };
+    propertyCache.set(cacheKey, merged);
+    return merged;
+  }
+
+  return (gid) => {
+    if (!gid) return categoryDefaults.get('floor') ?? FLOOR_TILE;
+
+    const mapped = tileMappings.get(gid);
+    if (mapped != null) return mapped;
+
+    const tileset = resolveTilesetForGid(tilesets, gid);
+    const normalizedId = normalizeTileId(gid, tilesets);
+
+    const normalizedMapped = tileMappings.get(normalizedId);
+    if (normalizedMapped != null) return normalizedMapped;
+
+    const props = getTileProperties(gid, normalizedId, tileset);
+    const propertyResolved = resolveTileFromProperties(props, { propertyKeys, variantLookup, categoryDefaults });
+    if (propertyResolved != null) return propertyResolved;
+
+    if (floorIds.has(gid) || floorIds.has(normalizedId)) return categoryDefaults.get('floor') ?? FLOOR_TILE;
+    if (doorIds.has(gid) || doorIds.has(normalizedId)) return categoryDefaults.get('door') ?? DOOR_TILE;
+    if (wallIds.size === 0) {
+      const resolvedCategory = props.category ? categoryDefaults.get(props.category) : null;
+      if (resolvedCategory != null) return resolvedCategory;
+      return categoryDefaults.get('wall') ?? WALL_TILE;
+    }
+    if (wallIds.has(gid) || wallIds.has(normalizedId)) return categoryDefaults.get('wall') ?? WALL_TILE;
+    return categoryDefaults.get('floor') ?? FLOOR_TILE;
+  };
 }
 
 function toTileCoords(object) {
@@ -168,7 +298,7 @@ function findLayer(layers = [], name) {
 /**
  * Convert a Tiled JSON map (CSV/TSX) into the internal LevelConfig shape.
  * @param {any} mapData
- * @param {{ layerNames?: Partial<typeof DEFAULT_LAYER_NAMES>, tileMappings?: Record<string, number>, floorTileIds?: number[], wallTileIds?: number[], doorTileIds?: number[] }} [options]
+ * @param {{ layerNames?: Partial<typeof DEFAULT_LAYER_NAMES>, tileMappings?: Record<string, number>, floorTileIds?: number[], wallTileIds?: number[], doorTileIds?: number[], presets?: Partial<typeof DEFAULT_TILED_IMPORT_OPTIONS> }} [options]
  * @returns {LevelConfig}
  */
 export function importTiledLevel(mapData, options = {}) {
@@ -177,11 +307,15 @@ export function importTiledLevel(mapData, options = {}) {
   }
 
   const layerNames = { ...DEFAULT_LAYER_NAMES, ...(options.layerNames ?? {}) };
+  const presetOptions = { ...DEFAULT_TILED_IMPORT_OPTIONS, ...(options.presets ?? {}) };
   const tilesets = mapData.tilesets ?? [];
-  const tileMappings = buildTileMappingMap(options.tileMappings ?? {});
-  const floorIds = new Set(options.floorTileIds ?? [FLOOR_TILE]);
-  const wallIds = new Set(options.wallTileIds ?? [WALL_TILE]);
-  const doorIds = new Set(options.doorTileIds ?? [DOOR_TILE]);
+  const normalizeTileValue = createTileResolver(mapData, {
+    ...presetOptions,
+    tileMappings: options.tileMappings,
+    floorTileIds: options.floorTileIds,
+    wallTileIds: options.wallTileIds,
+    doorTileIds: options.doorTileIds,
+  });
 
   const width = mapData.width ?? 0;
   const height = mapData.height ?? 0;
@@ -199,8 +333,8 @@ export function importTiledLevel(mapData, options = {}) {
   const rawDecor = normalizeLayerData(decorLayer, totalTiles);
   const rawCollision = collisionLayer === decorLayer ? rawDecor : normalizeLayerData(collisionLayer, totalTiles);
 
-  const decor = rawDecor.map((gid) => normalizeTileValue(gid, { tilesets, tileMappings, floorIds, wallIds, doorIds }));
-  const collision = rawCollision.map((gid) => normalizeTileValue(gid, { tilesets, tileMappings, floorIds, wallIds, doorIds }));
+  const decor = rawDecor.map((gid) => normalizeTileValue(gid));
+  const collision = rawCollision.map((gid) => normalizeTileValue(gid));
 
   const lighting = parseLightingLayer(lightingLayer);
   const actors = parseSpawnLayer(spawnLayer);
