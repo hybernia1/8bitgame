@@ -35,7 +35,9 @@ export const COLORS = {
   floor: '#121219',
   floorGlow: 'rgba(92, 242, 204, 0.06)',
   doorClosed: '#2a1b1f',
+  doorOpen: '#1c2a20',
   doorAccent: '#f2d45c',
+  doorGlow: 'rgba(92, 242, 204, 0.55)',
   gridBackground: '#0b0b10',
   gridBorder: '#0b0c10',
 };

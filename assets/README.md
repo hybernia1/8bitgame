@@ -5,6 +5,7 @@ This project will generate procedural sprites when no external textures are pres
 - `assets/tiles/floor.png` – base floor tile for the demo map.
 - `assets/walls/wall.png` – wall tile for level geometry.
 - `assets/doors/door.png` – closed-door tile used on the gate.
+- `assets/doors/door.open.png` – open-door tile shown after gates unlock.
 - `assets/hero/hero.png` – main playable character. Use a 3x4 sheet (down, left, right, up) with three frames per row; drop in your own image to override the procedural fallback.
 - `assets/npc/npc.png` – friendly NPCs in the level.
 - `assets/npc/monster.png` – optional hostile NPC variant.

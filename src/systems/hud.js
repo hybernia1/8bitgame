@@ -144,13 +144,9 @@ export function createHudSystem(passedElements = {}) {
 
   function setInventoryStatus(collapsed, bindingLabel) {
     if (!elements.inventoryStatus) return;
-    if (!collapsed) {
-      elements.inventoryStatus.classList.add('hidden');
-      applyText(elements.inventoryStatus, '');
-      return;
-    }
     elements.inventoryStatus.classList.remove('hidden');
-    applyText(elements.inventoryStatus, format('note.inventory.collapsed', { binding: bindingLabel ?? '' }));
+    const messageKey = collapsed ? 'note.inventory.collapsed' : 'note.inventory.pinnedStatus';
+    applyText(elements.inventoryStatus, format(messageKey, { binding: bindingLabel ?? '' }));
   }
 
   return {

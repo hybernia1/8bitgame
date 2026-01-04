@@ -640,10 +640,6 @@ canvas {
   gap: 10px;
 }
 
-.inventory.collapsed {
-  display: none;
-}
-
 .inventory-status {
   padding: 8px 10px;
   border-radius: 10px;

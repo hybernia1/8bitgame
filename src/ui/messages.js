@@ -15,8 +15,10 @@ export const messages = {
   'hud.controls':
     'Pohyb: WASD/šipky · Interakce: {interact} · Střelba: {shoot} · Inventář: {inventory} · Pauza: {pause}',
   'note.inventory.intro': 'Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.',
-  'note.inventory.toggle': 'Batoh: {binding}',
-  'note.inventory.collapsed': 'Batoh je skrytý. Stiskni {binding} pro zobrazení.',
+  'note.inventory.toggle': 'Batoh je připnutý a pořád viditelný.',
+  'note.inventory.collapsed': 'Batoh zůstává otevřený, přepínání není potřeba.',
+  'note.inventory.pinnedStatus': 'Sloty jsou stále po ruce – používej čísla 1-6 nebo kliknutí.',
+  'note.inventory.pinnedShort': 'vždy otevřený',
   'note.inventory.emptySlot': 'Slot {index} je prázdný.',
   'note.inventory.slotLabel': 'Slot {index}',
   'note.inventory.unusable': 'Tenhle předmět teď nemůžeš použít.',
