@@ -53,15 +53,6 @@ export const TILE_DEFINITIONS = {
     variant: 'wall_window',
     spriteKey: 'wall.window',
     transparent: true,
-    lighting: {
-      mask: 'windowCone',
-      color: 'rgba(110, 242, 164, 0.3)',
-      intensity: 0.65,
-      length: 1.35,
-      spread: 0.9,
-      offsetY: 0.2,
-      radius: 2,
-    },
   },
   [TILE_IDS.WALL_CRACKED]: {
     tileId: TILE_IDS.WALL_CRACKED,
@@ -69,6 +60,7 @@ export const TILE_DEFINITIONS = {
     category: 'wall',
     variant: 'wall_cracked',
     spriteKey: 'wall.cracked',
+    hitPoints: 1,
   },
   [TILE_IDS.FLOOR_LIT]: {
     tileId: TILE_IDS.FLOOR_LIT,

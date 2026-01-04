@@ -1,6 +1,6 @@
 import { TILE } from '../core/constants.js';
 
-export function createCombatSystem({ ammo, projectiles, player, tileAt, showNote }) {
+export function createCombatSystem({ ammo, projectiles, player, tileAt, damageTile, showNote }) {
   function attemptShoot() {
     const spent = ammo?.consume?.(1);
     if (!spent) {
@@ -30,6 +30,9 @@ export function createCombatSystem({ ammo, projectiles, player, tileAt, showNote
 
       const tile = tileAt(bullet.x, bullet.y);
       if (tile !== 0 || bullet.lifetime <= 0) {
+        if (tile !== 0 && typeof damageTile === 'function') {
+          damageTile(bullet.x, bullet.y);
+        }
         projectiles.splice(i, 1);
         continue;
       }
