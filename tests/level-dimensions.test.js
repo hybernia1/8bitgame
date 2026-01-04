@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { demoLevel } from '../src/data/demoLevel.js';
+import { abandonedLaboratoryLevel, northernWingLevel } from '../src/data/levels/index.js';
 import { facilitySample } from '../src/data/maps/facility-sample.js';
-import { levelOne } from '../src/data/level1.js';
 
 function resolveTileLayers(config) {
   const layers = config.tileLayers ?? {};
@@ -52,12 +51,12 @@ function validateLevelDimensions(name, config) {
   );
 }
 
-test('demo level layers match declared dimensions', () => {
-  validateLevelDimensions('demoLevel', demoLevel);
+test('abandoned laboratory level layers match declared dimensions', () => {
+  validateLevelDimensions('abandonedLaboratoryLevel', abandonedLaboratoryLevel);
 });
 
-test('level one layers match declared dimensions', () => {
-  validateLevelDimensions('levelOne', levelOne);
+test('northern wing level layers match declared dimensions', () => {
+  validateLevelDimensions('northernWingLevel', northernWingLevel);
 });
 
 test('tiled facility layers match declared dimensions', () => {
