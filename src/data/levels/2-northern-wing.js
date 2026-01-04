@@ -277,8 +277,19 @@ export const northernWingLevel = {
       defaultDialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
       lines: [
         {
+          id: 'cat-awaiting-vcr',
+          when: [
+            { flag: 'videoTapePlayed', equals: false },
+            { flag: 'catCollarKeyFound', equals: false },
+          ],
+          dialogue: 'Ještě tě pomazlím, ale nejdříve si musím projít záznamy z kamer.',
+        },
+        {
           id: 'cat-collar-key',
-          when: [{ flag: 'catCollarKeyFound', equals: false }],
+          when: [
+            { flag: 'videoTapePlayed', equals: true },
+            { flag: 'catCollarKeyFound', equals: false },
+          ],
           dialogue:
             'Podrbeš kočku a na obojku zahlédneš malý klíček. Kočka ti nastaví hlavu a klíček ti nechá.',
           rewardId: 'cat-collar-key',
@@ -325,7 +336,8 @@ export const northernWingLevel = {
         {
           id: 'vcr-play',
           when: [{ hasItem: 'videotape' }],
-          dialogue: 'Vkládáš kazetu. Přístroj se rozbliká a začne přehrávat šum a tichý hlas.',
+          dialogue:
+            'Vkládáš kazetu. Přístroj jen zabliká a přehraje prázdný šum – technik Jára tě sem poslal zbytečně.',
           actions: [
             {
               type: 'consumeItem',
@@ -341,7 +353,7 @@ export const northernWingLevel = {
         {
           id: 'vcr-after',
           when: [{ flag: 'videoTapePlayed', equals: true }],
-          dialogue: 'Kazeta dohrála. Přehrávač jen tiše hučí.',
+          dialogue: 'Kazeta byla prázdná. Přehrávač jen tiše hučí.',
         },
       ],
     },
