@@ -10,6 +10,7 @@
   --shell-chrome: 96px;
   --game-scale: 1.5;
   --page-padding: clamp(10px, 1.6vw, 24px);
+  --canvas-rendering: pixelated;
 }
 
 * {
@@ -78,7 +79,7 @@ canvas {
     repeating-linear-gradient(90deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     #130c08;
   border-radius: 14px;
-  image-rendering: pixelated;
+  image-rendering: var(--canvas-rendering, pixelated);
 }
 
 .game-shell.is-fullscreen canvas {
