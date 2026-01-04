@@ -1,4 +1,10 @@
-import { TILE } from '../core/constants.js';
+import { TILE, TILE_SCALE } from '../core/constants.js';
+
+const SCALE = TILE_SCALE;
+const DEFAULT_PROP_SIZE = 26 * SCALE;
+const SHADOW_OFFSET = 4 * SCALE;
+const SHADOW_HEIGHT = 6 * SCALE;
+const OUTLINE = 2 * SCALE;
 
 function toWorldPosition(prop = {}, fallbackIndex = 0) {
   const tx = prop.tx ?? null;
@@ -7,7 +13,7 @@ function toWorldPosition(prop = {}, fallbackIndex = 0) {
     id: prop.id ?? `prop-${fallbackIndex}`,
     name: prop.name ?? 'Krabice',
     pushable: true,
-    size: prop.size ?? 26,
+    size: prop.size ?? DEFAULT_PROP_SIZE,
     sprite: prop.sprite ?? 'prop',
     color: prop.color ?? '#c49a6c',
     tint: prop.tint ?? 'rgba(114, 86, 52, 0.35)',
@@ -83,7 +89,7 @@ export function drawPushables(ctx, camera, pushables = [], spriteSheet) {
 
     ctx.fillStyle = prop.tint;
     ctx.beginPath();
-    ctx.ellipse(0, half - 4, half, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, half - SHADOW_OFFSET, half, SHADOW_HEIGHT, 0, 0, Math.PI * 2);
     ctx.fill();
 
     if (sprite?.render) {
@@ -92,7 +98,7 @@ export function drawPushables(ctx, camera, pushables = [], spriteSheet) {
       ctx.fillStyle = prop.color ?? '#c49a6c';
       ctx.fillRect(-half, -half, size, size);
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.strokeRect(-half + 2, -half + 2, size - 4, size - 4);
+      ctx.strokeRect(-half + OUTLINE, -half + OUTLINE, size - OUTLINE * 2, size - OUTLINE * 2);
     }
 
     ctx.restore();
