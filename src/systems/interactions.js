@@ -13,6 +13,7 @@ export function createInteractionSystem({
   showNote,
   setObjectives,
   collectNearbyPickups,
+  onPickupCollected,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
   const npcScripts = level.getNpcScripts();
@@ -205,7 +206,7 @@ export function createInteractionSystem({
       }
     }
 
-    const collected = collectNearbyPickups(player, pickups, inventory);
+    const collected = collectNearbyPickups(player, pickups, inventory, { onCollect: onPickupCollected });
     if (collected.length) {
       const objectiveLoot = collected.filter((pickup) => pickup.objective !== false).length;
       if (objectiveLoot) {
