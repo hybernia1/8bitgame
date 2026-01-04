@@ -9,7 +9,7 @@
   --canvas-height: 1152px;
   --shell-chrome: 96px;
   --game-scale: 1.5;
-  --page-padding: 12px;
+  --page-padding: clamp(10px, 1.6vw, 24px);
 }
 
 * {
@@ -25,9 +25,17 @@ body {
   color: var(--text);
   font-family: "Press Start 2P", "VT323", "Courier New", monospace;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   padding: var(--page-padding);
+}
+
+main {
+  width: 100%;
+  min-height: calc(100vh - (var(--page-padding) * 2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 900px) {
@@ -42,12 +50,13 @@ body {
   border-radius: 0;
   box-shadow: none;
   padding: 0;
-  display: flex;
+  display: grid;
+  place-items: center;
   position: relative;
   width: min(calc(var(--canvas-width) * var(--game-scale)), calc(100vw - (var(--page-padding) * 2)));
+  height: min(calc(var(--canvas-height) * var(--game-scale)), calc(100vh - (var(--page-padding) * 2)));
   max-width: calc(100vw - (var(--page-padding) * 2));
-  justify-content: center;
-  align-items: center;
+  max-height: calc(100vh - (var(--page-padding) * 2));
 }
 
 .game-shell.is-fullscreen {
@@ -59,10 +68,11 @@ body {
 
 canvas {
   width: 100%;
-  max-width: calc(100vw - (var(--page-padding) * 2));
-  height: auto;
-  max-height: calc(100vh - (var(--page-padding) * 2));
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   aspect-ratio: 16 / 9;
+  object-fit: contain;
   border: none;
   background: repeating-linear-gradient(0deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     repeating-linear-gradient(90deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
@@ -72,6 +82,8 @@ canvas {
 }
 
 .game-shell.is-fullscreen canvas {
+  width: 100%;
+  height: 100%;
   max-width: 100vw;
   max-height: 100vh;
 }
@@ -220,9 +232,11 @@ canvas {
   background: none;
   border: none;
   box-shadow: none;
-  display: block;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   width: 100%;
+  height: 100%;
 }
 
 .overlay {
@@ -401,20 +415,22 @@ canvas {
   background: linear-gradient(135deg, rgba(92, 242, 204, 0.12), rgba(12, 17, 23, 0.8));
   border: 1px solid #23232e;
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  min-width: min(640px, calc(100% - 32px));
+  max-width: min(960px, calc(100% - 32px));
 }
 
 .interaction-title {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--accent);
 }
 
 .interaction-text {
-  font-size: 10px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.45;
   color: #dbe8ff;
 }
 
@@ -591,7 +607,8 @@ canvas {
   left: 50%;
   bottom: 16px;
   transform: translateX(-50%);
-  min-width: min(480px, calc(100% - 32px));
+  min-width: min(640px, calc(100% - 32px));
+  max-width: min(960px, calc(100% - 32px));
   pointer-events: none;
   z-index: 4;
 }
@@ -601,7 +618,9 @@ canvas {
 }
 
 .play-column {
+  width: 100%;
   min-width: 0;
+  display: grid;
 }
 
 .sr-only {
