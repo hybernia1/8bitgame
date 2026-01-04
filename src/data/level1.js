@@ -1,9 +1,7 @@
 import { TILE } from '../core/constants.js';
-import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
 import { TILE_IDS } from '../world/tile-registry.js';
 
 const BASE_WIDTH = 16;
-const { width: TARGET_WIDTH, height: TARGET_HEIGHT } = WIDESCREEN_DIMENSIONS;
 const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
 
 const baseLayout = [
@@ -20,6 +18,7 @@ const baseLayout = [
   W, F, F, F, F, F, FL, F, F, F, F, W, W, W, F, W,
   W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
+const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 
 /** @type {import('./types.js').LevelConfig} */
 export const levelOne = {
@@ -29,14 +28,14 @@ export const levelOne = {
     title: 'Servisní Křídlo',
     subtitle: 'hud.controls',
     levelNumber: 1,
+    dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   },
-  width: TARGET_WIDTH,
-  height: TARGET_HEIGHT,
+  dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
-    collision: padLayer(baseLayout, BASE_WIDTH),
-    collisionUnlocked: padLayer(baseLayout, BASE_WIDTH),
-    decor: padLayer(baseLayout, BASE_WIDTH),
-    decorUnlocked: padLayer(baseLayout, BASE_WIDTH),
+    collision: [...baseLayout],
+    collisionUnlocked: [...baseLayout],
+    decor: [...baseLayout],
+    decorUnlocked: [...baseLayout],
   },
   interactables: {
     pressureSwitches: [

@@ -1,10 +1,8 @@
 import { TILE } from '../core/constants.js';
-import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
 import { TILE_IDS } from '../world/tile-registry.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
-const { width: TARGET_WIDTH, height: TARGET_HEIGHT } = WIDESCREEN_DIMENSIONS;
 const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
 
 const baseSwitches = [
@@ -96,19 +94,19 @@ export const demoLevel = {
     title: 'Demo Facility',
     subtitle: 'hud.controls',
     levelNumber: 0,
+    dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   },
-  width: TARGET_WIDTH,
-  height: TARGET_HEIGHT,
+  dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   // Locked layout (what the player sees on load).
-  map: padLayer(baseMap, BASE_WIDTH),
+  map: [...baseMap],
   // Layout after unlocking the gate. Used to restore the intended shape once the
   // player receives the key.
-  unlockedMap: padLayer(unlockedMap, BASE_WIDTH),
+  unlockedMap: [...unlockedMap],
   tileLayers: {
-    collision: padLayer(baseMap, BASE_WIDTH),
-    collisionUnlocked: padLayer(unlockedMap, BASE_WIDTH),
-    decor: padLayer(baseMap, BASE_WIDTH),
-    decorUnlocked: padLayer(unlockedMap, BASE_WIDTH),
+    collision: [...baseMap],
+    collisionUnlocked: [...unlockedMap],
+    decor: [...baseMap],
+    decorUnlocked: [...unlockedMap],
   },
   lighting: {
     litZones: [

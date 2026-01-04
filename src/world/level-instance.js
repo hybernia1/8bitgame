@@ -34,6 +34,54 @@ function resolveTileLayers(config) {
   };
 }
 
+function resolveDimensions(levelConfig, tileLayers) {
+  const preferred = levelConfig.dimensions ?? levelConfig.meta?.dimensions ?? {};
+  const providedWidth = preferred.width ?? levelConfig.width;
+  const providedHeight = preferred.height ?? levelConfig.height;
+
+  let width = Number.isInteger(providedWidth) ? providedWidth : null;
+  let height = Number.isInteger(providedHeight) ? providedHeight : null;
+
+  const collisionLength = tileLayers.collision?.length ?? 0;
+
+  if (width && !height && collisionLength) {
+    const derived = collisionLength / width;
+    if (!Number.isInteger(derived)) {
+      throw new Error(
+        `Invalid map dimensions: expected rows of ${width} tiles but got ${collisionLength} entries.`,
+      );
+    }
+    height = derived;
+  }
+
+  if (height && !width && collisionLength) {
+    const derived = collisionLength / height;
+    if (!Number.isInteger(derived)) {
+      throw new Error(
+        `Invalid map dimensions: expected ${height} rows but collision layer has ${collisionLength} tiles.`,
+      );
+    }
+    width = derived;
+  }
+
+  if (!width || !height) {
+    const totalTiles = collisionLength || tileLayers.decor?.length || levelConfig.map?.length || 0;
+    if (totalTiles > 0) {
+      const sqrt = Math.sqrt(totalTiles);
+      if (Number.isInteger(sqrt)) {
+        width = width ?? sqrt;
+        height = height ?? sqrt;
+      }
+    }
+  }
+
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+    throw new Error('Level is missing valid dimensions.');
+  }
+
+  return { width, height };
+}
+
 export class LevelInstance {
   /**
    * @param {LevelConfig} levelConfig
@@ -41,7 +89,6 @@ export class LevelInstance {
   constructor(levelConfig) {
     this.config = levelConfig;
     this.meta = levelConfig.meta ?? { name: 'Unknown Sector' };
-    this.mapWidth = levelConfig.width ?? WORLD.width;
 
     this.layers = {
       decor: { canvas: null, context: null },
@@ -55,19 +102,9 @@ export class LevelInstance {
     this.dirtyLightingIndices = new Set();
 
     const tileLayers = resolveTileLayers(levelConfig);
-    const collisionHeight = tileLayers.collision.length / this.mapWidth;
-
-    if (!Number.isInteger(collisionHeight)) {
-      throw new Error(
-        `Invalid map dimensions: expected rows of ${this.mapWidth} tiles but got ${tileLayers.collision.length} entries.`,
-      );
-    }
-
-    this.mapHeight = levelConfig.height ?? collisionHeight;
-
-    if (!Number.isInteger(this.mapHeight)) {
-      throw new Error(`Invalid map height: "${this.mapHeight}" is not an integer.`);
-    }
+    const { width, height } = resolveDimensions(levelConfig, tileLayers);
+    this.mapWidth = width;
+    this.mapHeight = height;
 
     this.collisionBase = tileLayers.collision;
     this.collisionUnlocked = tileLayers.collisionUnlocked;
