@@ -9,6 +9,7 @@
   --canvas-height: 576px;
   --shell-chrome: 96px;
   --game-scale: 1.5;
+  --page-padding: 12px;
 }
 
 * {
@@ -26,12 +27,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: var(--page-padding);
 }
 
 @media (max-width: 900px) {
   body {
-    padding: 14px;
+    --page-padding: 14px;
   }
 }
 
@@ -43,8 +44,8 @@ body {
   padding: 0;
   display: flex;
   position: relative;
-  width: min(calc(var(--canvas-width) * var(--game-scale)), 100%);
-  max-width: calc(var(--canvas-width) * var(--game-scale));
+  width: min(calc(var(--canvas-width) * var(--game-scale)), calc(100vw - (var(--page-padding) * 2)));
+  max-width: calc(100vw - (var(--page-padding) * 2));
   justify-content: center;
   align-items: center;
 }
@@ -58,9 +59,9 @@ body {
 
 canvas {
   width: 100%;
-  max-width: calc(var(--canvas-width) * var(--game-scale));
+  max-width: calc(100vw - (var(--page-padding) * 2));
   height: auto;
-  max-height: 100vh;
+  max-height: calc(100vh - (var(--page-padding) * 2));
   aspect-ratio: 16 / 9;
   border: none;
   background: repeating-linear-gradient(0deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
