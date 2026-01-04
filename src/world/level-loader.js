@@ -214,10 +214,12 @@ export function importTiledLevel(mapData, options = {}) {
     title: props.title ?? mapData.name,
     subtitle: props.subtitle,
     levelNumber: Number.isNaN(parsedLevelNumber) ? 0 : parsedLevelNumber,
+    dimensions: { width, height },
   };
 
   return {
     meta,
+    dimensions: { width, height },
     width,
     height,
     tileLayers: {

@@ -101,6 +101,7 @@
  * @property {string} [title]
  * @property {string} [subtitle]
  * @property {number} [levelNumber]
+ * @property {{ width: number, height: number }} [dimensions] Native/original map dimensions before any padding.
  */
 
 /**
@@ -126,6 +127,7 @@
 /**
  * @typedef {Object} LevelConfig
  * @property {LevelMeta} meta
+ * @property {{ width: number, height: number }} [dimensions]
  * @property {number} [width]
  * @property {number} [height]
  * @property {TileLayers} [tileLayers]
