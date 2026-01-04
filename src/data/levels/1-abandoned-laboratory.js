@@ -1,9 +1,18 @@
 import { TILE } from '../../core/constants.js';
+import { placeNpc } from '../npcs/index.js';
 import { TILE_IDS } from '../../world/tile-registry.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
-const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
+const {
+  FLOOR_PLAIN: F,
+  WALL_SOLID: W,
+  DOOR_CLOSED: D,
+  DOOR_OPEN: DO,
+  WALL_WINDOW: WW,
+  WALL_CRACKED: WC,
+  FLOOR_LIT: FL,
+} = TILE_IDS;
 
 const baseSwitches = [
   {
@@ -94,7 +103,7 @@ const unlockedMap = [
   W, F, F, F, F, W, F, F, WW, W, W, F, F, F, F, WC, F, W, F, W,
   W, F, F, F, F, W, F, F, F, F, W, FL, FL, W, F, W, F, W, F, W,
   W, F, F, F, F, W, FL, F, F, F, W, F, F, W, F, W, F, W, F, W,
-  W, F, F, F, F, W, F, F, F, F, F, F, F, W, F, W, F, W, F, W,
+  W, F, F, F, F, W, F, F, F, F, F, F, F, W, DO, W, F, W, F, W,
   W, F, F, F, F, W, F, W, W, W, W, W, F, W, F, W, F, W, F, W,
   W, F, F, F, F, F, F, F, F, F, F, W, F, F, F, W, F, WC, F, W,
   W, F, F, F, F, W, W, W, W, W, F, W, F, F, F, W, F, F, F, W,
@@ -140,7 +149,7 @@ export const abandonedLaboratoryLevel = {
       tx: 14,
       ty: 10,
       locked: true,
-      openTile: F,
+      openTile: DO,
       nextLevelId: 'level-2',
       sealedTiles: [
         [14, 9],
@@ -168,31 +177,9 @@ export const abandonedLaboratoryLevel = {
     monsters: [],
     props: [],
     npcs: [
-      {
-        id: 'mayor',
-        name: 'Starostka Hana',
-        sprite: 'hana',
-        tx: 3,
-        ty: 2,
-        dialogue: 'Hana ztiší hlas: „Potřebuji tě tady. Jde o tři ztracené děti.“',
-      },
-      {
-        id: 'caretaker',
-        name: 'Správce Laboratoře',
-        sprite: 'caretaker',
-        tx: 10,
-        ty: 4,
-        dialogue: 'Správce šeptá: „Sežeň články a nářadí. Tma tu nesmí vyhrát.“',
-      },
-      {
-        id: 'technician',
-        name: 'Technik Jára',
-        sprite: 'jara',
-        tx: 6,
-        ty: 9,
-        dialogue: 'Jára si drží baterku u hrudi: „Potřebujeme světlo, jinak jsme slepí.“',
-        info: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
-      },
+      placeNpc('mayor', 3, 2),
+      placeNpc('caretaker', 10, 4),
+      placeNpc('technician', 6, 9),
       {
         id: 'key-guard',
         name: 'Hlídač Klíče',

@@ -17,7 +17,7 @@ import { createGameLoop } from './systems/game-loop.js';
 import { getCurrentScene, registerScene, resume, setScene, showMenu } from './core/scenes.js';
 import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta } from './world/level-data.js';
 import { format } from './ui/messages.js';
-import { formatBinding, formatControlsHint } from './core/input-bindings.js';
+import { formatControlsHint } from './core/input-bindings.js';
 
 const { canvas, context: ctx } = init('game');
 initKeys();
@@ -617,7 +617,6 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   let savedSnapshot = null;
   let interactQueued = false;
   let shootQueued = false;
-  let inventoryCollapsed = true;
 
   function getLevelDimensions() {
     return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
@@ -776,16 +775,10 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
         handlers: itemHandlers,
       });
 
-    function setInventoryCollapsed(collapsed) {
-      inventoryCollapsed = Boolean(collapsed);
-      inventoryElement?.classList.toggle('collapsed', inventoryCollapsed);
-      inventoryElement?.setAttribute('aria-hidden', inventoryCollapsed ? 'true' : 'false');
-      const bindingLabel = formatBinding(inputSystem.getBindings(), 'toggle-inventory');
-      hudSystem.setInventoryStatus(inventoryCollapsed, bindingLabel);
-    }
-
-    function toggleInventory() {
-      setInventoryCollapsed(!inventoryCollapsed);
+    function pinInventory(bindingLabel) {
+      inventoryElement?.classList.remove('collapsed');
+      inventoryElement?.setAttribute('aria-hidden', 'false');
+      hudSystem.setInventoryStatus(false, bindingLabel);
     }
 
     function handleAction(action, detail = {}) {
@@ -803,7 +796,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
           togglePauseScene();
           break;
         case 'toggle-inventory':
-          toggleInventory();
+          hudSystem.showNote('note.inventory.pinnedStatus');
           break;
         default:
           break;
@@ -821,10 +814,10 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     });
 
     const controlsHint = formatControlsHint(inputSystem.getBindings());
+    controlsHint.inventory = format('note.inventory.pinnedShort');
     hudSystem.setControlsHint(controlsHint);
     hudSystem.setInventoryBindingHint(controlsHint.inventory);
-    hudSystem.setInventoryStatus(inventoryCollapsed, controlsHint.inventory);
-    setInventoryCollapsed(true);
+    pinInventory(controlsHint.inventory);
 
     const combatSystem = createCombatSystem({
       ammo: { consume: consumeAmmo },

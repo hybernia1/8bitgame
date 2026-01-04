@@ -5,6 +5,7 @@ const BASE_SPRITE_ORDER = [
   'floor',
   'wall',
   'door',
+  'door.open',
   'player',
   'pickup',
   'npc',
@@ -23,6 +24,7 @@ const TEXTURE_PATHS = {
   floor: 'assets/tiles/floor.png',
   wall: 'assets/walls/wall.png',
   door: 'assets/doors/door.png',
+  'door.open': 'assets/doors/door.open.png',
   player: 'assets/hero/hero.png',
   pickup: 'assets/items/pickup.png',
   npc: 'assets/npc/npc.png',
@@ -290,6 +292,18 @@ function drawDoor(ctx, random) {
   ctx.fillRect(TILE / 2 - 2, TILE / 2 - 4, 4, 10);
 }
 
+function drawDoorOpen(ctx, random) {
+  drawNoise(ctx, 0, 0, TILE, TILE, COLORS.doorOpen, '#102019', 0.02, random);
+  ctx.fillStyle = jitterColor('#294233', 12, random);
+  ctx.fillRect(2, 2, TILE - 4, TILE - 4);
+  ctx.fillStyle = 'rgba(6, 12, 10, 0.7)';
+  ctx.fillRect(6, 6, TILE - 12, TILE - 12);
+  ctx.strokeStyle = COLORS.doorGlow;
+  ctx.strokeRect(4.5, 4.5, TILE - 9, TILE - 9);
+  ctx.fillStyle = COLORS.doorAccent;
+  ctx.fillRect(TILE / 2 - 2, TILE / 2 - 2, 4, 4);
+}
+
 function drawPlayer(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, '#0e1f1a', '#17342b', 0.04, random);
   ctx.fillStyle = COLORS.gridBorder;
@@ -442,6 +456,7 @@ const DRAWERS = {
   'wall.cracked': drawWallCracked,
   'wall.window': drawWallWindow,
   door: drawDoor,
+  'door.open': drawDoorOpen,
   player: drawPlayer,
   pickup: drawPickup,
   npc: drawNpc,
@@ -501,6 +516,7 @@ export const SPRITE_NAMES = {
   wallCracked: 'wall.cracked',
   wallWindow: 'wall.window',
   door: 'door',
+  doorOpen: 'door.open',
   player: 'player',
   pickup: 'pickup',
   npc: 'npc',

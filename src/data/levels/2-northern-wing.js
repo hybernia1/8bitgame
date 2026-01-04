@@ -1,8 +1,17 @@
 import { TILE } from '../../core/constants.js';
+import { placeNpc } from '../npcs/index.js';
 import { TILE_IDS } from '../../world/tile-registry.js';
 
 const BASE_WIDTH = 16;
-const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
+const {
+  FLOOR_PLAIN: F,
+  WALL_SOLID: W,
+  DOOR_CLOSED: D,
+  DOOR_OPEN: DO,
+  WALL_WINDOW: WW,
+  WALL_CRACKED: WC,
+  FLOOR_LIT: FL,
+} = TILE_IDS;
 
 const baseLayout = [
   W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
@@ -49,7 +58,7 @@ export const northernWingLevel = {
         tx: 9,
         ty: 8,
         targets: [{ tx: 11, ty: 9 }],
-        openTile: F,
+        openTile: DO,
         closedTile: D,
       },
     ],
@@ -70,17 +79,7 @@ export const northernWingLevel = {
       },
     ],
     npcs: [
-      {
-        id: 'cat',
-        name: 'Kočka',
-        sprite: 'cat',
-        tx: 4,
-        ty: 3,
-        speed: 28,
-        wanderRadius: TILE * 3,
-        wanderInterval: 0.8,
-        dialogue: 'Podrbat na bříšku! *prrr*',
-      },
+      placeNpc('cat', 4, 3),
       {
         id: 'recording-cabinet',
         name: 'Záznamová skříň',
