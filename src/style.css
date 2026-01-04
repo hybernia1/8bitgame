@@ -78,30 +78,22 @@ canvas {
 
 .hud-bar {
   display: flex;
+  flex-direction: row;
+  gap: 16px;
   align-items: center;
-  gap: 14px;
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 4px 6px;
-  box-shadow: none;
+  justify-content: flex-start;
+  background: linear-gradient(120deg, rgba(0, 0, 0, 0.55), rgba(10, 12, 18, 0.8));
+  border: 1px solid #23232e;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  max-width: min(420px, 42vw);
 }
 
-.hud-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-}
-
-.hud-heading-line {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  line-height: 1.1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-  white-space: nowrap;
+.hud-heading {
+  display: grid;
+  gap: 4px;
+  line-height: 1.3;
 }
 
 .hud-actions {
@@ -113,13 +105,13 @@ canvas {
 }
 
 .hud-button {
-  padding: 8px 10px;
-  border-radius: 50%;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid #2c2c38;
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 10px;
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
@@ -157,22 +149,6 @@ canvas {
   text-transform: uppercase;
   opacity: 0.7;
   letter-spacing: 1px;
-}
-
-.hud-health {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #ff5a73;
-  font-size: 12px;
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-
-.hud-health-hearts {
-  font-size: 14px;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(255, 90, 115, 0.5);
 }
 
 .game-frame {
@@ -213,12 +189,10 @@ canvas {
 
 .hud-top {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
-  flex-wrap: nowrap;
-  width: 100%;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .continue-panel {
@@ -367,17 +341,11 @@ canvas {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid #23232e;
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: grid;
   gap: 6px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-  max-width: min(400px, 46vw);
-  margin-left: auto;
-  margin-top: 4px;
-  align-self: flex-end;
-  backdrop-filter: blur(2px);
-  position: relative;
-  right: 0;
+  max-width: min(440px, 44vw);
 }
 
 .quest-log-header {

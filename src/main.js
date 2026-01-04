@@ -76,11 +76,7 @@ function setFullscreenUi(active) {
   gameShell?.classList.toggle('is-fullscreen', active);
   if (fullscreenButton) {
     fullscreenButton.setAttribute('aria-pressed', active ? 'true' : 'false');
-    fullscreenButton.textContent = active ? '⤢' : '⛶';
-    fullscreenButton.setAttribute(
-      'aria-label',
-      active ? 'Zavřít celou obrazovku' : 'Celá obrazovka',
-    );
+    fullscreenButton.textContent = active ? '⤢ Zavřít celou obrazovku' : '⛶ Celá obrazovka';
   }
 }
 
@@ -137,7 +133,6 @@ function getHudDomRefs(root = documentRoot) {
     questTitle: root.querySelector('[data-quest-title]'),
     questDescription: root.querySelector('[data-quest-description]'),
     questProgress: root.querySelector('[data-quest-progress]'),
-    healthHeartsEl: root.querySelector('[data-health-hearts]'),
     healthCurrentEl: root.querySelector('.hud-health-current'),
     healthTotalEl: root.querySelector('.hud-health-total'),
     inventoryNote: root.querySelector('[data-inventory-note]'),

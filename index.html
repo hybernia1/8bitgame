@@ -13,36 +13,35 @@
         <canvas id="game" width="1024" height="576" aria-label="Demo level canvas"></canvas>
         <div class="hud-layer" aria-live="polite">
           <div class="hud-top">
-            <div class="hud-top-row">
-              <header class="hud-bar">
-                <div class="hud-heading-line">
-                  <div class="eyebrow">OPS ZÓNA</div>
-                  <div class="title level-title">Level 0: Demo Facility</div>
-                  <div class="subtitle sr-only" data-controls-hint>WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
-                </div>
-                <div class="hud-health" aria-label="Stav životů">
-                  <span class="hud-health-hearts" data-health-hearts>❤❤❤</span>
-                  <span class="sr-only"><span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></span>
-                </div>
-              </header>
-              <div class="hud-actions">
-                <button type="button" class="hud-button" data-fullscreen-toggle aria-pressed="false" aria-label="Celá obrazovka">
-                  ⛶
-                </button>
+            <header class="hud-bar">
+              <div class="hud-heading">
+                <div class="eyebrow">Ops zóna</div>
+                <div class="title level-title">Level 0: Demo Facility</div>
+                <div class="subtitle sr-only" data-controls-hint>WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
               </div>
-            </div>
+            </header>
             <section class="quest-log" aria-label="Quest log">
               <div class="quest-log-header">
                 <div class="title">Úkol</div>
+                <div class="quest-progress" data-quest-progress></div>
               </div>
               <div class="quest-log-body">
                 <div class="quest-title" data-quest-title>Úkol načítám...</div>
                 <div class="quest-description" data-quest-description></div>
               </div>
             </section>
+            <div class="hud-actions">
+              <button type="button" class="hud-button" data-fullscreen-toggle aria-pressed="false">
+                ⛶ Celá obrazovka
+              </button>
+            </div>
           </div>
           <div class="hud-bottom">
             <div class="hud-bottom-left">
+              <div class="hud-pills">
+                <div class="hud-pill">❤ <span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></div>
+                <div class="hud-pill">🎯 Úkoly: <span data-objectives-collected>0</span>/<span data-objectives-total>0</span></div>
+              </div>
               <div class="inventory-note" data-inventory-note>Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.</div>
               <div class="hud-toast hidden" role="status" aria-live="polite"></div>
             </div>
