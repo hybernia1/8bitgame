@@ -1,7 +1,6 @@
 import { TILE } from '../../core/constants.js';
-import { placeNpc } from '../npcs/index.js';
 import { TILE_IDS } from '../../world/tile-registry.js';
-import { demoLevelDialogues } from '../dialogues/demoLevel.js';
+import { abandonedLaboratoryNpcPackage } from './1-abandoned-laboratory/npcs.js';
 import { demoLevelQuests } from '../quests/demoLevel.js';
 
 const BASE_WIDTH = 20;
@@ -163,33 +162,7 @@ export const abandonedLaboratoryLevel = {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
     monsters: [],
     props: [],
-    npcs: [
-      placeNpc('mayor', 3, 2),
-      placeNpc('caretaker', 10, 4),
-      placeNpc('technician', 6, 9, {
-        patrol: [
-          { tx: 6, ty: 9 },
-          { tx: 7, ty: 9 },
-          { tx: 7, ty: 10 },
-          { tx: 6, ty: 10 },
-        ],
-      }),
-      {
-        id: 'key-guard',
-        name: 'Hlídač Klíče',
-        tx: 18,
-        ty: 11,
-        sprite: 'monster',
-        dialogue: 'Stůj! Klíč tady nikdo neukradne.',
-        patrol: [
-          { tx: 18, ty: 1 },
-          { tx: 18, ty: 12 },
-        ],
-        speed: 50,
-        lethal: true,
-        health: 3,
-      },
-    ],
+    npcs: [...abandonedLaboratoryNpcPackage.placements],
   },
   pickups: [
     {
@@ -249,38 +222,11 @@ export const abandonedLaboratoryLevel = {
       quantity: 6,
     },
   ],
-  rewards: {
-    'caretaker-apple': {
-      id: 'caretaker-apple',
-      actions: [
-        {
-          type: 'giveItem',
-          item: { id: 'apple', name: 'Jablko', icon: '🍎', tint: '#f25c5c' },
-          blockedDialogue: 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.',
-          blockedNote: 'Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.',
-        },
-      ],
-      note: 'Správce ti předal jablko. Použij číslo slotu (1-6) nebo klikni na slot pro doplnění jednoho života.',
-    },
-    'technician-gate-key': {
-      id: 'technician-gate-key',
-      actions: [
-        {
-          type: 'giveItem',
-          item: { id: 'gate-key', name: 'Klíč od dveří', icon: '🔑', tint: '#f2d45c' },
-          blockedDialogue: 'Tvůj inventář je plný, uvolni si místo na klíč.',
-        },
-        { type: 'unlock', targetId: 'gate' },
-        { type: 'clearObjectives' },
-        { type: 'setArea', name: 'Severní křídlo laboratoře' },
-        { type: 'setLevelNumber', value: 2 },
-      ],
-      note: 'Klíč získán! Východní dveře se odemkly a mapa se rozšířila.',
-    },
-  },
+  npcScripts: abandonedLaboratoryNpcPackage.scripts,
+  rewards: abandonedLaboratoryNpcPackage.rewards,
 };
 
-export const dialogues = demoLevelDialogues;
+export const dialogues = abandonedLaboratoryNpcPackage.scripts;
 export const quests = demoLevelQuests;
 
 export default {

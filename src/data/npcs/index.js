@@ -32,6 +32,7 @@ const npcPresets = {
 };
 
 function clonePreset(id) {
+  if (!id) return {};
   const preset = npcPresets[id];
   if (!preset) {
     throw new Error(`Unknown NPC preset "${id}"`);
@@ -39,13 +40,57 @@ function clonePreset(id) {
   return { ...preset };
 }
 
-export function placeNpc(id, tx, ty, overrides = {}) {
-  const base = clonePreset(id);
-  return {
+function derivePlacementConfig(presetIdOrConfig, tx, ty, overrides = {}) {
+  if (typeof presetIdOrConfig === 'object') {
+    return { ...presetIdOrConfig };
+  }
+  return { presetId: presetIdOrConfig, tx, ty, ...overrides };
+}
+
+export function placeNpc(presetIdOrConfig, tx, ty, overrides = {}) {
+  const config = derivePlacementConfig(presetIdOrConfig, tx, ty, overrides);
+  const { presetId, preset, script, scriptId, rewards, ...rest } = config;
+  const base = preset ? { ...preset } : clonePreset(presetId ?? rest.id);
+  const npc = {
     ...base,
-    ...(Number.isFinite(tx) && Number.isFinite(ty) ? { tx, ty } : {}),
-    ...overrides,
+    ...(Number.isFinite(config.tx) ? { tx: config.tx } : {}),
+    ...(Number.isFinite(config.ty) ? { ty: config.ty } : {}),
+    ...rest,
   };
+
+  if (script) {
+    npc.script = { id: script.id ?? npc.id, ...script };
+  } else if (scriptId) {
+    npc.scriptId = scriptId;
+  }
+
+  if (rewards) {
+    npc.rewards = rewards;
+  }
+
+  return npc;
+}
+
+export function buildNpcPackage(npcs = []) {
+  const placements = [];
+  const scripts = {};
+  const rewards = {};
+
+  npcs.forEach((npc) => {
+    const { script, scriptId, rewards: npcRewards, ...placement } = npc;
+    placements.push(placement);
+
+    const resolvedScriptId = script?.id ?? scriptId ?? placement.id;
+    if (script) {
+      scripts[resolvedScriptId] = script;
+    }
+
+    Object.entries(npcRewards ?? {}).forEach(([id, reward]) => {
+      rewards[id] = reward;
+    });
+  });
+
+  return { placements, scripts, rewards };
 }
 
 export function getNpcPresets() {
