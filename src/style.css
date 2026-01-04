@@ -361,6 +361,32 @@ canvas {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.fullscreen-callout {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.fullscreen-callout-body {
+  display: grid;
+  gap: 4px;
+}
+
+.fullscreen-callout-title {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}
+
+.fullscreen-callout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .menu-card {
   display: grid;
   gap: 10px;
