@@ -32,8 +32,15 @@ export function createHudSystem(passedElements = {}) {
   }
 
   function setHealth(hp, max) {
-    applyText(elements.healthCurrentEl, hp);
-    applyText(elements.healthTotalEl, max);
+    const safeHp = Math.max(0, Number.isFinite(hp) ? hp : 0);
+    const safeMax = Math.max(safeHp, Number.isFinite(max) ? max : safeHp);
+    applyText(elements.healthCurrentEl, safeHp);
+    applyText(elements.healthTotalEl, safeMax);
+    if (elements.healthHeartsEl) {
+      const filled = '❤'.repeat(Math.max(0, Math.min(safeHp, safeMax)));
+      const empty = '♡'.repeat(Math.max(0, safeMax - safeHp));
+      applyText(elements.healthHeartsEl, `${filled}${empty}`);
+    }
   }
 
   function showNote(messageId, params) {
