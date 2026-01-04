@@ -61,6 +61,41 @@ function extractLevelPackage(moduleValue) {
   return { config, dialogues, quests };
 }
 
+function validateLevelPackage(levelId, config) {
+  const scripts = config.npcScripts ?? {};
+  const rewards = config.rewards ?? {};
+  const missingRewards = new Set();
+  const missingDialogues = [];
+
+  Object.values(scripts).forEach((script) => {
+    (script?.lines ?? []).forEach((line) => {
+      if (line.rewardId && !rewards[line.rewardId]) {
+        missingRewards.add(line.rewardId);
+      }
+    });
+  });
+
+  (config.actors?.npcs ?? []).forEach((npc) => {
+    const targetScriptId = npc.scriptId ?? npc.id;
+    const hasScript = Boolean(targetScriptId && scripts[targetScriptId]);
+    const hasDialogue = Boolean(npc.dialogue);
+    if (!hasScript && !hasDialogue) {
+      missingDialogues.push(targetScriptId || npc.id || 'unknown-npc');
+    }
+  });
+
+  if (missingRewards.size || missingDialogues.length) {
+    const rewardMessage = missingRewards.size ? `Missing rewards: ${[...missingRewards].join(', ')}` : '';
+    const dialogueMessage = missingDialogues.length
+      ? `NPCs without dialogue or script: ${missingDialogues.join(', ')}`
+      : '';
+    const message = [`Level "${levelId}" failed validation.`, rewardMessage, dialogueMessage]
+      .filter(Boolean)
+      .join(' ');
+    throw new Error(message);
+  }
+}
+
 function registerLevelPackage(moduleValue, fallbackId) {
   const { config, dialogues, quests } = extractLevelPackage(moduleValue);
   if (!config) return null;
@@ -73,6 +108,7 @@ function registerLevelPackage(moduleValue, fallbackId) {
     quests: normalized.quests ?? quests ?? [],
   };
 
+  validateLevelPackage(levelId, mergedConfig);
   registry.set(levelId, mergedConfig);
   return { levelId, config: mergedConfig };
 }

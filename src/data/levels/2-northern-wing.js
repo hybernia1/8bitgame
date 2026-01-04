@@ -1,6 +1,6 @@
 import { TILE } from '../../core/constants.js';
-import { placeNpc } from '../npcs/index.js';
 import { TILE_IDS } from '../../world/tile-registry.js';
+import { northernWingNpcPackage } from './2-northern-wing/npcs.js';
 
 const BASE_WIDTH = 16;
 const {
@@ -140,57 +140,7 @@ export const northernWingLevel = {
         pushable: true,
       },
     ],
-    npcs: [
-      placeNpc('cat', 4, 3),
-      {
-        id: 'recording-cabinet',
-        name: 'Záznamová skříň',
-        sprite: 'decor.console',
-        animationBase: 'decor.console',
-        tx: 5,
-        ty: 5,
-        dialogue: 'Skříň se starými záznamy bliká zeleně.',
-      },
-      {
-        id: 'vcr-player',
-        name: 'Přehrávač',
-        sprite: 'decor.console',
-        animationBase: 'decor.console',
-        tx: 13,
-        ty: 10,
-        dialogue: 'Starý přehrávač čeká na kazetu.',
-      },
-      {
-        id: 'spider-1',
-        name: 'Pavouk',
-        sprite: 'spider',
-        tx: 9,
-        ty: 8,
-        lethal: true,
-        wanderRadius: TILE * 4,
-        wanderInterval: 1.4,
-      },
-      {
-        id: 'spider-2',
-        name: 'Pavouk',
-        sprite: 'spider',
-        tx: 12,
-        ty: 6,
-        lethal: true,
-        wanderRadius: TILE * 5,
-        wanderInterval: 1.2,
-      },
-      {
-        id: 'spider-3',
-        name: 'Pavouk',
-        sprite: 'spider',
-        tx: 6,
-        ty: 9,
-        lethal: true,
-        wanderRadius: TILE * 3,
-        wanderInterval: 1,
-      },
-    ],
+    npcs: [...northernWingNpcPackage.placements],
   },
   pickups: [
     {
@@ -239,126 +189,12 @@ export const northernWingLevel = {
       objective: false,
     },
   ],
-  rewards: {
-    'recording-cabinet-tape': {
-      id: 'recording-cabinet-tape',
-      actions: [
-        {
-          type: 'giveItem',
-          item: { id: 'videotape', name: 'Videokazeta', icon: '📼', tint: '#f2d45c' },
-          blockedDialogue: 'Nemáš místo v inventáři, uvolni si slot pro kazetu.',
-          blockedNote: 'Kazetu nemáš kam uložit. Uvolni slot a otevři skříň znovu.',
-        },
-      ],
-      note: 'note.videotape.found',
-    },
-    'cat-collar-key': {
-      id: 'cat-collar-key',
-      actions: [
-        {
-          type: 'giveItem',
-          item: { id: 'collar-key', name: 'Klíček z obojku', icon: '🗝️', tint: '#f2d45c' },
-          blockedDialogue: 'Bez volného slotu si klíček z obojku nevezmeš.',
-          blockedNote: 'Uvolni slot, ať můžeš vzít klíček z kočičího obojku.',
-        },
-        { type: 'unlock', targetId: 'north-gate' },
-        { type: 'setFlag', flag: 'northGateUnlocked', value: true },
-        { type: 'setArea', name: 'Únikový koridor' },
-        { type: 'setLevelNumber', value: 3 },
-      ],
-      note: 'Našel jsi klíček na kočičím obojku. Severní dveře by se měly odjistit.',
-    },
-  },
+  npcScripts: northernWingNpcPackage.scripts,
+  rewards: northernWingNpcPackage.rewards,
   quests: [],
-  npcScripts: {
-    cat: {
-      defaultDialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
-      lines: [
-        {
-          id: 'cat-awaiting-vcr',
-          when: [
-            { flag: 'videoTapePlayed', equals: false },
-            { flag: 'catCollarKeyFound', equals: false },
-          ],
-          dialogue: 'Ještě tě pomazlím, ale nejdříve si musím projít záznamy z kamer.',
-        },
-        {
-          id: 'cat-collar-key',
-          when: [
-            { flag: 'videoTapePlayed', equals: true },
-            { flag: 'catCollarKeyFound', equals: false },
-          ],
-          dialogue:
-            'Podrbeš kočku a na obojku zahlédneš malý klíček. Kočka ti nastaví hlavu a klíček ti nechá.',
-          rewardId: 'cat-collar-key',
-          actions: [{ type: 'setFlag', flag: 'catCollarKeyFound', value: true }],
-          note: 'Klíček z kočičího obojku získán.',
-        },
-        {
-          id: 'cat-thanks',
-          when: [
-            { flag: 'catCollarKeyFound', equals: true },
-            { flag: 'catThanked', equals: false },
-          ],
-          dialogue:
-            'Díky za klíček, kočičko. Mám doma čtyři kočky – poznám, kdy někdo nosí poklad! Kočka ti olízne ruku a spokojeně přede.',
-          actions: [{ type: 'setFlag', flag: 'catThanked', value: true }],
-        },
-        {
-          id: 'cat-purr',
-          dialogue: 'Kočka se otře o tvoji nohu a olízne ti ruku.',
-        },
-      ],
-    },
-    'recording-cabinet': {
-      defaultDialogue: 'Skříň je plná prázdných šuplíků.',
-      lines: [
-        {
-          id: 'cabinet-tape',
-          when: [{ flag: 'videoTapeCollected', equals: false }],
-          dialogue: 'V útrobách skříně nacházíš videokazetu se štítkem. Přehrávač tu ale nevidíš.',
-          rewardId: 'recording-cabinet-tape',
-          setState: { videoTapeCollected: true },
-          note: 'note.videotape.found',
-        },
-        {
-          id: 'cabinet-empty',
-          when: [{ flag: 'videoTapeCollected', equals: true }],
-          dialogue: 'Skříň už je prázdná. Přehrávač musí být jinde.',
-        },
-      ],
-    },
-    'vcr-player': {
-      defaultDialogue: 'Bez kazety přehrávač nepomůže.',
-      lines: [
-        {
-          id: 'vcr-play',
-          when: [{ hasItem: 'videotape' }],
-          dialogue:
-            'Vkládáš kazetu. Přístroj jen zabliká a přehraje prázdný šum – technik Jára tě sem poslal zbytečně.',
-          actions: [
-            {
-              type: 'consumeItem',
-              item: 'videotape',
-              quantity: 1,
-              blockedDialogue: 'Kazetu nemáš, přehrávač jen tiše pípá.',
-              blockedNote: 'Chybí videokazeta.',
-            },
-            { type: 'setFlag', flag: 'videoTapePlayed', value: true },
-          ],
-          note: 'note.videotape.played',
-        },
-        {
-          id: 'vcr-after',
-          when: [{ flag: 'videoTapePlayed', equals: true }],
-          dialogue: 'Kazeta byla prázdná. Přehrávač jen tiše hučí.',
-        },
-      ],
-    },
-  },
 };
 
-export const dialogues = {};
+export const dialogues = northernWingNpcPackage.scripts;
 export const quests = [];
 
 export default {
