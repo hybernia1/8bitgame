@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "import:maps": "node scripts/import-maps.js"
+    "import:maps": "node scripts/import-maps.js",
+    "import": "npm run import:maps"
   }
 }

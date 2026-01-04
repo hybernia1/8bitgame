@@ -11,6 +11,71 @@ const FLOOR_TILE = TILE_IDS.FLOOR_PLAIN;
 const DEFAULT_COLLISION_TILE = TILE_IDS.WALL_SOLID;
 const DEFAULT_DESTRUCTIBLE_HP = 1;
 
+function toIndex(entry, width) {
+  if (Number.isInteger(entry?.index)) return entry.index;
+  if (Number.isInteger(entry?.tx) && Number.isInteger(entry?.ty)) return entry.ty * width + entry.tx;
+  return null;
+}
+
+function normalizeUnlockMask(tileLayers, width) {
+  const baseCollision = tileLayers.collision ?? [];
+  const baseDecor = tileLayers.decor ?? baseCollision;
+  const fallbackUnlockMask = tileLayers.unlockMask ?? [];
+  const collisionUnlocked = tileLayers.collisionUnlocked ?? [];
+  const decorUnlocked = tileLayers.decorUnlocked ?? [];
+  const expectedSize = Math.max(baseCollision.length, baseDecor.length);
+
+  /** @type {Map<number, { index: number, collision?: number, decor?: number, tile?: number }>} */
+  const merged = new Map();
+
+  function mergePatch(index, patch) {
+    const existing = merged.get(index) ?? { index };
+    if (patch.tile != null) existing.tile = patch.tile;
+    if (patch.collision != null) existing.collision = patch.collision;
+    if (patch.decor != null) existing.decor = patch.decor;
+    if (patch.tileId != null && existing.tile == null) existing.tile = patch.tileId;
+    merged.set(index, existing);
+  }
+
+  fallbackUnlockMask.forEach((entry) => {
+    const index = toIndex(entry, width);
+    if (!Number.isInteger(index)) {
+      throw new Error('Unlock mask entry is missing a valid index, tx, or ty.');
+    }
+    if (expectedSize && (index < 0 || index >= expectedSize)) {
+      throw new Error(`Unlock mask entry ${index} falls outside the map bounds.`);
+    }
+    mergePatch(index, entry);
+  });
+
+  if (collisionUnlocked.length && collisionUnlocked.length !== expectedSize) {
+    throw new Error(
+      `Unlocked collision layer size mismatch: expected ${expectedSize} tiles but received ${collisionUnlocked.length}.`,
+    );
+  }
+  if (decorUnlocked.length && decorUnlocked.length !== expectedSize) {
+    throw new Error(
+      `Unlocked decor layer size mismatch: expected ${expectedSize} tiles but received ${decorUnlocked.length}.`,
+    );
+  }
+
+  if (collisionUnlocked.length === expectedSize) {
+    collisionUnlocked.forEach((value, index) => {
+      if (value === baseCollision[index]) return;
+      mergePatch(index, { collision: value });
+    });
+  }
+
+  if (decorUnlocked.length === expectedSize) {
+    decorUnlocked.forEach((value, index) => {
+      if (value === baseDecor[index]) return;
+      mergePatch(index, { decor: value });
+    });
+  }
+
+  return Array.from(merged.values()).sort((a, b) => a.index - b.index);
+}
+
 function getTileHitPoints(tileId) {
   const def = getTileDefinition(tileId);
   const baseHp = def.hitPoints ?? DEFAULT_DESTRUCTIBLE_HP;
@@ -35,14 +100,14 @@ function isOccupyingTile(entity, tx, ty) {
 function resolveTileLayers(config) {
   const layers = config.tileLayers ?? {};
   const fallback = config.map ?? [];
-  const fallbackUnlocked = config.unlockedMap ?? fallback;
   const collision = layers.collision ?? fallback;
   const decor = layers.decor ?? collision;
   return {
     collision: [...collision],
     decor: [...decor],
-    collisionUnlocked: [...(layers.collisionUnlocked ?? fallbackUnlocked ?? collision)],
-    decorUnlocked: [...(layers.decorUnlocked ?? decor ?? fallbackUnlocked)],
+    collisionUnlocked: layers.collisionUnlocked ? [...layers.collisionUnlocked] : [],
+    decorUnlocked: layers.decorUnlocked ? [...layers.decorUnlocked] : [],
+    unlockMask: layers.unlockMask ?? config.unlockMask ?? [],
   };
 }
 
@@ -119,9 +184,9 @@ export class LevelInstance {
     this.mapHeight = height;
 
     this.collisionBase = tileLayers.collision;
-    this.collisionUnlocked = tileLayers.collisionUnlocked;
     this.decorBase = tileLayers.decor;
-    this.decorUnlocked = tileLayers.decorUnlocked;
+    this.unlockMask = normalizeUnlockMask(tileLayers, this.mapWidth);
+    this.unlockMaskByIndex = new Map(this.unlockMask.map((entry) => [entry.index, entry]));
 
     const expectedSize = this.mapWidth * this.mapHeight;
     if (this.collisionBase.length !== expectedSize) {
@@ -132,16 +197,6 @@ export class LevelInstance {
     if (this.decorBase.length !== expectedSize) {
       throw new Error(
         `Decor layer size mismatch: expected ${expectedSize} tiles but received ${this.decorBase.length}.`,
-      );
-    }
-    if (this.collisionUnlocked.length !== expectedSize) {
-      throw new Error(
-        `Unlocked collision layer size mismatch: expected ${expectedSize} tiles but received ${this.collisionUnlocked.length}.`,
-      );
-    }
-    if (this.decorUnlocked.length !== expectedSize) {
-      throw new Error(
-        `Unlocked decor layer size mismatch: expected ${expectedSize} tiles but received ${this.decorUnlocked.length}.`,
       );
     }
 
@@ -173,11 +228,9 @@ export class LevelInstance {
     this.sealedTiles = this.gate?.sealedTiles ?? [];
     this.sealedTileIndices = this.gateIndex === null ? [] : this.sealedTiles.map(([tx, ty]) => ty * this.mapWidth + tx);
     this.sealedCollisionOriginals =
-      this.gateIndex === null
-        ? []
-        : this.sealedTileIndices.map((index) => this.collisionUnlocked[index] ?? FLOOR_TILE);
+      this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.getUnlockedTileValue(index, 'collision'));
     this.sealedDecorOriginals =
-      this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.decorUnlocked[index] ?? FLOOR_TILE);
+      this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.getUnlockedTileValue(index, 'decor'));
 
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
@@ -199,6 +252,50 @@ export class LevelInstance {
     this.rebuildTileEffects();
     this.initializePressureSwitches();
     this.initializeDestructibleTiles();
+  }
+
+  getUnlockedTileValue(index, layer) {
+    const patch = this.unlockMaskByIndex.get(index);
+    if (!patch) return layer === 'collision' ? this.collisionBase[index] : this.decorBase[index];
+    if (layer === 'collision') {
+      if (Number.isInteger(patch.collision)) return patch.collision;
+      if (Number.isInteger(patch.tile)) return patch.tile;
+      if (Number.isInteger(patch.tileId)) return patch.tileId;
+      if (Number.isInteger(patch.decor)) return patch.decor;
+      return this.collisionBase[index];
+    }
+    if (Number.isInteger(patch.decor)) return patch.decor;
+    if (Number.isInteger(patch.tile)) return patch.tile;
+    if (Number.isInteger(patch.tileId)) return patch.tileId;
+    if (Number.isInteger(patch.collision)) return patch.collision;
+    return this.decorBase[index];
+  }
+
+  applyUnlockMask() {
+    if (!this.unlockMask.length) return [];
+    const changed = new Set();
+    this.unlockMask.forEach((entry) => {
+      const { index } = entry;
+      if (!Number.isInteger(index) || index < 0 || index >= this.collisionTiles.length) return;
+      const shared = Number.isInteger(entry.tile) ? entry.tile : Number.isInteger(entry.tileId) ? entry.tileId : null;
+      const nextCollision = Number.isInteger(entry.collision) ? entry.collision : shared;
+      const nextDecor = Number.isInteger(entry.decor) ? entry.decor : shared;
+
+      if (nextCollision != null && this.collisionTiles[index] !== nextCollision) {
+        this.collisionTiles[index] = nextCollision;
+        changed.add(index);
+      }
+      if (nextDecor != null && this.decorTiles[index] !== nextDecor) {
+        this.decorTiles[index] = nextDecor;
+        changed.add(index);
+      }
+    });
+
+    const changedIndices = Array.from(changed);
+    if (changedIndices.length) {
+      this.invalidateTiles(changedIndices);
+    }
+    return changedIndices;
   }
 
   invalidateAllLayers() {
@@ -382,18 +479,21 @@ export class LevelInstance {
   unlockGate() {
     if (!this.gate || !this.gate.locked) return;
     this.gate.locked = false;
+    const changed = new Set(this.applyUnlockMask());
     if (this.gateIndex !== null) {
       this.collisionTiles[this.gateIndex] = this.gateOpenTile;
       this.decorTiles[this.gateIndex] = this.gateOpenTile;
+      changed.add(this.gateIndex);
     }
     this.sealedTileIndices.forEach((index, i) => {
       this.collisionTiles[index] = this.sealedCollisionOriginals[i] ?? FLOOR_TILE;
       this.decorTiles[index] = this.sealedDecorOriginals[i] ?? FLOOR_TILE;
+      changed.add(index);
     });
 
-    const changed = [this.gateIndex, ...this.sealedTileIndices].filter((idx) => Number.isInteger(idx));
-    if (changed.length) {
-      this.invalidateTiles(changed);
+    const changedArray = Array.from(changed).filter((idx) => Number.isInteger(idx));
+    if (changedArray.length) {
+      this.invalidateTiles(changedArray);
     }
   }
 

@@ -359,8 +359,6 @@ export function importTiledLevel(mapData, options = {}) {
     tileLayers: {
       collision,
       decor,
-      collisionUnlocked: collision,
-      decorUnlocked: decor,
     },
     lighting,
     actors,

@@ -120,9 +120,8 @@
 /**
  * @typedef {Object} TileLayers
  * @property {number[]} collision
- * @property {number[]} [collisionUnlocked]
  * @property {number[]} decor
- * @property {number[]} [decorUnlocked]
+ * @property {Array<{ index?: number, tx?: number, ty?: number, tile?: number, tileId?: number, collision?: number, decor?: number }>} [unlockMask]
  */
 
 /**
@@ -132,8 +131,6 @@
  * @property {number} [width]
  * @property {number} [height]
  * @property {TileLayers} [tileLayers]
- * @property {number[]} [map]
- * @property {number[]} [unlockedMap]
  * @property {{ litZones?: Array<{ x: number, y: number, w: number, h: number }>, switches?: Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }> }} [lighting]
  * @property {{ playerStart?: { x: number, y: number }, monsters?: any[], props?: any[], npcs?: any[] }} actors
  * @property {Array<{ id: string, name: string, icon: string, x?: number, y?: number, tx?: number, ty?: number, tint?: string, description?: string, objective?: boolean, stackable?: boolean, quantity?: number }>} pickups

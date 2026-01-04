@@ -74,7 +74,7 @@ const baseSwitches = [
 ];
 
 /** @type {import('../types.js').LevelConfig} */
-const baseMap = [
+const baseLayout = [
   W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
   W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
   W, F, FL, FL, FL, W, W, W, W, F, F, F, F, W, F, F, F, F, F, W,
@@ -92,24 +92,6 @@ const baseMap = [
   W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
 
-const unlockedMap = [
-  W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
-  W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
-  W, F, FL, FL, FL, W, W, W, W, F, F, F, F, W, F, F, F, F, F, W,
-  W, F, F, F, F, WW, F, F, W, F, F, F, F, W, F, W, W, WC, F, W,
-  W, F, F, F, F, W, F, F, W, F, F, F, F, W, F, F, F, W, F, W,
-  W, F, F, F, F, W, F, F, W, FL, FL, F, F, W, W, W, F, W, F, W,
-  W, F, F, F, F, W, F, F, W, F, F, F, F, FL, F, F, F, W, F, W,
-  W, F, F, F, F, W, F, F, W, W, W, F, F, F, F, WC, F, W, F, W,
-  W, F, F, F, F, W, F, F, F, F, W, FL, FL, W, F, W, F, W, F, W,
-  W, F, F, F, F, W, FL, F, F, F, W, F, F, W, F, W, F, W, F, W,
-  W, F, F, F, F, W, F, F, F, F, F, F, F, W, DO, W, F, W, F, W,
-  W, F, F, F, F, W, F, W, W, W, W, W, F, W, F, W, F, W, F, W,
-  W, F, F, F, F, F, F, F, F, F, F, W, F, F, F, W, F, WC, F, W,
-  W, F, F, F, F, W, W, W, W, W, F, W, F, F, F, W, F, F, F, W,
-  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
-];
-
 export const abandonedLaboratoryLevel = {
   meta: {
     id: 'level-1',
@@ -120,16 +102,19 @@ export const abandonedLaboratoryLevel = {
     dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
-  // Locked layout (what the player sees on load).
-  map: [...baseMap],
-  // Layout after unlocking the gate. Used to restore the intended shape once the
-  // player receives the key.
-  unlockedMap: [...unlockedMap],
   tileLayers: {
-    collision: [...baseMap],
-    collisionUnlocked: [...unlockedMap],
-    decor: [...baseMap],
-    decorUnlocked: [...unlockedMap],
+    collision: [...baseLayout],
+    decor: [...baseLayout],
+    unlockMask: [
+      { tx: 5, ty: 3, tile: WW },
+      { tx: 17, ty: 8, tile: W },
+      { tx: 14, ty: 9, tile: F },
+      { tx: 16, ty: 9, tile: F },
+      { tx: 14, ty: 10, tile: DO },
+      { tx: 16, ty: 10, tile: F },
+      { tx: 16, ty: 11, tile: F },
+      { tx: 16, ty: 12, tile: F },
+    ],
   },
   lighting: {
     litZones: [
