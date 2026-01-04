@@ -1,4 +1,28 @@
-export const TILE = 32;
+const TILE_BASE = 32;
+const DEFAULT_TILE_SCALE = 2;
+
+function resolveTileScale() {
+  const globalScale = Number.parseFloat(globalThis?.GAME_TILE_SCALE ?? '');
+  if (Number.isFinite(globalScale) && globalScale > 0) return globalScale;
+
+  const queryScale =
+    typeof window !== 'undefined'
+      ? Number.parseFloat(new URLSearchParams(window.location.search).get('tileScale') ?? '')
+      : NaN;
+  if (Number.isFinite(queryScale) && queryScale > 0) return queryScale;
+
+  const dataScale =
+    typeof document !== 'undefined'
+      ? Number.parseFloat(document.documentElement?.dataset?.tileScale ?? '')
+      : NaN;
+  if (Number.isFinite(dataScale) && dataScale > 0) return dataScale;
+
+  return DEFAULT_TILE_SCALE;
+}
+
+export const TILE_SCALE = resolveTileScale();
+export const TILE = TILE_BASE * TILE_SCALE;
+export const TEXTURE_TILE = TILE_BASE;
 
 export const WORLD = {
   width: 32,
