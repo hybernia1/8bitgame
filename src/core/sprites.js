@@ -220,9 +220,11 @@ function drawFromImageFrame(image, sx, sy, sourceTile = TEXTURE_TILE) {
 
 function resolveTextureTileSize(texture) {
   if (!texture) return TILE;
-  const dividesEvenly =
-    texture.width % TEXTURE_TILE === 0 && texture.height % TEXTURE_TILE === 0;
-  if (dividesEvenly) return TEXTURE_TILE;
+  const preferredSizes = [TEXTURE_TILE * 2, TEXTURE_TILE];
+  const matchingSize = preferredSizes.find(
+    (size) => texture.width % size === 0 && texture.height % size === 0,
+  );
+  if (matchingSize) return matchingSize;
   return Math.min(TEXTURE_TILE, texture.width, texture.height);
 }
 
@@ -505,10 +507,23 @@ const DRAWERS = {
   'decor.console': drawConsole,
 };
 
+function setCanvasRenderingMode(mode) {
+  if (typeof document === 'undefined') return;
+  document.documentElement?.style?.setProperty('--canvas-rendering', mode);
+}
+
+function hasHighResolutionTextures(textures) {
+  return Object.values(textures).some((texture) => {
+    if (!texture) return false;
+    return resolveTextureTileSize(texture) > TEXTURE_TILE;
+  });
+}
+
 export async function loadSpriteSheet() {
   const textures = await loadTextureMap();
   const frames = [];
   const animations = {};
+  setCanvasRenderingMode(hasHighResolutionTextures(textures) ? 'auto' : 'pixelated');
 
   SPRITE_ORDER.forEach((name) => {
     const texture = textures[name];
