@@ -17,7 +17,7 @@
               <header class="hud-bar">
                 <div class="hud-heading-line">
                   <div class="eyebrow">OPS ZÓNA</div>
-                  <div class="title level-title">Level 0: Demo Facility</div>
+                  <div class="title level-title">Level 1: Opuštěná laboratoř</div>
                   <div class="subtitle sr-only" data-controls-hint>WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
                 </div>
                 <div class="hud-health" aria-label="Stav životů a nábojů">
@@ -58,7 +58,7 @@
         </div>
         <div class="interaction-banner hidden" aria-live="polite">
           <div class="interaction-title">Interakce</div>
-          <div class="interaction-text">Přibliž se k Technikovi Járovi a stiskni E.</div>
+          <div class="interaction-text">Přibliž se ke starostce a stiskni E.</div>
         </div>
         <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
           <div class="panel-title">Hlavní menu</div>
@@ -70,7 +70,7 @@
             </div>
             <button type="button" class="menu-button" data-menu-continue>Pokračovat z posledního savu</button>
             <div class="menu-row">
-              <input type="text" aria-label="ID levelu" data-level-input placeholder="demo-level" />
+              <input type="text" aria-label="ID levelu" data-level-input placeholder="level-1" />
               <button type="button" class="menu-button ghost" data-menu-select>Výběr levelu</button>
             </div>
             <button type="button" class="menu-button ghost" data-menu-settings>Nastavení</button>
@@ -89,6 +89,26 @@
           <div class="panel-title" data-continue-title>Level načten</div>
           <p class="menu-subtitle" data-continue-subtitle>Stiskni libovolnou klávesu pro pokračování.</p>
           <p class="menu-subtitle continue-detail hidden" data-continue-detail></p>
+        </section>
+        <section class="overlay prologue-panel hidden" aria-label="Prolog vyšetřování">
+          <div class="panel-title">Prolog</div>
+          <div class="prologue-body">
+            <p>
+              Jsem detektiv, který už jednou prohrál všechno – ženu i děti. Snažím se umlčet noční můry alkoholem a
+              prášky na předpis, ale v hlavě zůstává jen prázdnota a zmatek.
+            </p>
+            <p>
+              Dnes v noci volala starostka malé vesnice. Je zoufalá – během posledního měsíce zmizely tři děti a žádné
+              stopy. Prosí mě, abych přijel, protože už neví, komu jinému věřit.
+            </p>
+            <p>
+              Přijal jsem. Řekl jsem jí, že se zastavím a podívám se na tu záhadu. Začínáme v laboratoři, která může
+              skrývat odpovědi, nebo další hrůzy.
+            </p>
+          </div>
+          <div class="prologue-actions">
+            <button type="button" class="menu-button" data-prologue-continue>Vyrazit do vesnice</button>
+          </div>
         </section>
         <section class="overlay pause-panel hidden" aria-label="Pauza">
           <div class="panel-title">Pauza</div>

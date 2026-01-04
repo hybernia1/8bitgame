@@ -41,6 +41,8 @@ const continuePanel = documentRoot?.querySelector('.continue-panel');
 const continueTitle = documentRoot?.querySelector('[data-continue-title]');
 const continueSubtitle = documentRoot?.querySelector('[data-continue-subtitle]');
 const continueDetail = documentRoot?.querySelector('[data-continue-detail]');
+const prologuePanel = documentRoot?.querySelector('.prologue-panel');
+const prologueContinueButton = documentRoot?.querySelector('[data-prologue-continue]');
 const levelSelectInput = documentRoot?.querySelector('[data-level-input]');
 const slotInput = documentRoot?.querySelector('[data-slot-input]');
 const menuSubtitle = documentRoot?.querySelector('.menu-subtitle');
@@ -327,11 +329,43 @@ function waitForContinuePrompt(content = {}) {
   });
 }
 
+function showProloguePanel() {
+  hideAllPanels();
+  toggleVisibility(prologuePanel, true);
+  prologueContinueButton?.focus?.();
+}
+
+function hideProloguePanel() {
+  toggleVisibility(prologuePanel, false);
+}
+
+function waitForPrologueContinue() {
+  if (!prologuePanel) return Promise.resolve();
+  showProloguePanel();
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      ['keydown', 'mousedown', 'touchstart'].forEach((event) =>
+        window.removeEventListener(event, keyHandler),
+      );
+      prologueContinueButton?.removeEventListener('click', clickHandler);
+      hideProloguePanel();
+      resolve();
+    };
+    const keyHandler = () => cleanup();
+    const clickHandler = () => cleanup();
+    ['keydown', 'mousedown', 'touchstart'].forEach((event) =>
+      window.addEventListener(event, keyHandler, { once: true }),
+    );
+    prologueContinueButton?.addEventListener('click', clickHandler, { once: true });
+  });
+}
+
 function hideAllPanels() {
   toggleVisibility(menuPanel, false);
   toggleVisibility(pausePanel, false);
   toggleVisibility(loadingPanel, false);
   hideContinuePanel();
+  hideProloguePanel();
 }
 
 function togglePauseScene() {
@@ -886,6 +920,25 @@ registerScene('menu', {
   },
 });
 
+registerScene('prologue', {
+  async onEnter({ params }) {
+    const targetParams = {
+      levelId: params?.levelId || DEFAULT_LEVEL_ID,
+      slotId: params?.slotId || resolveSlotId(),
+      freshStart: params?.freshStart ?? true,
+    };
+    await waitForPrologueContinue();
+    await setScene('loading', targetParams);
+  },
+  async onExit() {
+    hideProloguePanel();
+  },
+  onRender() {
+    ctx.fillStyle = COLORS.gridBackground;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  },
+});
+
 registerScene('loading', {
   async onEnter({ params }) {
     const loadStarted = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -988,7 +1041,7 @@ const pauseSaveButton = documentRoot?.querySelector?.('[data-pause-save]');
 const pauseMenuButton = documentRoot?.querySelector?.('[data-pause-menu]');
 
 startButton?.addEventListener('click', () =>
-  setScene('loading', { levelId: DEFAULT_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
+  setScene('prologue', { levelId: DEFAULT_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
 );
 continueButton?.addEventListener('click', () => {
   const saves = game.listSaves();
@@ -1001,7 +1054,7 @@ continueButton?.addEventListener('click', () => {
 });
 selectButton?.addEventListener('click', () => {
   const chosen = levelSelectInput?.value || DEFAULT_LEVEL_ID;
-  setScene('loading', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
+  setScene('prologue', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
 });
 settingsButton?.addEventListener('click', () => {
   if (menuSubtitle) {

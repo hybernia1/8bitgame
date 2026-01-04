@@ -269,6 +269,30 @@ canvas {
   opacity: 0.85;
 }
 
+.prologue-panel {
+  max-width: 720px;
+  justify-self: center;
+  align-content: center;
+  gap: 16px;
+  text-align: left;
+}
+
+.prologue-body {
+  display: grid;
+  gap: 10px;
+  line-height: 1.5;
+  color: #d6e3e5;
+}
+
+.prologue-body p {
+  margin: 0;
+}
+
+.prologue-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .panel-title {
   font-size: 15px;
   color: var(--accent);

@@ -1,8 +1,8 @@
 import { demoLevelQuests } from './demoLevel.js';
 
 const questRegistry = {
-  'demo-facility': demoLevelQuests,
-  'level-1': [],
+  'level-1': demoLevelQuests,
+  'level-2': [],
 };
 
 export function getQuestsForLevel(levelId) {

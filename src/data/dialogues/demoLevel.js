@@ -1,5 +1,18 @@
 /** @type {import('../types.js').NpcScriptCollection} */
 export const demoLevelDialogues = {
+  mayor: {
+    defaultDialogue:
+      'Omlouvám se, že tě táhnu rovnou do laboratoře. Za poslední měsíc zmizely tři děti a mám strach, že jde o nějaký okultní rituál. Tohle je první místo, kde musíme hledat stopy.',
+    lines: [
+      {
+        id: 'mayor-intro',
+        when: [{ flag: 'mayorIntroduced', equals: false }],
+        dialogue:
+          'Dostals můj telefonát. Prosím, projdi laboratoř a zjisti, jestli tu nenajdeš něco, co by vysvětlilo, kam děti mizí.',
+        setState: { mayorIntroduced: true },
+      },
+    ],
+  },
   caretaker: {
     defaultDialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
     lines: [

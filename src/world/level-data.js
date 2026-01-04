@@ -12,7 +12,7 @@ import { normalizeLevelConfig } from './level-loader.js';
 export const registry = new Map();
 export const loaderRegistry = new Map();
 
-const demoId = demoLevel.meta?.id ?? 'demo-level';
+const demoId = demoLevel.meta?.id ?? 'level-1';
 export const DEFAULT_LEVEL_ID = demoId;
 
 function enrichLevelConfig(base, id) {
@@ -39,7 +39,7 @@ export function registerLevelModule(id, modulePath) {
 }
 
 registerLevelConfig(demoId, demoLevel);
-registerLevelConfig(levelOne.meta?.id ?? 'level-1', levelOne);
+registerLevelConfig(levelOne.meta?.id ?? 'level-2', levelOne);
 registerLevelConfig(facilitySample.meta?.id ?? 'tiled-facility', facilitySample);
 
 export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {

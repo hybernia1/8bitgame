@@ -23,11 +23,11 @@ const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 /** @type {import('./types.js').LevelConfig} */
 export const levelOne = {
   meta: {
-    id: 'level-1',
-    name: 'Servisní Křídlo',
-    title: 'Servisní Křídlo',
+    id: 'level-2',
+    name: 'Severní Křídlo Laboratoře',
+    title: 'Severní Křídlo Laboratoře',
     subtitle: 'hud.controls',
-    levelNumber: 1,
+    levelNumber: 2,
     dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },

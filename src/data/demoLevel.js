@@ -89,11 +89,11 @@ const unlockedMap = [
 
 export const demoLevel = {
   meta: {
-    id: 'demo-facility',
-    name: 'Demo Facility',
-    title: 'Demo Facility',
+    id: 'level-1',
+    name: 'Opuštěná Laboratoř',
+    title: 'Opuštěná Laboratoř',
     subtitle: 'hud.controls',
-    levelNumber: 0,
+    levelNumber: 1,
     dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
@@ -127,7 +127,7 @@ export const demoLevel = {
       ty: 10,
       locked: true,
       openTile: F,
-      nextLevelId: 'level-1',
+      nextLevelId: 'level-2',
       sealedTiles: [
         [14, 9],
         [15, 9],
@@ -154,6 +154,14 @@ export const demoLevel = {
     monsters: [],
     props: [],
     npcs: [
+      {
+        id: 'mayor',
+        name: 'Starostka Hana',
+        tx: 3,
+        ty: 2,
+        dialogue:
+          'Omlouvám se, že tě táhnu rovnou do laboratoře, ale mám pocit, že ztracené děti jsou součástí něčeho temného.',
+      },
       {
         id: 'caretaker',
         name: 'Správce Laboratoře',
@@ -267,8 +275,8 @@ export const demoLevel = {
         },
         { type: 'unlock', targetId: 'gate' },
         { type: 'clearObjectives' },
-        { type: 'setArea', name: 'Nové servisní křídlo' },
-        { type: 'setLevelNumber', value: 1 },
+        { type: 'setArea', name: 'Severní křídlo laboratoře' },
+        { type: 'setLevelNumber', value: 2 },
       ],
       note: 'Klíč získán! Východní dveře se odemkly a mapa se rozšířila.',
     },
