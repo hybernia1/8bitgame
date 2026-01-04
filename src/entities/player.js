@@ -10,10 +10,15 @@ const GRAB_PADDING = 6 * TILE_SCALE;
 function getInputAxis() {
   let dx = 0;
   let dy = 0;
-  if (keyPressed('up') || keyPressed('w')) dy -= 1;
-  if (keyPressed('down') || keyPressed('s')) dy += 1;
-  if (keyPressed('left') || keyPressed('a')) dx -= 1;
-  if (keyPressed('right') || keyPressed('d')) dx += 1;
+  const up = keyPressed(['up', 'arrowup', 'w']);
+  const down = keyPressed(['down', 'arrowdown', 's']);
+  const left = keyPressed(['left', 'arrowleft', 'a']);
+  const right = keyPressed(['right', 'arrowright', 'd']);
+
+  if (up) dy -= 1;
+  if (down) dy += 1;
+  if (left) dx -= 1;
+  if (right) dx += 1;
   return { dx, dy };
 }
 
