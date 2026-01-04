@@ -33,7 +33,8 @@ export const messages = {
   'note.apple.fullHealth': 'Máš plné zdraví, jablko si nech na horší chvíli.',
   'note.apple.healed': 'Jablko ti doplnilo jeden život.',
   'note.videotape.found': 'Vytáhl jsi videokazetu, ale poblíž není žádný přehrávač.',
-  'note.videotape.played': 'Kazeta se přehrála a zmizela z inventáře.',
+  'note.videotape.played':
+    'Kazeta byla prázdná a přehrávání skončilo šumem. Technik Jára tě sem poslal zbytečně.',
   'note.damage.hit': 'Zásah! Přišel jsi o život. Vrať se a dávej si pozor.',
   'note.death.guard': 'Hlídač klíče tě zneškodnil. Mise se restartuje...',
   'note.damage.darkness': 'Tma pálí! Najdi vypínač a rozsviť část místnosti.',
