@@ -18,6 +18,7 @@ import { getCurrentScene, registerScene, resume, setScene, showMenu } from './co
 import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta } from './world/level-data.js';
 import { format } from './ui/messages.js';
 import { formatBinding, formatControlsHint } from './core/input-bindings.js';
+import { createLevelEditorOverlay } from './ui/editor.js';
 
 const { canvas, context: ctx } = init('game');
 initKeys();
@@ -35,6 +36,7 @@ const VIEWPORT_BUFFER = 0;
 const menuPanel = documentRoot?.querySelector('.menu-panel');
 const fullscreenButton = documentRoot?.querySelector('[data-fullscreen-toggle]');
 const gameShell = documentRoot?.querySelector('.game-shell');
+const editorToggleButton = documentRoot?.querySelector('[data-editor-toggle]');
 const pausePanel = documentRoot?.querySelector('.pause-panel');
 const loadingPanel = documentRoot?.querySelector('.loading-panel');
 const continuePanel = documentRoot?.querySelector('.continue-panel');
@@ -136,6 +138,25 @@ if (documentRoot) {
   syncCanvasCssDimensions();
   updateGameScale();
   window.addEventListener('resize', updateGameScale, { passive: true });
+}
+
+let levelEditor = null;
+
+function ensureLevelEditor() {
+  if (levelEditor || !documentRoot) return;
+  levelEditor = createLevelEditorOverlay({
+    documentRoot,
+    host: gameShell ?? documentRoot.body,
+    spriteSheetPromise,
+    initialConfig: getLevelConfig(),
+    onToggle(open) {
+      editorToggleButton?.setAttribute('aria-pressed', open ? 'true' : 'false');
+    },
+  });
+
+  if (editorToggleButton && levelEditor) {
+    editorToggleButton.addEventListener('click', () => levelEditor?.toggle());
+  }
 }
 
 function getHudDomRefs(root = documentRoot) {
@@ -560,6 +581,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
   }
 
   async function bootstrap() {
+    ensureLevelEditor();
     spriteSheet = await spriteSheetPromise;
     level = await game.loadLevel(levelId);
     savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
@@ -606,6 +628,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
     syncAmmoHud();
     setLevelMeta(level.meta);
+    levelEditor?.setLevel(level);
 
     renderInventory(inventory);
 
