@@ -79,7 +79,8 @@ function validateLevelPackage(levelId, config) {
     const targetScriptId = npc.scriptId ?? npc.id;
     const hasScript = Boolean(targetScriptId && scripts[targetScriptId]);
     const hasDialogue = Boolean(npc.dialogue);
-    if (!hasScript && !hasDialogue) {
+    const isHostileOnly = npc.lethal && !hasScript && !hasDialogue;
+    if (!hasScript && !hasDialogue && !isHostileOnly) {
       missingDialogues.push(targetScriptId || npc.id || 'unknown-npc');
     }
   });
