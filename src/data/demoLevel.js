@@ -48,6 +48,20 @@ const baseSwitches = [
       },
     ],
   },
+  {
+    id: 'technician-switch',
+    name: 'Servisní vypínač',
+    tx: 7,
+    ty: 9,
+    lights: [
+      {
+        x: 5,
+        y: 8,
+        w: 5,
+        h: 4,
+      },
+    ],
+  },
 ];
 
 /** @type {import('./types.js').LevelConfig} */
@@ -159,22 +173,21 @@ export const demoLevel = {
         name: 'Starostka Hana',
         tx: 3,
         ty: 2,
-        dialogue:
-          'Omlouvám se, že tě táhnu rovnou do laboratoře, ale mám pocit, že ztracené děti jsou součástí něčeho temného.',
+        dialogue: 'Hana ztiší hlas: „Potřebuji tě tady. Jde o tři ztracené děti.“',
       },
       {
         id: 'caretaker',
         name: 'Správce Laboratoře',
         tx: 10,
         ty: 4,
-        dialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
+        dialogue: 'Správce šeptá: „Sežeň články a nářadí. Tma tu nesmí vyhrát.“',
       },
       {
         id: 'technician',
         name: 'Technik Jára',
         tx: 6,
         ty: 9,
-        dialogue: 'Hej, slyšel jsem šumění u zadního skladu. Možná tam něco blýská.',
+        dialogue: 'Jára si drží baterku u hrudi: „Potřebujeme světlo, jinak jsme slepí.“',
         info: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
       },
       {

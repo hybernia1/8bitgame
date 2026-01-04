@@ -23,6 +23,12 @@ export function createInteractionSystem({
   const sessionState = state.sessionState ?? (state.sessionState = {});
   const questState = prepareQuestState(questConfigs, persistentState.quests ?? (persistentState.quests = {}));
   const flags = persistentState.flags ?? (persistentState.flags = {});
+  if (flags.technicianLightOn !== true) {
+    const techSwitch = level.getLightSwitches().find((sw) => sw.id === 'technician-switch');
+    if (techSwitch?.activated) {
+      flags.technicianLightOn = true;
+    }
+  }
   sessionState.dialogueTime ??= 0;
   sessionState.activeSpeaker ??= '';
   sessionState.activeLine ??= '';
@@ -138,6 +144,9 @@ export function createInteractionSystem({
     if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       const toggled = level.activateLightSwitch(activeSwitch.id);
       if (toggled) {
+        if (activeSwitch.id === 'technician-switch') {
+          persistentState.flags.technicianLightOn = true;
+        }
         showNote('note.switch.activated', { name: activeSwitch.name });
         game?.saveProgress?.({ auto: true });
       } else {

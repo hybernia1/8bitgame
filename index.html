@@ -62,22 +62,42 @@
         </div>
         <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
           <div class="panel-title">Hlavní menu</div>
-          <p class="menu-subtitle">Vyber si akci pro další postup.</p>
+          <p class="menu-subtitle">Zvol si novou misi, pokračuj z posledního savu, nebo skoč na konkrétní level.</p>
           <div class="menu-actions">
-            <div class="menu-row">
-              <input type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
-              <button type="button" class="menu-button" data-menu-start>Nový start</button>
+            <div class="menu-card">
+              <div class="menu-card-header">
+                <div class="menu-card-title">Nová hra</div>
+                <p class="menu-card-hint">Začni od prologu v čistém slotu.</p>
+              </div>
+              <div class="menu-row">
+                <label for="slot-input" class="menu-label">Slot</label>
+                <input id="slot-input" type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
+                <button type="button" class="menu-button" data-menu-start>Spustit</button>
+              </div>
             </div>
-            <button type="button" class="menu-button" data-menu-continue>Pokračovat z posledního savu</button>
-            <div class="menu-row">
-              <input type="text" aria-label="ID levelu" data-level-input placeholder="level-1" />
-              <button type="button" class="menu-button ghost" data-menu-select>Výběr levelu</button>
+            <div class="menu-card">
+              <div class="menu-card-header">
+                <div class="menu-card-title">Pokračovat</div>
+                <p class="menu-card-hint">Načti poslední automatický nebo ruční save.</p>
+              </div>
+              <button type="button" class="menu-button" data-menu-continue>Pokračovat z posledního savu</button>
+              <div class="save-panel">
+                <div class="panel-title">Uložené pozice</div>
+                <p class="menu-subtitle">Vyber uložený slot nebo ho smaž.</p>
+                <div class="save-slot-list" data-save-slot-list></div>
+              </div>
             </div>
-            <button type="button" class="menu-button ghost" data-menu-settings>Nastavení</button>
-            <div class="save-panel">
-              <div class="panel-title">Pokračovat</div>
-              <p class="menu-subtitle">Vyber uložený slot nebo ho smaž.</p>
-              <div class="save-slot-list" data-save-slot-list></div>
+            <div class="menu-card">
+              <div class="menu-card-header">
+                <div class="menu-card-title">Výběr levelu</div>
+                <p class="menu-card-hint">Rychlý skok na konkrétní úroveň pro testování.</p>
+              </div>
+              <div class="menu-row">
+                <label for="level-input" class="menu-label">Level</label>
+                <input id="level-input" type="text" aria-label="ID levelu" data-level-input placeholder="level-1" />
+                <button type="button" class="menu-button ghost" data-menu-select>Vstoupit</button>
+              </div>
+              <button type="button" class="menu-button ghost subtle" data-menu-settings>Ostatní nastavení</button>
             </div>
           </div>
         </section>
@@ -92,22 +112,16 @@
         </section>
         <section class="overlay prologue-panel hidden" aria-label="Prolog vyšetřování">
           <div class="panel-title">Prolog</div>
-          <div class="prologue-body">
-            <p>
-              Zase se mi vrací sen o rodině – slyším dětský smích, cítím jejich ruce, a pak jen ticho a vzdálené
-              sirény. Probudím se s hlavou těžkou od léků, které mají ty obrazy utišit.
-            </p>
-            <p>
-              Uprostřed noci zavibruje telefon. Starostka Hana s rozechvělým hlasem prosí o pomoc. V posledním měsíci
-              zmizely tři děti a policie tápe – jediným společným bodem je vesnická laboratoř na kopci.
-            </p>
-            <p>
-              Přijímám případ. Říkám jí, že přijedu hned, i kdybych měl zase otevřít rány, které se nikdy nezahojily.
-              Začínáme v laboratoři, která může skrývat odpovědi – nebo další hrůzy.
-            </p>
+          <div class="prologue-step">
+            <div class="prologue-meta">
+              <div class="prologue-kicker">Kapitola úvodu</div>
+              <div class="prologue-progress" data-prologue-progress>1 / 2</div>
+            </div>
+            <div class="prologue-heading" data-prologue-step-title>Sen</div>
+            <div class="prologue-body" data-prologue-body></div>
           </div>
           <div class="prologue-actions">
-            <button type="button" class="menu-button" data-prologue-continue>Vyrazit do vesnice</button>
+            <button type="button" class="menu-button" data-prologue-continue>Pokračovat</button>
           </div>
         </section>
         <section class="overlay pause-panel hidden" aria-label="Pauza">
