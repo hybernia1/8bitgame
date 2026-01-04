@@ -1,9 +1,11 @@
-import { TILE } from '../core/constants.js';
+import { TILE, TILE_SCALE } from '../core/constants.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
-const TALK_RADIUS = 26;
-const CHARACTER_SIZE = 22;
-const MIN_TARGET_DISTANCE = 4;
+const TALK_RADIUS = 26 * TILE_SCALE;
+const CHARACTER_SIZE = Math.round(TILE * 0.6875);
+const MIN_TARGET_DISTANCE = 4 * TILE_SCALE;
+const DEFAULT_WANDER_SPEED = 36 * TILE_SCALE;
+const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
 
 function toWorldPosition(point = {}) {
   return {
@@ -13,6 +15,9 @@ function toWorldPosition(point = {}) {
 }
 
 function updatePatrol(npc, dt) {
+  const wanderSpeed = npc.wanderSpeed ?? npc.speed ?? DEFAULT_WANDER_SPEED;
+  const patrolSpeed = npc.speed ?? DEFAULT_PATROL_SPEED;
+
   if (npc.busyTimer > 0) {
     npc.busyTimer = Math.max(0, npc.busyTimer - dt);
     return { dx: 0, dy: 0, moving: false };
@@ -41,7 +46,7 @@ function updatePatrol(npc, dt) {
         return { dx: 0, dy: 0, moving: false };
       }
 
-      const step = (npc.speed ?? 36) * dt;
+      const step = wanderSpeed * dt;
       const move = Math.min(step, distance);
       const normalizedX = dx / (distance || 1);
       const normalizedY = dy / (distance || 1);
@@ -68,7 +73,7 @@ function updatePatrol(npc, dt) {
     return { dx: 0, dy: 0, moving: false };
   }
 
-  const step = (npc.speed ?? 40) * dt;
+  const step = patrolSpeed * dt;
   const move = Math.min(step, distance);
   const normalizedX = dx / (distance || 1);
   const normalizedY = dy / (distance || 1);
@@ -118,12 +123,23 @@ export function createNpcs(spriteSheet, placements) {
       fallbackAnimation;
     currentAnimation?.start?.();
 
+    const size = typeof npc.size === 'number' ? npc.size * TILE_SCALE : CHARACTER_SIZE;
+    const speed = typeof npc.speed === 'number' ? npc.speed * TILE_SCALE : DEFAULT_PATROL_SPEED;
+    const wanderSpeed =
+      typeof npc.wanderSpeed === 'number'
+        ? npc.wanderSpeed * TILE_SCALE
+        : npc.speed != null
+          ? speed
+          : DEFAULT_WANDER_SPEED;
+
     return {
       ...npc,
       sprite: spriteName,
       color: npc.color || '#87b0ff',
       tint: npc.tint || 'rgba(135, 176, 255, 0.18)',
-      size: npc.size ?? CHARACTER_SIZE,
+      size,
+      speed,
+      wanderSpeed,
       ...toWorldPosition(npc),
       patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
       patrolIndex: 0,

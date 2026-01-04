@@ -28,7 +28,7 @@ const spriteSheetPromise = loadSpriteSheet();
 
 const documentRoot = typeof document !== 'undefined' ? document : null;
 
-const BASE_CANVAS = { width: 1024, height: 576 };
+const BASE_CANVAS = { width: WORLD.width * TILE, height: WORLD.height * TILE };
 const GAME_SCALE_LIMITS = { min: 0.6, max: 5 };
 const VIEWPORT_BUFFER = 0;
 
@@ -46,6 +46,17 @@ const slotInput = documentRoot?.querySelector('[data-slot-input]');
 const menuSubtitle = documentRoot?.querySelector('.menu-subtitle');
 const saveSlotList = documentRoot?.querySelector('[data-save-slot-list]');
 const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
+
+if (canvas) {
+  canvas.width = BASE_CANVAS.width;
+  canvas.height = BASE_CANVAS.height;
+}
+
+function syncCanvasCssDimensions() {
+  if (!documentRoot) return;
+  documentRoot.documentElement.style.setProperty('--canvas-width', `${BASE_CANVAS.width}px`);
+  documentRoot.documentElement.style.setProperty('--canvas-height', `${BASE_CANVAS.height}px`);
+}
 
 function setGameScale(value) {
   if (!documentRoot) return;
@@ -122,6 +133,7 @@ if (documentRoot) {
 fullscreenButton?.addEventListener('click', toggleFullscreen);
 setFullscreenUi(Boolean(getFullscreenElement()));
 if (documentRoot) {
+  syncCanvasCssDimensions();
   updateGameScale();
   window.addEventListener('resize', updateGameScale, { passive: true });
 }

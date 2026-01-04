@@ -1,7 +1,11 @@
 import { keyPressed } from '../kontra.mjs';
-import { COLORS } from '../core/constants.js';
+import { COLORS, TILE, TILE_SCALE } from '../core/constants.js';
 import { attemptPush, findBlockingPushable, findNearbyPushable } from './pushables.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
+
+const PLAYER_SIZE = Math.round(TILE * 0.6875);
+const PLAYER_SPEED = 120 * TILE_SCALE;
+const GRAB_PADDING = 6 * TILE_SCALE;
 
 function getInputAxis() {
   let dx = 0;
@@ -24,8 +28,8 @@ export function createPlayer(spriteSheet, placements = {}) {
   return {
     x: playerStart.x,
     y: playerStart.y,
-    speed: 120,
-    size: 22,
+    speed: PLAYER_SPEED,
+    size: PLAYER_SIZE,
     color: '#5cf2cc',
     lastDirection: { x: 1, y: 0 },
     facing,
@@ -46,7 +50,7 @@ export function updatePlayer(player, dt, collision = {}) {
   const actionJustPressed = actionPressed && !player.interactPressedLastFrame;
   const len = Math.hypot(dx, dy) || 1;
   const direction = resolveDirection(dx, dy, player.facing);
-  const grabPadding = 6;
+  const grabPadding = GRAB_PADDING;
 
   const releaseGrab = () => {
     player.grabbedPushableId = null;
