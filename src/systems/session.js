@@ -215,6 +215,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       menuSubtitle.textContent = defaultMenuSubtitle;
     }
     setFullscreenAvailability(isFullscreenSupported);
+    shell.showFullscreenPrompt?.();
     refreshSaveSlotList();
     hideContinuePanel();
     toggleVisibility(menuPanel, true);
@@ -949,7 +950,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   registerScene('menu', {
     async onEnter() {
       setFullscreenAvailability(isFullscreenSupported);
-      shell.requestFullscreen?.();
+      shell.showFullscreenPrompt?.();
       showMenuPanel();
     },
     onRender() {

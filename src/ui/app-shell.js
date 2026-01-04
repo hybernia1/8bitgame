@@ -13,6 +13,10 @@ let shellState = {
   fullscreenButton: null,
   fullscreenEnabled: false,
   fullscreenSupported: false,
+  fullscreenPrompt: null,
+  fullscreenRequestButton: null,
+  fullscreenDismissButton: null,
+  fullscreenPromptDismissed: false,
 };
 
 export function setScale(value) {
@@ -54,6 +58,9 @@ function isFullscreenActive() {
 
 function setFullscreenUi(active) {
   shellState.gameShell?.classList.toggle('is-fullscreen', active);
+  if (active) {
+    hideFullscreenPrompt();
+  }
   if (shellState.fullscreenButton) {
     shellState.fullscreenButton.setAttribute('aria-pressed', active ? 'true' : 'false');
     shellState.fullscreenButton.textContent = active ? '⤢' : '⛶';
@@ -108,10 +115,31 @@ export function toggleFullscreen() {
   }
 }
 
+function hideFullscreenPrompt() {
+  shellState.fullscreenPromptDismissed = true;
+  shellState.fullscreenPrompt?.classList.add('hidden');
+}
+
+function showFullscreenPrompt() {
+  if (!shellState.fullscreenPrompt) return;
+  if (!shellState.fullscreenEnabled || shellState.fullscreenPromptDismissed || isFullscreenActive()) {
+    shellState.fullscreenPrompt.classList.add('hidden');
+    return;
+  }
+  shellState.fullscreenPrompt.classList.remove('hidden');
+}
+
 function bindFullscreenListeners() {
   if (!shellState.documentRoot) return;
   ['fullscreenchange', 'webkitfullscreenchange'].forEach((event) =>
-    shellState.documentRoot.addEventListener(event, () => setFullscreenUi(Boolean(getFullscreenElement()))),
+    shellState.documentRoot.addEventListener(event, () => {
+      const active = Boolean(getFullscreenElement());
+      setFullscreenUi(active);
+      if (!active) {
+        shellState.fullscreenPromptDismissed = false;
+      }
+      showFullscreenPrompt();
+    }),
   );
 }
 
@@ -137,6 +165,9 @@ export function initShell({
   const root = shellState.documentRoot;
   shellState.gameShell = root?.querySelector('.game-shell') ?? null;
   shellState.fullscreenButton = root?.querySelector('[data-fullscreen-toggle]') ?? null;
+  shellState.fullscreenPrompt = root?.querySelector('[data-fullscreen-prompt]') ?? null;
+  shellState.fullscreenRequestButton = root?.querySelector('[data-fullscreen-request]') ?? null;
+  shellState.fullscreenDismissButton = root?.querySelector('[data-fullscreen-dismiss]') ?? null;
 
   const domRefs = {
     documentRoot: root,
@@ -175,9 +206,20 @@ export function initShell({
   if (shellState.fullscreenButton) {
     shellState.fullscreenButton.addEventListener('click', toggleFullscreen);
   }
+  if (shellState.fullscreenRequestButton) {
+    shellState.fullscreenRequestButton.addEventListener('click', () => {
+      requestFullscreen();
+    });
+  }
+  if (shellState.fullscreenDismissButton) {
+    shellState.fullscreenDismissButton.addEventListener('click', () => {
+      hideFullscreenPrompt();
+    });
+  }
 
   setFullscreenUi(Boolean(getFullscreenElement()));
   setFullscreenAvailability(shellState.fullscreenSupported);
+  showFullscreenPrompt();
 
   if (root) {
     syncCanvasCssDimensions();
@@ -196,5 +238,6 @@ export function initShell({
     isFullscreenActive,
     setFullscreenAvailability,
     setFullscreenUi,
+    showFullscreenPrompt,
   };
 }
