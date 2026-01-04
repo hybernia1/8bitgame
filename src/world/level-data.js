@@ -142,6 +142,8 @@ export const DEFAULT_LEVEL_ID = defaultPackage.levelId;
 const defaultLevelConfig = defaultPackage.config;
 
 registerLevelConfig(facilitySample.meta?.id ?? 'tiled-facility', facilitySample);
+registerLevelModule('level-2', '../data/levels/2-northern-wing.js');
+registerLevelModule('level-3', '../data/levels/3-rooftop-corridor.js');
 
 function getLevelConfigSyncInternal(id) {
   const base = registry.get(id) ?? registry.get(DEFAULT_LEVEL_ID) ?? defaultLevelConfig;
