@@ -4,6 +4,7 @@
  */
 
 import { TILE } from '../core/constants.js';
+import { TILE_IDS } from './tile-registry.js';
 
 const DEFAULT_LAYER_NAMES = {
   collision: 'collision',
@@ -11,6 +12,8 @@ const DEFAULT_LAYER_NAMES = {
   lighting: 'lighting',
   spawns: 'spawns',
 };
+
+const { FLOOR_PLAIN: FLOOR_TILE, WALL_SOLID: WALL_TILE, DOOR_CLOSED: DOOR_TILE } = TILE_IDS;
 
 function isTiledMap(payload) {
   return Boolean(payload && payload.type === 'map' && Array.isArray(payload.layers));
@@ -24,7 +27,7 @@ function readProperties(properties = []) {
 }
 
 function normalizeLayerData(layer, expectedSize) {
-  if (!layer) return new Array(expectedSize).fill(0);
+  if (!layer) return new Array(expectedSize).fill(FLOOR_TILE);
   if (layer.type !== 'tilelayer') {
     throw new Error(`Layer "${layer.name}" is not a tile layer.`);
   }
@@ -47,7 +50,7 @@ function normalizeLayerData(layer, expectedSize) {
     );
   }
 
-  return raw.map((value) => Number.parseInt(value, 10) || 0);
+  return raw.map((value) => Number.parseInt(value, 10) || FLOOR_TILE);
 }
 
 function resolveTilesetForGid(tilesets = [], gid) {
@@ -58,14 +61,14 @@ function resolveTilesetForGid(tilesets = [], gid) {
 }
 
 function normalizeTileId(gid, tilesets = []) {
-  if (!gid) return 0;
+  if (!gid) return FLOOR_TILE;
   const tileset = resolveTilesetForGid(tilesets, gid);
   if (!tileset) return gid;
   return gid - tileset.firstgid;
 }
 
 function normalizeTileValue(gid, { tilesets, tileMappings, floorIds, wallIds, doorIds }) {
-  if (!gid) return 0;
+  if (!gid) return FLOOR_TILE;
   const mapped = tileMappings.get(gid);
   if (mapped != null) return mapped;
 
@@ -73,11 +76,11 @@ function normalizeTileValue(gid, { tilesets, tileMappings, floorIds, wallIds, do
   const normalizedMapped = tileMappings.get(normalizedId);
   if (normalizedMapped != null) return normalizedMapped;
 
-  if (floorIds.has(gid) || floorIds.has(normalizedId)) return 0;
-  if (doorIds.has(gid) || doorIds.has(normalizedId)) return 2;
-  if (wallIds.size === 0) return 1;
-  if (wallIds.has(gid) || wallIds.has(normalizedId)) return 1;
-  return 0;
+  if (floorIds.has(gid) || floorIds.has(normalizedId)) return FLOOR_TILE;
+  if (doorIds.has(gid) || doorIds.has(normalizedId)) return DOOR_TILE;
+  if (wallIds.size === 0) return WALL_TILE;
+  if (wallIds.has(gid) || wallIds.has(normalizedId)) return WALL_TILE;
+  return FLOOR_TILE;
 }
 
 function buildTileMappingMap(mapping = {}) {
@@ -176,9 +179,9 @@ export function importTiledLevel(mapData, options = {}) {
   const layerNames = { ...DEFAULT_LAYER_NAMES, ...(options.layerNames ?? {}) };
   const tilesets = mapData.tilesets ?? [];
   const tileMappings = buildTileMappingMap(options.tileMappings ?? {});
-  const floorIds = new Set(options.floorTileIds ?? []);
-  const wallIds = new Set(options.wallTileIds ?? []);
-  const doorIds = new Set(options.doorTileIds ?? []);
+  const floorIds = new Set(options.floorTileIds ?? [FLOOR_TILE]);
+  const wallIds = new Set(options.wallTileIds ?? [WALL_TILE]);
+  const doorIds = new Set(options.doorTileIds ?? [DOOR_TILE]);
 
   const width = mapData.width ?? 0;
   const height = mapData.height ?? 0;

@@ -1,22 +1,24 @@
 import { TILE } from '../core/constants.js';
 import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
+import { TILE_IDS } from '../world/tile-registry.js';
 
 const BASE_WIDTH = 16;
 const { width: TARGET_WIDTH, height: TARGET_HEIGHT } = WIDESCREEN_DIMENSIONS;
+const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
 
 const baseLayout = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1,
-  1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
-  1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
-  1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1,
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
+  W, F, FL, FL, FL, F, F, F, F, F, F, F, F, F, F, W,
+  W, F, F, WW, W, W, F, F, F, W, WW, W, F, F, F, W,
+  W, F, F, W, F, F, F, F, F, WC, F, F, F, F, F, W,
+  W, F, F, W, F, F, WW, F, F, W, F, F, W, F, F, W,
+  W, F, F, F, F, F, W, FL, FL, F, F, F, F, F, F, W,
+  W, F, F, W, W, W, F, F, F, W, W, W, F, F, F, W,
+  W, F, F, F, F, FL, F, F, F, F, F, F, WW, F, F, W,
+  W, F, F, W, F, F, W, W, W, F, F, WW, W, W, WC, W,
+  W, F, FL, WC, F, F, F, F, F, F, FL, D, F, F, WC, W,
+  W, F, F, F, F, F, FL, F, F, F, F, W, W, W, F, W,
+  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
 
 /** @type {import('./types.js').LevelConfig} */
@@ -44,8 +46,8 @@ export const levelOne = {
         tx: 9,
         ty: 8,
         targets: [{ tx: 11, ty: 9 }],
-        openTile: 0,
-        closedTile: 2,
+        openTile: F,
+        closedTile: D,
       },
     ],
   },
