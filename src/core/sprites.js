@@ -1,5 +1,5 @@
 import { SpriteSheet } from '../kontra.mjs';
-import { TILE, COLORS } from './constants.js';
+import { COLORS, TEXTURE_TILE, TILE } from './constants.js';
 
 const SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'cat', 'monster', 'prop'];
 const TEXTURE_SEED = 1337;
@@ -177,11 +177,11 @@ function withTexture(drawFn, seed = TEXTURE_SEED) {
 }
 
 function drawFromImage(image) {
-  return (ctx) => ctx.drawImage(image, 0, 0, TILE, TILE);
+  return (ctx) => ctx.drawImage(image, 0, 0, TEXTURE_TILE, TEXTURE_TILE, 0, 0, TILE, TILE);
 }
 
 function drawFromImageFrame(image, sx, sy) {
-  return (ctx) => ctx.drawImage(image, sx, sy, TILE, TILE, 0, 0, TILE, TILE);
+  return (ctx) => ctx.drawImage(image, sx, sy, TEXTURE_TILE, TEXTURE_TILE, 0, 0, TILE, TILE);
 }
 
 function buildSpriteFrames(name, texture) {
@@ -193,13 +193,13 @@ function buildSpriteFrames(name, texture) {
     return [withTexture(DRAWERS[name])];
   }
 
-  const cols = Math.max(1, Math.floor(texture.width / TILE));
-  const rows = Math.max(1, Math.floor(texture.height / TILE));
+  const cols = Math.max(1, Math.floor(texture.width / TEXTURE_TILE));
+  const rows = Math.max(1, Math.floor(texture.height / TEXTURE_TILE));
 
   const frames = [];
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
-      frames.push(drawFromImageFrame(texture, col * TILE, row * TILE));
+      frames.push(drawFromImageFrame(texture, col * TEXTURE_TILE, row * TEXTURE_TILE));
     }
   }
 
