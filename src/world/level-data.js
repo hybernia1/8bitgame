@@ -1,6 +1,4 @@
-import { abandonedLaboratoryLevel, northernWingLevel, rooftopCorridorLevel } from '../data/levels/index.js';
-import { getDialoguesForLevel } from '../data/dialogues/index.js';
-import { getQuestsForLevel } from '../data/quests/index.js';
+import defaultLevelModule from '../data/levels/1-abandoned-laboratory.js';
 import { facilitySample } from '../data/maps/facility-sample.js';
 import { normalizeLevelConfig } from './level-loader.js';
 
@@ -8,44 +6,137 @@ import { normalizeLevelConfig } from './level-loader.js';
  * @typedef {import('../data/types.js').LevelConfig} LevelConfig
  */
 
+const processedModuleIds = new Set(['1-abandoned-laboratory']);
+let cachedLevelModuleEntriesPromise = null;
+
 export const registry = new Map();
 export const loaderRegistry = new Map();
 
-const defaultLevel = abandonedLaboratoryLevel;
-const defaultLevelId = defaultLevel.meta?.id ?? 'level-1';
-export const DEFAULT_LEVEL_ID = defaultLevelId;
-
-function enrichLevelConfig(base, id) {
-  const levelId = base.meta?.id ?? id;
-  return {
-    ...base,
-    quests: base.quests ?? getQuestsForLevel(levelId),
-    npcScripts: base.npcScripts ?? getDialoguesForLevel(levelId),
-  };
+function deriveIdFromPath(path) {
+  const filename = path.split('/').pop() ?? '';
+  return filename.replace(/\.js$/, '');
 }
 
-export function registerLevelConfig(id, config) {
+async function getLevelModuleEntries() {
+  if (cachedLevelModuleEntriesPromise) return cachedLevelModuleEntriesPromise;
+
+  if (typeof import.meta?.glob === 'function') {
+    const globEntries = import.meta.glob('../data/levels/*.js');
+    cachedLevelModuleEntriesPromise = Promise.resolve(Object.entries(globEntries));
+    return cachedLevelModuleEntriesPromise;
+  }
+
+  cachedLevelModuleEntriesPromise = (async () => {
+    try {
+      const { readdir } = await import('fs/promises');
+      const directoryUrl = new URL('../data/levels/', import.meta.url);
+      const files = await readdir(directoryUrl);
+      return files
+        .filter((file) => file.endsWith('.js'))
+        .map((file) => {
+          const url = new URL(file, directoryUrl).href;
+          return [url, () => import(url)];
+        });
+    } catch {
+      return [];
+    }
+  })();
+
+  return cachedLevelModuleEntriesPromise;
+}
+
+function extractLevelPackage(moduleValue) {
+  const candidate = moduleValue?.default ?? moduleValue;
+  let config = candidate?.config ?? moduleValue?.config;
+
+  if (!config && candidate?.meta) config = candidate;
+  if (!config && moduleValue?.meta) config = moduleValue;
+  if (!config && typeof candidate === 'object') {
+    config = Object.values(candidate).find((value) => value?.meta);
+  }
+
+  const dialogues = candidate?.dialogues ?? moduleValue?.dialogues ?? candidate?.npcScripts;
+  const quests = candidate?.quests ?? moduleValue?.quests ?? candidate?.questLines;
+
+  return { config, dialogues, quests };
+}
+
+function registerLevelPackage(moduleValue, fallbackId) {
+  const { config, dialogues, quests } = extractLevelPackage(moduleValue);
+  if (!config) return null;
+
   const normalized = normalizeLevelConfig(config);
-  const levelId = normalized.meta?.id ?? id;
-  registry.set(levelId, normalized);
+  const levelId = normalized.meta?.id ?? fallbackId ?? config?.meta?.id;
+  const mergedConfig = {
+    ...normalized,
+    npcScripts: normalized.npcScripts ?? dialogues ?? {},
+    quests: normalized.quests ?? quests ?? [],
+  };
+
+  registry.set(levelId, mergedConfig);
+  return { levelId, config: mergedConfig };
+}
+
+function enrichLevelConfig(base, id) {
+  return {
+    ...base,
+    meta: base.meta ?? { id },
+    quests: base.quests ?? [],
+    npcScripts: base.npcScripts ?? {},
+  };
 }
 
 export function registerLevelLoader(id, loader) {
   loaderRegistry.set(id, loader);
 }
 
+export function registerLevelConfig(id, config, extras = {}) {
+  return registerLevelPackage({ config, ...extras }, id);
+}
+
 export function registerLevelModule(id, modulePath) {
   registerLevelLoader(id, () => import(modulePath));
 }
 
-registerLevelConfig(defaultLevelId, defaultLevel);
-registerLevelConfig(northernWingLevel.meta?.id ?? 'level-2', northernWingLevel);
-registerLevelConfig(rooftopCorridorLevel.meta?.id ?? 'level-3', rooftopCorridorLevel);
+const defaultPackage = registerLevelPackage(defaultLevelModule, 'level-1') ?? {
+  levelId: 'level-1',
+  config: normalizeLevelConfig({ meta: { id: 'level-1' } }),
+};
+export const DEFAULT_LEVEL_ID = defaultPackage.levelId;
+const defaultLevelConfig = defaultPackage.config;
+
 registerLevelConfig(facilitySample.meta?.id ?? 'tiled-facility', facilitySample);
 
-export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {
-  const base = registry.get(id) ?? registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(defaultLevel);
+function getLevelConfigSyncInternal(id) {
+  const base = registry.get(id) ?? registry.get(DEFAULT_LEVEL_ID) ?? defaultLevelConfig;
   return enrichLevelConfig(base, id);
+}
+
+export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {
+  return getLevelConfigSyncInternal(id);
+}
+
+async function loadLevelFromLoader(loader, fallbackId) {
+  const loaded = await loader();
+  const registered = registerLevelPackage(loaded, fallbackId);
+  return registered?.config ?? null;
+}
+
+async function importBundledLevel(id) {
+  const entries = await getLevelModuleEntries();
+  for (const [path, loader] of entries) {
+    const moduleId = deriveIdFromPath(path);
+    if (processedModuleIds.has(moduleId)) continue;
+    const moduleValue = await loader();
+    processedModuleIds.add(moduleId);
+
+    const registered = registerLevelPackage(moduleValue, moduleId);
+    if (registered?.levelId && !loaderRegistry.has(registered.levelId)) {
+      registerLevelLoader(registered.levelId, () => loader());
+    }
+    if (registered?.levelId === id) return registered.config;
+  }
+  return null;
 }
 
 export async function loadLevelConfig(id = DEFAULT_LEVEL_ID) {
@@ -53,16 +144,16 @@ export async function loadLevelConfig(id = DEFAULT_LEVEL_ID) {
   if (!base) {
     const loader = loaderRegistry.get(id);
     if (loader) {
-      const loaded = await loader();
-      const normalized = normalizeLevelConfig(loaded);
-      const levelId = normalized.meta?.id ?? id;
-      registry.set(levelId, normalized);
-      base = normalized;
+      base = await loadLevelFromLoader(loader, id);
     }
   }
 
   if (!base) {
-    base = registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(defaultLevel);
+    base = await importBundledLevel(id);
+  }
+
+  if (!base) {
+    base = getLevelConfigSyncInternal(DEFAULT_LEVEL_ID);
   }
 
   return enrichLevelConfig(base, id);

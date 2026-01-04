@@ -1,6 +1,8 @@
 import { TILE } from '../../core/constants.js';
 import { placeNpc } from '../npcs/index.js';
 import { TILE_IDS } from '../../world/tile-registry.js';
+import { demoLevelDialogues } from '../dialogues/demoLevel.js';
+import { demoLevelQuests } from '../quests/demoLevel.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
@@ -276,4 +278,13 @@ export const abandonedLaboratoryLevel = {
       note: 'Klíč získán! Východní dveře se odemkly a mapa se rozšířila.',
     },
   },
+};
+
+export const dialogues = demoLevelDialogues;
+export const quests = demoLevelQuests;
+
+export default {
+  config: abandonedLaboratoryLevel,
+  dialogues,
+  quests,
 };

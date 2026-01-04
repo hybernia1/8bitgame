@@ -357,3 +357,12 @@ export const northernWingLevel = {
     },
   },
 };
+
+export const dialogues = {};
+export const quests = [];
+
+export default {
+  config: northernWingLevel,
+  dialogues,
+  quests,
+};
