@@ -1,5 +1,5 @@
-import { demoLevel } from '../data/demoLevel.js';
-import { levelOne } from '../data/level1.js';
+import { demoLevel } from '../data/levels/demoLevel.js';
+import { levelOne } from '../data/levels/level1.js';
 import { getDialoguesForLevel } from '../data/dialogues/index.js';
 import { getQuestsForLevel } from '../data/quests/index.js';
 import { normalizeLevelConfig } from './level-loader.js';
