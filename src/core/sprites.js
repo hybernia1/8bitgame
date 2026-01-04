@@ -177,7 +177,7 @@ function withTexture(drawFn, seed = TEXTURE_SEED) {
 }
 
 function drawFromImage(image) {
-  return (ctx) => ctx.drawImage(image, 0, 0, TILE, TILE);
+  return (ctx) => ctx.drawImage(image, 0, 0, TEXTURE_TILE, TEXTURE_TILE, 0, 0, TILE, TILE);
 }
 
 function drawFromImageFrame(image, sx, sy) {
