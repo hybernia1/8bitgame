@@ -152,6 +152,8 @@ function getHudDomRefs(root = documentRoot) {
     healthHeartsEl: root.querySelector('[data-health-hearts]'),
     healthCurrentEl: root.querySelector('.hud-health-current'),
     healthTotalEl: root.querySelector('.hud-health-total'),
+    ammoEl: root.querySelector('[data-ammo]'),
+    ammoCurrentEl: root.querySelector('[data-ammo-count]'),
     inventoryNote: root.querySelector('[data-inventory-note]'),
     inventoryBinding: root.querySelector('[data-inventory-binding]'),
     inventoryStatus: root.querySelector('[data-inventory-status]'),
@@ -358,6 +360,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     health: 3,
     maxHealth: 3,
     invulnerableTime: 0,
+    ammo: 0,
+    maxAmmo: 0,
   };
 
   const persistentState = {
@@ -513,6 +517,32 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     });
   }
 
+  function syncAmmoHud() {
+    hudSystem?.setAmmo?.(playerVitals.ammo ?? 0, playerVitals.maxAmmo ?? 0);
+  }
+
+  function setAmmoCount(amount = 0) {
+    const safeAmount = Math.max(0, Number.isFinite(amount) ? Math.floor(amount) : 0);
+    const safeMax = Number.isFinite(playerVitals.maxAmmo)
+      ? Math.max(playerVitals.maxAmmo ?? 0, safeAmount)
+      : safeAmount;
+    playerVitals.ammo = safeAmount;
+    playerVitals.maxAmmo = safeMax;
+    syncAmmoHud();
+  }
+
+  function addAmmo(amount = 0) {
+    if (!Number.isFinite(amount)) return;
+    setAmmoCount((playerVitals.ammo ?? 0) + Math.floor(amount));
+  }
+
+  function consumeAmmo(amount = 1) {
+    const cost = Math.max(1, Math.floor(Number.isFinite(amount) ? amount : 1));
+    if ((playerVitals.ammo ?? 0) < cost) return false;
+    setAmmoCount((playerVitals.ammo ?? 0) - cost);
+    return true;
+  }
+
   function getSwitchOccupants() {
     const entities = [{ x: player?.x ?? 0, y: player?.y ?? 0, size: player?.size ?? TILE }];
     if (Array.isArray(pushables)) {
@@ -548,6 +578,12 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       Object.assign(playerVitals, savedSnapshot.playerVitals);
     }
 
+    const normalizedMaxAmmo = Number.isFinite(playerVitals.maxAmmo)
+      ? Math.max(0, Math.floor(playerVitals.maxAmmo))
+      : 0;
+    playerVitals.maxAmmo = normalizedMaxAmmo;
+    setAmmoCount(playerVitals.ammo ?? 0);
+
     resetSessionState();
     if (savedSnapshot?.persistentState) {
       Object.assign(persistentState.flags, savedSnapshot.persistentState.flags ?? {});
@@ -568,11 +604,19 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     hudSystem.showNote('note.inventory.intro');
     hudSystem.setObjectives(objectivesCollected, level.getObjectiveTotal());
     hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
+    syncAmmoHud();
     setLevelMeta(level.meta);
 
     renderInventory(inventory);
 
     const inventoryElement = documentRoot?.querySelector?.('.inventory') ?? null;
+
+    const handlePickupCollected = (pickup) => {
+      if (pickup.id === 'ammo') {
+        const amount = Number.isFinite(pickup.quantity) ? pickup.quantity : 1;
+        addAmmo(amount);
+      }
+    };
 
     const handleInventoryUse = (slotIndex) =>
       useInventorySlot({
@@ -636,10 +680,9 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     setInventoryCollapsed(true);
 
     const combatSystem = createCombatSystem({
-      inventory,
+      ammo: { consume: consumeAmmo },
       projectiles,
       player,
-      renderInventory,
       tileAt: level.tileAt.bind(level),
       showNote: hudSystem.showNote,
     });
@@ -656,6 +699,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       showNote: hudSystem.showNote,
       setObjectives: (count) => hudSystem.setObjectives(count ?? state.objectivesCollected, level.getObjectiveTotal()),
       collectNearbyPickups,
+      onPickupCollected: handlePickupCollected,
     });
 
     updateFrame = (dt) => {

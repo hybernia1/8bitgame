@@ -10,6 +10,7 @@ export function createPickups(templates = []) {
     ...pickup,
     objective: pickup.objective ?? true,
     stackable: pickup.stackable ?? false,
+    storeInInventory: pickup.storeInInventory ?? true,
     quantity: pickup.quantity ?? (pickup.stackable ? 1 : undefined),
     x: pickup.x ?? pickup.tx * TILE + offset,
     y: pickup.y ?? pickup.ty * TILE + offset,
@@ -45,7 +46,7 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
   });
 }
 
-export function collectNearbyPickups(player, pickups, inventory) {
+export function collectNearbyPickups(player, pickups, inventory, { onCollect } = {}) {
   const collected = [];
   pickups.forEach((pickup) => {
     if (pickup.collected) return;
@@ -53,6 +54,20 @@ export function collectNearbyPickups(player, pickups, inventory) {
     const dy = pickup.y - player.y;
     const distance = Math.hypot(dx, dy);
     if (distance <= player.size / 2 + 12) {
+      const handleCollected = () => {
+        const approved = onCollect?.(pickup);
+        if (approved === false) return false;
+        pickup.collected = true;
+        collected.push(pickup);
+        return true;
+      };
+
+      if (pickup.storeInInventory === false) {
+        handleCollected();
+        return;
+      }
+
+      if (!inventory?.addItem) return;
       const stored = inventory.addItem({
         id: pickup.id,
         name: pickup.name,
@@ -63,8 +78,7 @@ export function collectNearbyPickups(player, pickups, inventory) {
         quantity: pickup.quantity,
       });
       if (stored) {
-        pickup.collected = true;
-        collected.push(pickup);
+        handleCollected();
       }
     }
   });

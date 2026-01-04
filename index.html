@@ -20,9 +20,16 @@
                   <div class="title level-title">Level 0: Demo Facility</div>
                   <div class="subtitle sr-only" data-controls-hint>WASD/šipky = pohyb · E = interakce · Mezerník = střelba</div>
                 </div>
-                <div class="hud-health" aria-label="Stav životů">
-                  <span class="hud-health-hearts" data-health-hearts>❤❤❤</span>
-                  <span class="sr-only"><span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></span>
+                <div class="hud-health" aria-label="Stav životů a nábojů">
+                  <div class="hud-health-display">
+                    <span class="hud-health-hearts" data-health-hearts>❤❤❤</span>
+                    <span class="sr-only"><span class="hud-health-current">12</span> / <span class="hud-health-total">12</span></span>
+                  </div>
+                  <div class="hud-ammo" data-ammo aria-label="Stav nábojů: 0">
+                    <span class="hud-ammo-icon" aria-hidden="true">•</span>
+                    <span class="hud-ammo-label">Náboje</span>
+                    <span class="hud-ammo-count" data-ammo-count>0</span>
+                  </div>
                 </div>
               </header>
               <div class="hud-actions">

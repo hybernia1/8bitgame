@@ -43,6 +43,21 @@ export function createHudSystem(passedElements = {}) {
     }
   }
 
+  function setAmmo(ammo, maxAmmo) {
+    const safeAmmo = Math.max(0, Number.isFinite(ammo) ? Math.floor(ammo) : 0);
+    const safeMaxAmmo = Number.isFinite(maxAmmo) ? Math.max(0, Math.floor(maxAmmo)) : null;
+    const displayAmmo =
+      safeMaxAmmo && safeMaxAmmo > 0 ? `${safeAmmo}/${Math.max(safeAmmo, safeMaxAmmo)}` : `${safeAmmo}`;
+    applyText(elements.ammoCurrentEl, displayAmmo);
+    if (elements.ammoEl) {
+      const label =
+        safeMaxAmmo && safeMaxAmmo > 0
+          ? `Stav nábojů: ${safeAmmo} z ${Math.max(safeAmmo, safeMaxAmmo)}`
+          : `Stav nábojů: ${safeAmmo}`;
+      elements.ammoEl.setAttribute('aria-label', label);
+    }
+  }
+
   function showNote(messageId, params) {
     applyText(elements.inventoryNote, format(messageId, params));
   }
@@ -142,6 +157,7 @@ export function createHudSystem(passedElements = {}) {
     setLevelTitle,
     setObjectives,
     setHealth,
+    setAmmo,
     setSubtitle,
     setControlsHint,
     setQuestLog,

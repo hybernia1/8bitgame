@@ -227,6 +227,7 @@ export const demoLevel = {
       description: 'Munice pro tvoji pistoli.',
       objective: false,
       stackable: true,
+      storeInInventory: false,
       quantity: 6,
     },
     {
@@ -239,6 +240,7 @@ export const demoLevel = {
       description: 'Munice pro tvoji pistoli.',
       objective: false,
       stackable: true,
+      storeInInventory: false,
       quantity: 6,
     },
   ],

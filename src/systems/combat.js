@@ -1,15 +1,12 @@
 import { TILE } from '../core/constants.js';
 
-export function createCombatSystem({ inventory, projectiles, player, renderInventory, tileAt, showNote }) {
+export function createCombatSystem({ ammo, projectiles, player, tileAt, showNote }) {
   function attemptShoot() {
-    const ammoCount = inventory.getItemCount('ammo');
-    if (ammoCount <= 0) {
+    const spent = ammo?.consume?.(1);
+    if (!spent) {
       showNote?.('note.combat.noAmmo');
       return;
     }
-
-    inventory.consumeItem('ammo', 1);
-    renderInventory(inventory);
 
     const direction = player.lastDirection ?? { x: 1, y: 0 };
     const speed = 260;

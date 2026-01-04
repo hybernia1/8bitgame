@@ -8,6 +8,10 @@ function createStubElement() {
   return {
     textContent: '',
     dataset: {},
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = String(value);
+    },
     classList: {
       add() {},
       remove() {},
@@ -44,6 +48,8 @@ describe('systems smoke tests', () => {
       banner: createStubElement(),
       bannerTitle: createStubElement(),
       bannerBody: createStubElement(),
+      ammoEl: createStubElement(),
+      ammoCurrentEl: createStubElement(),
     };
 
     const hud = createHudSystem(hudElements);
@@ -59,9 +65,14 @@ describe('systems smoke tests', () => {
     hud.hideInteraction();
     assert.equal(hudElements.banner.dataset.state, 'hidden');
 
+    hud.setAmmo(5, 10);
+    assert.equal(hudElements.ammoCurrentEl.textContent, '5/10');
+    assert.equal(hudElements.ammoEl.attributes['aria-label'], 'Stav nábojů: 5 z 10');
+
     const hudWithoutDom = createHudSystem();
     assert.doesNotThrow(() => {
       hudWithoutDom.setHealth(1, 2);
+      hudWithoutDom.setAmmo(0, 0);
       hudWithoutDom.setControlsHint();
       hudWithoutDom.showToast('note.inventory.intro');
       hudWithoutDom.hideToast();
