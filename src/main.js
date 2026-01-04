@@ -43,6 +43,7 @@ const continueSubtitle = documentRoot?.querySelector('[data-continue-subtitle]')
 const continueDetail = documentRoot?.querySelector('[data-continue-detail]');
 const prologuePanel = documentRoot?.querySelector('.prologue-panel');
 const prologueContinueButton = documentRoot?.querySelector('[data-prologue-continue]');
+const prologueBackButton = documentRoot?.querySelector('[data-prologue-back]');
 const prologueStepTitle = documentRoot?.querySelector('[data-prologue-step-title]');
 const prologueStepBody = documentRoot?.querySelector('[data-prologue-body]');
 const prologueProgress = documentRoot?.querySelector('[data-prologue-progress]');
@@ -108,6 +109,9 @@ function getFullscreenElement(root = documentRoot) {
 }
 
 let fullscreenEnabled = false;
+const fullscreenSupported = Boolean(
+  documentRoot?.fullscreenEnabled ?? documentRoot?.webkitFullscreenEnabled ?? getFullscreenElement(documentRoot),
+);
 
 function setFullscreenUi(active) {
   gameShell?.classList.toggle('is-fullscreen', active);
@@ -127,7 +131,7 @@ function setFullscreenAvailability(enabled) {
   fullscreenButton.disabled = !fullscreenEnabled;
   fullscreenButton.setAttribute('aria-disabled', fullscreenEnabled ? 'false' : 'true');
   fullscreenButton.classList.toggle('is-disabled', !fullscreenEnabled);
-  const label = fullscreenEnabled ? 'Celá obrazovka' : 'Celá obrazovka (dostupná až po startu)';
+  const label = fullscreenEnabled ? 'Celá obrazovka' : 'Celá obrazovka není v prohlížeči dostupná';
   fullscreenButton.setAttribute('aria-label', label);
   fullscreenButton.title = label;
 }
@@ -170,7 +174,7 @@ if (documentRoot) {
 }
 fullscreenButton?.addEventListener('click', toggleFullscreen);
 setFullscreenUi(Boolean(getFullscreenElement()));
-setFullscreenAvailability(false);
+setFullscreenAvailability(fullscreenSupported);
 if (documentRoot) {
   syncCanvasCssDimensions();
   updateGameScale();
@@ -302,7 +306,7 @@ function showMenuPanel() {
   if (menuSubtitle) {
     menuSubtitle.textContent = defaultMenuSubtitle;
   }
-  setFullscreenAvailability(false);
+  setFullscreenAvailability(fullscreenSupported);
   refreshSaveSlotList();
   hideContinuePanel();
   toggleVisibility(menuPanel, true);
@@ -392,7 +396,7 @@ function renderPrologueStep(index = 0) {
 function showProloguePanel() {
   hideAllPanels();
   toggleVisibility(prologuePanel, true);
-  setFullscreenAvailability(false);
+  setFullscreenAvailability(fullscreenSupported);
   prologueContinueButton?.focus?.();
 }
 
@@ -405,30 +409,65 @@ function waitForPrologueContinue() {
   let stepIndex = 0;
   renderPrologueStep(stepIndex);
   showProloguePanel();
+
+  const updateNav = () => {
+    const step = PROLOGUE_STEPS[stepIndex];
+    const isLast = stepIndex >= PROLOGUE_STEPS.length - 1;
+    if (prologueContinueButton) {
+      prologueContinueButton.textContent = step?.actionLabel || (isLast ? 'Vyrazit' : 'Další');
+    }
+    if (prologueBackButton) {
+      prologueBackButton.disabled = stepIndex === 0;
+      prologueBackButton.setAttribute('aria-disabled', stepIndex === 0 ? 'true' : 'false');
+    }
+  };
+
+  updateNav();
+
   return new Promise((resolve) => {
     const cleanup = () => {
-      ['keydown', 'mousedown', 'touchstart'].forEach((event) =>
-        window.removeEventListener(event, keyHandler),
-      );
-      prologueContinueButton?.removeEventListener('click', clickHandler);
+      window.removeEventListener('keydown', keyHandler);
+      prologueContinueButton?.removeEventListener('click', nextHandler);
+      prologueBackButton?.removeEventListener('click', backHandler);
       hideProloguePanel();
       resolve();
     };
-    const advance = (event) => {
-      if (event?.type === 'keydown' && event.key === 'Tab') return;
-      if (stepIndex < PROLOGUE_STEPS.length - 1) {
-        stepIndex += 1;
-        renderPrologueStep(stepIndex);
+    const advance = (direction = 1) => {
+      const nextIndex = stepIndex + direction;
+      if (nextIndex < 0) return;
+      if (nextIndex >= PROLOGUE_STEPS.length) {
+        cleanup();
         return;
       }
-      cleanup();
+      stepIndex = nextIndex;
+      renderPrologueStep(stepIndex);
+      updateNav();
     };
-    const keyHandler = (event) => advance(event);
-    const clickHandler = (event) => advance(event);
-    ['keydown', 'mousedown', 'touchstart'].forEach((event) =>
-      window.addEventListener(event, keyHandler),
-    );
-    prologueContinueButton?.addEventListener('click', clickHandler);
+    const keyHandler = (event) => {
+      if (event.key === 'Tab') return;
+      if (event.key === 'ArrowLeft') {
+        advance(-1);
+      } else if (event.key === 'ArrowRight') {
+        advance(1);
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        if (stepIndex >= PROLOGUE_STEPS.length - 1) {
+          cleanup();
+        } else {
+          advance(1);
+        }
+      }
+    };
+    const nextHandler = () => {
+      if (stepIndex >= PROLOGUE_STEPS.length - 1) {
+        cleanup();
+      } else {
+        advance(1);
+      }
+    };
+    const backHandler = () => advance(-1);
+    window.addEventListener('keydown', keyHandler);
+    prologueContinueButton?.addEventListener('click', nextHandler);
+    prologueBackButton?.addEventListener('click', backHandler);
   });
 }
 
@@ -988,7 +1027,7 @@ let currentInGameSession = null;
 
 registerScene('menu', {
   async onEnter() {
-    setFullscreenAvailability(false);
+    setFullscreenAvailability(fullscreenSupported);
     showMenuPanel();
   },
   onRender() {
@@ -999,7 +1038,7 @@ registerScene('menu', {
 
 registerScene('prologue', {
   async onEnter({ params }) {
-    setFullscreenAvailability(false);
+    setFullscreenAvailability(fullscreenSupported);
     const targetParams = {
       levelId: params?.levelId || DEFAULT_LEVEL_ID,
       slotId: params?.slotId || resolveSlotId(),
@@ -1153,7 +1192,7 @@ pauseMenuButton?.addEventListener('click', () => showMenu());
 
 game.onReturnToMenu(() => {
   showMenu();
-  setFullscreenAvailability(false);
+  setFullscreenAvailability(fullscreenSupported);
   refreshSaveSlotList();
 });
 game.onAdvanceToMap((nextLevelId) => {

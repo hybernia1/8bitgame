@@ -1,7 +1,20 @@
 import { SpriteSheet } from '../kontra.mjs';
 import { TILE, TEXTURE_TILE, COLORS } from './constants.js';
 
-const BASE_SPRITE_ORDER = ['floor', 'wall', 'door', 'player', 'pickup', 'npc', 'cat', 'monster', 'prop'];
+const BASE_SPRITE_ORDER = [
+  'floor',
+  'wall',
+  'door',
+  'player',
+  'pickup',
+  'npc',
+  'hana',
+  'jara',
+  'caretaker',
+  'cat',
+  'monster',
+  'prop',
+];
 const VARIANT_SPRITE_ORDER = ['floor.window_light', 'floor.lit', 'wall.cracked', 'wall.window', 'decor.console'];
 const SPRITE_ORDER = [...BASE_SPRITE_ORDER, ...VARIANT_SPRITE_ORDER];
 const TEXTURE_SEED = 1337;
@@ -13,6 +26,9 @@ const TEXTURE_PATHS = {
   player: 'assets/hero/hero.png',
   pickup: 'assets/items/pickup.png',
   npc: 'assets/npc/npc.png',
+  hana: ['assets/npc/hana.png', 'assets/hana.png'],
+  jara: ['assets/npc/jara.png', 'assets/jara.png'],
+  caretaker: ['assets/npc/caretaker.png', 'assets/caretaker.png'],
   cat: ['assets/npc/cat.png', 'assets/npc/npc.png'],
   monster: 'assets/npc/monster.png',
   prop: 'assets/props/prop.png',
@@ -29,6 +45,9 @@ const VARIANT_TEXTURE_PATHS = {
 const SPRITE_ANIMATIONS = {
   player: (frameCount) => getDirectionalAnimationDefs('player', frameCount, { includeLegacyDefault: true }),
   npc: (frameCount) => getDirectionalAnimationDefs('npc', frameCount, { includeLegacyDefault: true }),
+  hana: (frameCount) => getDirectionalAnimationDefs('hana', frameCount, { includeLegacyDefault: true }),
+  jara: (frameCount) => getDirectionalAnimationDefs('jara', frameCount, { includeLegacyDefault: true }),
+  caretaker: (frameCount) => getDirectionalAnimationDefs('caretaker', frameCount, { includeLegacyDefault: true }),
   cat: (frameCount) => getDirectionalAnimationDefs('cat', frameCount, { includeLegacyDefault: true }),
   monster: (frameCount) => getDirectionalAnimationDefs('monster', frameCount, { includeLegacyDefault: true }),
 };
@@ -426,6 +445,9 @@ const DRAWERS = {
   player: drawPlayer,
   pickup: drawPickup,
   npc: drawNpc,
+  hana: drawNpc,
+  jara: drawNpc,
+  caretaker: drawNpc,
   cat: drawCat,
   monster: drawMonster,
   prop: drawProp,
@@ -482,6 +504,9 @@ export const SPRITE_NAMES = {
   player: 'player',
   pickup: 'pickup',
   npc: 'npc',
+  hana: 'hana',
+  jara: 'jara',
+  caretaker: 'caretaker',
   cat: 'cat',
   monster: 'monster',
   prop: 'prop',

@@ -5,6 +5,12 @@ export const items = {
     icon: '🍎',
     tint: '#f25c5c',
   },
+  videotape: {
+    id: 'videotape',
+    name: 'Videokazeta',
+    icon: '📼',
+    tint: '#f2d45c',
+  },
 };
 
 export const itemHandlers = {
