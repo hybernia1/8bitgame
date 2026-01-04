@@ -28,6 +28,10 @@ const spriteSheetPromise = loadSpriteSheet();
 
 const documentRoot = typeof document !== 'undefined' ? document : null;
 
+const BASE_CANVAS = { width: 1024, height: 576 };
+const GAME_SCALE_LIMITS = { min: 0.6, max: 1.5 };
+const VIEWPORT_BUFFER = 32;
+
 const menuPanel = documentRoot?.querySelector('.menu-panel');
 const fullscreenButton = documentRoot?.querySelector('[data-fullscreen-toggle]');
 const gameShell = documentRoot?.querySelector('.game-shell');
@@ -42,6 +46,26 @@ const slotInput = documentRoot?.querySelector('[data-slot-input]');
 const menuSubtitle = documentRoot?.querySelector('.menu-subtitle');
 const saveSlotList = documentRoot?.querySelector('[data-save-slot-list]');
 const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
+
+function setGameScale(value) {
+  if (!documentRoot) return;
+  documentRoot.documentElement.style.setProperty('--game-scale', value.toString());
+}
+
+function updateGameScale() {
+  if (!documentRoot) return;
+  const viewportWidth = documentRoot.documentElement.clientWidth || window.innerWidth || BASE_CANVAS.width;
+  const viewportHeight = documentRoot.documentElement.clientHeight || window.innerHeight || BASE_CANVAS.height;
+  const availableWidth = Math.max(0, viewportWidth - VIEWPORT_BUFFER);
+  const availableHeight = Math.max(0, viewportHeight - VIEWPORT_BUFFER);
+  const widthScale = availableWidth / BASE_CANVAS.width;
+  const heightScale = availableHeight / BASE_CANVAS.height;
+  const nextScale = Math.min(
+    GAME_SCALE_LIMITS.max,
+    Math.max(GAME_SCALE_LIMITS.min, Math.min(widthScale, heightScale)),
+  );
+  setGameScale(Number.isFinite(nextScale) ? Number(nextScale.toFixed(3)) : GAME_SCALE_LIMITS.min);
+}
 
 function getFullscreenElement(root = documentRoot) {
   if (!root) return null;
@@ -93,6 +117,10 @@ if (documentRoot) {
 }
 fullscreenButton?.addEventListener('click', toggleFullscreen);
 setFullscreenUi(Boolean(getFullscreenElement()));
+if (documentRoot) {
+  updateGameScale();
+  window.addEventListener('resize', updateGameScale, { passive: true });
+}
 
 function getHudDomRefs(root = documentRoot) {
   if (!root) return {};
