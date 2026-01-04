@@ -1,9 +1,9 @@
-import { TILE } from '../core/constants.js';
+import { TILE, TEXTURE_SCALE } from '../core/constants.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
-const TALK_RADIUS = 26;
-const CHARACTER_SIZE = 22;
-const MIN_TARGET_DISTANCE = 4;
+const TALK_RADIUS = Math.round(26 * TEXTURE_SCALE);
+const CHARACTER_SIZE = TILE;
+const MIN_TARGET_DISTANCE = Math.round(4 * TEXTURE_SCALE);
 
 function toWorldPosition(point = {}) {
   return {
