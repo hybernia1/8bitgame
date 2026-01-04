@@ -1,6 +1,6 @@
 export const messages = {
   'interaction.title': 'Interakce',
-  'interaction.initialPrompt': 'Přibliž se k Technikovi Járovi a stiskni E.',
+  'interaction.initialPrompt': 'Přibliž se ke starostce a stiskni E.',
   'prompt.talk': 'Stiskni E pro rozhovor s {name}',
   'prompt.switch': 'Stiskni E pro aktivaci vypínače',
   'prompt.gateLocked': 'Dveře jsou zamčené. Technik Jára má klíč.',

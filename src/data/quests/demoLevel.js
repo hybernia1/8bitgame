@@ -3,8 +3,8 @@ export const demoLevelQuests = [
   {
     id: 'collect-components',
     type: 'collect',
-    name: 'Zajisti komponenty',
-    description: 'Sesbírej energoblok, klíčový fragment a servisní nářadí.',
+    name: 'Prohledej laboratoř',
+    description: 'Sesbírej energoblok, klíčový fragment a servisní nářadí – možná skrývají stopy k únosům.',
     objectiveCount: 3,
     completionNote: 'note.quest.completed',
   },

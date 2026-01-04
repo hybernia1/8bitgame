@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test, { after, afterEach } from 'node:test';
 
 import { createGame } from '../src/core/game.js';
+import { DEFAULT_LEVEL_ID } from '../src/world/level-data.js';
 
 function createLocalStorageMock() {
   const store = new Map();
@@ -42,7 +43,7 @@ test('reload keeps persistent quest progress but clears transient session dialog
   const inventory = createInventoryStub();
   const game = createGame({ inventory });
 
-  await game.loadLevel('demo-level');
+  await game.loadLevel(DEFAULT_LEVEL_ID);
   game.setSaveSlot(slotId);
   game.setSnapshotProvider(() => ({
     playerState: null,
@@ -66,7 +67,7 @@ test('reload keeps persistent quest progress but clears transient session dialog
 
   const reloadedGame = createGame({ inventory: createInventoryStub() });
   reloadedGame.loadFromSlot(slotId);
-  await reloadedGame.loadLevel('demo-level');
+  await reloadedGame.loadLevel(DEFAULT_LEVEL_ID);
   const snapshot = reloadedGame.getSavedSnapshot(reloadedGame.currentLevelId);
 
   assert.equal(snapshot.persistentState.flags.questAccepted, true);

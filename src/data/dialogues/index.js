@@ -1,8 +1,8 @@
 import { demoLevelDialogues } from './demoLevel.js';
 
 const dialogueRegistry = {
-  'demo-facility': demoLevelDialogues,
-  'level-1': {},
+  'level-1': demoLevelDialogues,
+  'level-2': {},
 };
 
 export function getDialoguesForLevel(levelId) {
