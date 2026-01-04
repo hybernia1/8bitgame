@@ -1,10 +1,10 @@
 :root {
-  --bg: #0f0f12;
-  --panel: #181820;
-  --accent: #5cf2cc;
-  --text: #e7e7ef;
-  --shadow: #0a0a0d;
-  --grid: #1f1f27;
+  --bg: #1a120c;
+  --panel: #21160f;
+  --accent: #f0c24b;
+  --text: #f9ecd5;
+  --shadow: #0c0805;
+  --grid: #2a1a12;
   --canvas-width: 2048px;
   --canvas-height: 1152px;
   --shell-chrome: 96px;
@@ -19,8 +19,8 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 10% 20%, rgba(92, 242, 204, 0.06), transparent 22%),
-    radial-gradient(circle at 90% 10%, rgba(92, 242, 204, 0.04), transparent 24%),
+  background: radial-gradient(circle at 10% 20%, rgba(240, 194, 75, 0.08), transparent 22%),
+    radial-gradient(circle at 90% 10%, rgba(240, 194, 75, 0.06), transparent 24%),
     var(--bg);
   color: var(--text);
   font-family: "Press Start 2P", "VT323", "Courier New", monospace;
@@ -76,7 +76,7 @@ canvas {
   border: none;
   background: repeating-linear-gradient(0deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     repeating-linear-gradient(90deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
-    #0b0b10;
+    #130c08;
   border-radius: 14px;
   image-rendering: pixelated;
 }
@@ -127,8 +127,8 @@ canvas {
 .hud-button {
   padding: 8px 10px;
   border-radius: 50%;
-  border: 1px solid #2c2c38;
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #3a271b;
+  background: rgba(255, 245, 224, 0.06);
   color: var(--text);
   font-family: inherit;
   font-size: 12px;
@@ -149,7 +149,7 @@ canvas {
 }
 
 .hud-button[aria-pressed='true'] {
-  background: rgba(92, 242, 204, 0.12);
+  background: rgba(240, 194, 75, 0.14);
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -163,8 +163,8 @@ canvas {
 .hud-pill {
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #23232e;
-  background: radial-gradient(circle at 20% 20%, rgba(92, 242, 204, 0.12), rgba(10, 10, 16, 0.7));
+  border: 1px solid #3a271b;
+  background: radial-gradient(circle at 20% 20%, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.72));
   font-size: 10px;
   letter-spacing: 0.5px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
@@ -190,7 +190,7 @@ canvas {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #ff5a73;
+  color: #ff9a6b;
 }
 
 .hud-health-hearts {
@@ -207,13 +207,13 @@ canvas {
   margin-left: 4px;
   border-radius: 10px;
   border: 1px solid #302722;
-  background: radial-gradient(circle at 20% 20%, rgba(242, 143, 92, 0.18), rgba(20, 14, 12, 0.6));
-  color: #f2d5b0;
+  background: radial-gradient(circle at 20% 20%, rgba(240, 194, 75, 0.2), rgba(26, 18, 12, 0.68));
+  color: #f6e2b8;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .hud-ammo-icon {
-  color: #f28f5c;
+  color: #f0c24b;
   font-size: 14px;
   line-height: 1;
 }
@@ -248,8 +248,8 @@ canvas {
 .overlay {
   position: absolute;
   inset: 8px;
-  background: rgba(8, 8, 12, 0.92);
-  border: 1px solid #242432;
+  background: rgba(26, 16, 10, 0.92);
+  border: 1px solid #3a271b;
   border-radius: 12px;
   padding: 16px;
   display: grid;
@@ -319,7 +319,7 @@ canvas {
   font-size: 10px;
   padding: 4px 8px;
   border-radius: 16px;
-  border: 1px solid #262634;
+  border: 1px solid #3a271b;
 }
 
 .prologue-heading {
@@ -331,7 +331,7 @@ canvas {
   display: grid;
   gap: 10px;
   line-height: 1.5;
-  color: #d6e3e5;
+  color: #f3e2c2;
 }
 
 .prologue-body p {
@@ -366,8 +366,8 @@ canvas {
   gap: 10px;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid #262634;
-  background: linear-gradient(130deg, rgba(92, 242, 204, 0.05), rgba(14, 16, 24, 0.82));
+  border: 1px solid #3a271b;
+  background: linear-gradient(130deg, rgba(240, 194, 75, 0.06), rgba(26, 16, 10, 0.86));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
@@ -387,9 +387,9 @@ canvas {
 
 .save-panel {
   padding: 12px;
-  border: 1px solid #2c2c38;
+  border: 1px solid #3a271b;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 245, 224, 0.03);
   display: grid;
   gap: 10px;
 }
@@ -401,8 +401,8 @@ canvas {
 }
 
 .menu-button {
-  background: linear-gradient(120deg, rgba(92, 242, 204, 0.16), rgba(92, 242, 204, 0.08));
-  border: 1px solid #2c2c38;
+  background: linear-gradient(120deg, rgba(240, 194, 75, 0.18), rgba(240, 194, 75, 0.1));
+  border: 1px solid #3a271b;
   border-radius: 10px;
   color: var(--text);
   font-family: inherit;
@@ -433,7 +433,7 @@ canvas {
 
 .menu-row input {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #2c2c38;
+  border: 1px solid #3a271b;
   border-radius: 10px;
   color: var(--text);
   padding: 10px 12px;
@@ -452,11 +452,11 @@ canvas {
 
 .save-slot {
   padding: 10px;
-  border: 1px solid #262634;
+  border: 1px solid #3a271b;
   border-radius: 10px;
   display: grid;
   gap: 6px;
-  background: linear-gradient(130deg, rgba(92, 242, 204, 0.05), rgba(14, 16, 24, 0.8));
+  background: linear-gradient(130deg, rgba(240, 194, 75, 0.07), rgba(26, 16, 10, 0.82));
 }
 
 .save-slot-header {
@@ -488,8 +488,8 @@ canvas {
 }
 
 .interaction-banner {
-  background: linear-gradient(135deg, rgba(92, 242, 204, 0.12), rgba(12, 17, 23, 0.8));
-  border: 1px solid #23232e;
+  background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
+  border: 1px solid #3a271b;
   border-radius: 12px;
   padding: 12px 14px;
   display: grid;
@@ -515,11 +515,11 @@ canvas {
   width: 96px;
   height: 96px;
   border-radius: 12px;
-  border: 1px solid #23232e;
-  background: #0c1018;
+  border: 1px solid #3a271b;
+  background: #1d110a;
   background-repeat: no-repeat;
-  background-position: 0 0;
-  background-size: 200% 200%;
+  background-position: 50% 0;
+  background-size: 300% 400%;
   image-rendering: pixelated;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 6px 16px rgba(0, 0, 0, 0.3);
 }
@@ -536,7 +536,7 @@ canvas {
 .interaction-text {
   font-size: 12px;
   line-height: 1.45;
-  color: #dbe8ff;
+  color: #f5e7c2;
 }
 
 .inventory-header {
@@ -548,7 +548,7 @@ canvas {
 
 .quest-log {
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid #23232e;
+  border: 1px solid #3a271b;
   border-radius: 12px;
   padding: 10px 12px;
   display: grid;
@@ -586,12 +586,12 @@ canvas {
 
 .quest-title {
   font-size: 13px;
-  color: #f2f2f7;
+  color: #f6e7c6;
 }
 
 .quest-description {
   font-size: 11px;
-  opacity: 0.7;
+  opacity: 0.78;
 }
 
 .inventory-note {
@@ -600,7 +600,7 @@ canvas {
 }
 
 .inventory-slot {
-  border: 1px solid #2c2c38;
+  border: 1px solid #3a271b;
   border-radius: 10px;
   padding: 12px;
   display: flex;
@@ -608,7 +608,7 @@ canvas {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: radial-gradient(circle at 0% 0%, rgba(92, 242, 204, 0.08), rgba(10, 10, 16, 0.7));
+  background: radial-gradient(circle at 0% 0%, rgba(240, 194, 75, 0.1), rgba(24, 14, 10, 0.7));
   transition: border-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   aspect-ratio: 1 / 1;
   text-align: center;
@@ -646,7 +646,7 @@ canvas {
 
 .inventory {
   background: rgba(0, 0, 0, 0.58);
-  border: 1px solid #23232e;
+  border: 1px solid #3a271b;
   border-radius: 14px;
   padding: 14px 16px;
   display: grid;
@@ -672,8 +672,8 @@ canvas {
 .inventory-status {
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #23232e;
-  background: rgba(10, 10, 16, 0.75);
+  border: 1px solid #3a271b;
+  background: rgba(26, 16, 10, 0.78);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   font-size: 11px;
   color: var(--accent);
@@ -683,8 +683,8 @@ canvas {
 .hud-toast {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #2c2c38;
-  background: linear-gradient(160deg, rgba(92, 242, 204, 0.14), rgba(12, 16, 22, 0.8));
+  border: 1px solid #3a271b;
+  background: linear-gradient(160deg, rgba(240, 194, 75, 0.16), rgba(26, 16, 10, 0.82));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   font-size: 11px;
 }
