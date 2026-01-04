@@ -6,6 +6,7 @@ const CHARACTER_SIZE = Math.round(TILE * 0.6875);
 const MIN_TARGET_DISTANCE = 4 * TILE_SCALE;
 const DEFAULT_WANDER_SPEED = 36 * TILE_SCALE;
 const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
+const DEFAULT_LETHAL_WANDER_SPEED = 30 * TILE_SCALE;
 
 function toWorldPosition(point = {}) {
   return {
@@ -130,7 +131,9 @@ export function createNpcs(spriteSheet, placements) {
         ? npc.wanderSpeed * TILE_SCALE
         : npc.speed != null
           ? speed
-          : DEFAULT_WANDER_SPEED;
+          : npc.lethal
+            ? DEFAULT_LETHAL_WANDER_SPEED
+            : DEFAULT_WANDER_SPEED;
 
     return {
       ...npc,

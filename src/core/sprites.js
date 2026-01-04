@@ -14,6 +14,7 @@ const BASE_SPRITE_ORDER = [
   'caretaker',
   'cat',
   'monster',
+  'spider',
   'prop',
 ];
 const VARIANT_SPRITE_ORDER = ['floor.window_light', 'floor.lit', 'wall.cracked', 'wall.window', 'decor.console'];
@@ -33,6 +34,7 @@ const TEXTURE_PATHS = {
   caretaker: ['assets/npc/caretaker.png', 'assets/caretaker.png'],
   cat: ['assets/npc/cat.png', 'assets/npc/npc.png'],
   monster: 'assets/npc/monster.png',
+  spider: 'assets/npc/spider.png',
   prop: 'assets/props/prop.png',
 };
 
@@ -52,6 +54,7 @@ const SPRITE_ANIMATIONS = {
   caretaker: (frameCount) => getDirectionalAnimationDefs('caretaker', frameCount, { includeLegacyDefault: true }),
   cat: (frameCount) => getDirectionalAnimationDefs('cat', frameCount, { includeLegacyDefault: true }),
   monster: (frameCount) => getDirectionalAnimationDefs('monster', frameCount, { includeLegacyDefault: true }),
+  spider: (frameCount) => getDirectionalAnimationDefs('spider', frameCount, { includeLegacyDefault: true }),
 };
 
 function getDirectionalAnimationDefs(baseName, frameCount, { includeLegacyDefault = false } = {}) {
@@ -379,6 +382,38 @@ function drawMonster(ctx, random) {
   ctx.strokeRect(3.5, 5.5, TILE - 7, TILE - 11);
 }
 
+function drawSpider(ctx, random) {
+  drawNoise(ctx, 0, 0, TILE, TILE, '#0f0f14', '#16151d', 0.08, random);
+
+  ctx.save();
+  ctx.translate(TILE / 2, TILE / 2 + 2);
+
+  ctx.strokeStyle = '#5c4a63';
+  ctx.lineWidth = 2;
+  const legLength = TILE / 3;
+  const legOffsets = [-TILE / 4, -TILE / 6, TILE / 6, TILE / 4];
+  legOffsets.forEach((offset, index) => {
+    const direction = index < 2 ? -1 : 1;
+    ctx.beginPath();
+    ctx.moveTo(offset, -3);
+    ctx.lineTo(offset + direction * legLength, -10);
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = '#2d2630';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, TILE / 4, TILE / 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#b265c2';
+  ctx.beginPath();
+  ctx.arc(-5, -2, 3, 0, Math.PI * 2);
+  ctx.arc(5, -2, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawProp(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, '#2b2924', '#1d1c18', 0.03, random);
   ctx.fillStyle = '#6f6a5c';
@@ -465,6 +500,7 @@ const DRAWERS = {
   caretaker: drawNpc,
   cat: drawCat,
   monster: drawMonster,
+  spider: drawSpider,
   prop: drawProp,
   'decor.console': drawConsole,
 };
@@ -525,6 +561,7 @@ export const SPRITE_NAMES = {
   caretaker: 'caretaker',
   cat: 'cat',
   monster: 'monster',
+  spider: 'spider',
   prop: 'prop',
   decorConsole: 'decor.console',
 };
