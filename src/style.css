@@ -5,6 +5,10 @@
   --text: #e7e7ef;
   --shadow: #0a0a0d;
   --grid: #1f1f27;
+  --canvas-width: 1024px;
+  --canvas-height: 576px;
+  --shell-chrome: 96px;
+  --game-scale: 1.5;
 }
 
 * {
@@ -38,12 +42,14 @@ body {
   padding: 18px;
   display: flex;
   position: relative;
-  width: min(1120px, 100%);
+  width: min(calc(var(--canvas-width) * var(--game-scale) + var(--shell-chrome)), 100%);
   justify-content: center;
 }
 
 canvas {
-  width: 100%;
+  width: min(calc(var(--canvas-width) * var(--game-scale)), 100%);
+  height: auto;
+  aspect-ratio: 16 / 9;
   border: 2px solid #2c2c38;
   background: repeating-linear-gradient(0deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     repeating-linear-gradient(90deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
