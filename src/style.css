@@ -595,19 +595,19 @@ canvas {
 }
 
 .inventory-note {
-  font-size: 9px;
+  font-size: 12px;
   opacity: 0.8;
 }
 
 .inventory-slot {
   border: 1px solid #3a271b;
   border-radius: 10px;
-  padding: 12px;
+  padding: 11px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   background: radial-gradient(circle at 0% 0%, rgba(240, 194, 75, 0.1), rgba(24, 14, 10, 0.7));
   transition: border-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   aspect-ratio: 1 / 1;
@@ -625,12 +625,12 @@ canvas {
 }
 
 .inventory-icon {
-  font-size: 15px;
+  font-size: 14px;
   text-align: center;
 }
 
 .inventory-label {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.6px;
 }
 
@@ -648,16 +648,16 @@ canvas {
   background: rgba(0, 0, 0, 0.58);
   border: 1px solid #3a271b;
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: grid;
   gap: 12px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 .inventory-modal {
-  inset: auto 24px 24px auto;
-  width: min(480px, calc(100% - 48px));
-  max-height: calc(100% - 80px);
+  inset: 152px 16px auto auto;
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100% - 220px);
   overflow: auto;
   z-index: 4;
   align-content: start;
@@ -665,8 +665,8 @@ canvas {
 
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 8px;
 }
 
 .inventory-status {
@@ -686,7 +686,7 @@ canvas {
   border: 1px solid #3a271b;
   background: linear-gradient(160deg, rgba(240, 194, 75, 0.16), rgba(26, 16, 10, 0.82));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .hud-bottom {

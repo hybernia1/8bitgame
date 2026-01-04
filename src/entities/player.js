@@ -31,6 +31,8 @@ export function createPlayer(spriteSheet, placements = {}) {
     speed: PLAYER_SPEED,
     size: PLAYER_SIZE,
     color: '#5cf2cc',
+    flashTimer: 0,
+    flashVisible: true,
     lastDirection: { x: 1, y: 0 },
     facing,
     animationState: currentAnimation ? 'idle' : null,
@@ -144,6 +146,10 @@ export function drawPlayer(ctx, camera, player, spriteSheet) {
   const py = player.y - camera.y;
   const half = player.size / 2;
 
+  if (player.flashTimer > 0 && player.flashVisible === false) {
+    return;
+  }
+
   const hasSprite = player.currentAnimation || spriteSheet?.animations?.player;
 
   if (!hasSprite) {
@@ -199,4 +205,6 @@ export function restorePlayer(player, snapshot, fallbackPosition = { x: 0, y: 0 
   player.speed = safeSnapshot.speed ?? player.speed;
   player.size = safeSnapshot.size ?? player.size;
   player.color = safeSnapshot.color ?? player.color;
+  player.flashTimer = 0;
+  player.flashVisible = true;
 }

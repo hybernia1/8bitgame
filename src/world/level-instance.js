@@ -414,9 +414,9 @@ export class LevelInstance {
     this.lightSwitches.forEach((sw) => {
       const x = sw.tx * TILE - camera.x;
       const y = sw.ty * TILE - camera.y;
-      ctx.fillStyle = sw.activated ? '#6ef2a4' : '#f2d45c';
+      ctx.fillStyle = sw.activated ? '#6ef2a4' : '#9bd9ff';
       ctx.fillRect(x + TILE / 2 - 5, y + TILE / 2 - 5, 10, 10);
-      ctx.strokeStyle = sw.activated ? '#1d5c3b' : '#7a5a1d';
+      ctx.strokeStyle = sw.activated ? '#1d5c3b' : '#4f80ad';
       ctx.strokeRect(x + TILE / 2 - 6, y + TILE / 2 - 6, 12, 12);
     });
     ctx.restore();
@@ -978,7 +978,7 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
 }
 
 function drawLightingEffect(context, effect, x, y) {
-  const color = effect.color ?? 'rgba(110, 242, 164, 0.3)';
+  const color = effect.color ?? 'rgba(142, 214, 255, 0.34)';
   const intensity = Math.min(1, Math.max(0, effect.intensity ?? 0.6));
   context.globalAlpha = intensity;
 

@@ -7,7 +7,7 @@ import { createInteractionSystem } from './interactions.js';
 import { registerScene, resume, setScene, showMenu } from '../core/scenes.js';
 import { format } from '../ui/messages.js';
 import { renderInventory, useInventorySlot } from '../ui/inventory.js';
-import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta } from '../world/level-data.js';
+import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { drawGrid } from '../world/level-instance.js';
 import { itemHandlers } from '../items.js';
 import {
@@ -769,6 +769,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         if (playerVitals.invulnerableTime > 0) {
           playerVitals.invulnerableTime = Math.max(0, playerVitals.invulnerableTime - dt);
         }
+        if (player.flashTimer > 0) {
+          player.flashTimer = Math.max(0, player.flashTimer - dt);
+          player.flashVisible = Math.floor(player.flashTimer / 0.08) % 2 === 0;
+        } else {
+          player.flashVisible = true;
+        }
 
         const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
 
@@ -828,6 +834,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       playerVitals.health -= 1;
       playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, invulnerability);
+      player.flashTimer = Math.max(player.flashTimer ?? 0, invulnerability || 0.8);
+      player.flashVisible = true;
       hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
 
       if (playerVitals.health <= 0) {
@@ -941,6 +949,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   registerScene('menu', {
     async onEnter() {
       setFullscreenAvailability(isFullscreenSupported);
+      shell.requestFullscreen?.();
       showMenuPanel();
     },
     onRender() {
@@ -987,9 +996,13 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       }
 
       const targetLevelId = params?.levelId || game.currentLevelId || levelSelectInput?.value || DEFAULT_LEVEL_ID;
-      const targetMeta = getLevelMeta(getLevelConfig(targetLevelId));
-      showLoadingPanel(format('loading.transition', { name: targetMeta.title ?? targetMeta.name ?? targetLevelId }));
-      const nextLevelId = targetLevelId;
+      const targetConfig = await loadLevelConfig(targetLevelId);
+      const resolvedLevelId = targetConfig.meta?.id || targetLevelId;
+      const targetMeta = getLevelMeta(targetConfig);
+      showLoadingPanel(
+        format('loading.transition', { name: targetMeta.title ?? targetMeta.name ?? resolvedLevelId }),
+      );
+      const nextLevelId = resolvedLevelId;
       currentInGameSession?.cleanup?.();
       currentInGameSession = createInGameSession(nextLevelId);
       await currentInGameSession.bootstrap();
@@ -1001,10 +1014,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       if (params?.waitForContinue) {
         const continueTitleText = format('hud.levelTitle', {
-          name: targetMeta.title ?? targetMeta.name ?? targetLevelId,
+          name: targetMeta.title ?? targetMeta.name ?? resolvedLevelId,
           level: targetMeta.levelNumber ?? 0,
         });
-        const continueSubtitleText = format('loading.ready', { name: targetMeta.title ?? targetMeta.name ?? targetLevelId });
+        const continueSubtitleText = format('loading.ready', {
+          name: targetMeta.title ?? targetMeta.name ?? resolvedLevelId,
+        });
         await waitForContinuePrompt({
           title: continueTitleText,
           subtitle: continueSubtitleText,
