@@ -29,8 +29,8 @@ const spriteSheetPromise = loadSpriteSheet();
 const documentRoot = typeof document !== 'undefined' ? document : null;
 
 const BASE_CANVAS = { width: 1024, height: 576 };
-const GAME_SCALE_LIMITS = { min: 0.6, max: 1.5 };
-const VIEWPORT_BUFFER = 32;
+const GAME_SCALE_LIMITS = { min: 0.6, max: 5 };
+const VIEWPORT_BUFFER = 0;
 
 const menuPanel = documentRoot?.querySelector('.menu-panel');
 const fullscreenButton = documentRoot?.querySelector('[data-fullscreen-toggle]');
