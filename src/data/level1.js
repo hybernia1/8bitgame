@@ -18,6 +18,10 @@ const baseLayout = [
   W, F, F, F, F, F, FL, F, F, F, F, W, W, W, F, W,
   W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
+const layoutWithVcrRoom = [...baseLayout];
+const toIndex = (x, y) => y * BASE_WIDTH + x;
+layoutWithVcrRoom[toIndex(12, 10)] = F;
+layoutWithVcrRoom[toIndex(13, 10)] = F;
 const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 
 /** @type {import('./types.js').LevelConfig} */
@@ -32,10 +36,10 @@ export const levelOne = {
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
-    collision: [...baseLayout],
-    collisionUnlocked: [...baseLayout],
-    decor: [...baseLayout],
-    decorUnlocked: [...baseLayout],
+    collision: [...layoutWithVcrRoom],
+    collisionUnlocked: [...layoutWithVcrRoom],
+    decor: [...layoutWithVcrRoom],
+    decorUnlocked: [...layoutWithVcrRoom],
   },
   interactables: {
     pressureSwitches: [
@@ -67,13 +71,6 @@ export const levelOne = {
     ],
     npcs: [
       {
-        id: 'overseer',
-        name: 'Dozorčí',
-        tx: 8,
-        ty: 5,
-        dialogue: 'Vítej v servisním křídle. Prozkoumej sklad a připrav se na další výpravu.',
-      },
-      {
         id: 'cat',
         name: 'Kočka',
         sprite: 'cat',
@@ -83,6 +80,24 @@ export const levelOne = {
         wanderRadius: TILE * 3,
         wanderInterval: 0.8,
         dialogue: 'Podrbat na bříšku! *prrr*',
+      },
+      {
+        id: 'recording-cabinet',
+        name: 'Záznamová skříň',
+        sprite: 'decor.console',
+        animationBase: 'decor.console',
+        tx: 5,
+        ty: 5,
+        dialogue: 'Skříň se starými záznamy bliká zeleně.',
+      },
+      {
+        id: 'vcr-player',
+        name: 'Přehrávač',
+        sprite: 'decor.console',
+        animationBase: 'decor.console',
+        tx: 13,
+        ty: 10,
+        dialogue: 'Starý přehrávač čeká na kazetu.',
       },
     ],
   },
@@ -133,11 +148,68 @@ export const levelOne = {
       objective: false,
     },
   ],
-  rewards: {},
+  rewards: {
+    'recording-cabinet-tape': {
+      id: 'recording-cabinet-tape',
+      actions: [
+        {
+          type: 'giveItem',
+          item: { id: 'videotape', name: 'Videokazeta', icon: '📼', tint: '#f2d45c' },
+          blockedDialogue: 'Nemáš místo v inventáři, uvolni si slot pro kazetu.',
+          blockedNote: 'Kazetu nemáš kam uložit. Uvolni slot a otevři skříň znovu.',
+        },
+      ],
+      note: 'note.videotape.found',
+    },
+  },
   quests: [],
   npcScripts: {
     cat: {
       defaultDialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
+    },
+    'recording-cabinet': {
+      defaultDialogue: 'Skříň je plná prázdných šuplíků.',
+      lines: [
+        {
+          id: 'cabinet-tape',
+          when: [{ flag: 'videoTapeCollected', equals: false }],
+          dialogue: 'V útrobách skříně nacházíš videokazetu se štítkem. Přehrávač tu ale nevidíš.',
+          rewardId: 'recording-cabinet-tape',
+          setState: { videoTapeCollected: true },
+          note: 'note.videotape.found',
+        },
+        {
+          id: 'cabinet-empty',
+          when: [{ flag: 'videoTapeCollected', equals: true }],
+          dialogue: 'Skříň už je prázdná. Přehrávač musí být jinde.',
+        },
+      ],
+    },
+    'vcr-player': {
+      defaultDialogue: 'Bez kazety přehrávač nepomůže.',
+      lines: [
+        {
+          id: 'vcr-play',
+          when: [{ hasItem: 'videotape' }],
+          dialogue: 'Vkládáš kazetu. Přístroj se rozbliká a začne přehrávat šum a tichý hlas.',
+          actions: [
+            {
+              type: 'consumeItem',
+              item: 'videotape',
+              quantity: 1,
+              blockedDialogue: 'Kazetu nemáš, přehrávač jen tiše pípá.',
+              blockedNote: 'Chybí videokazeta.',
+            },
+            { type: 'setFlag', flag: 'videoTapePlayed', value: true },
+          ],
+          note: 'note.videotape.played',
+        },
+        {
+          id: 'vcr-after',
+          when: [{ flag: 'videoTapePlayed', equals: true }],
+          dialogue: 'Kazeta dohrála. Přehrávač jen tiše hučí.',
+        },
+      ],
     },
   },
 };

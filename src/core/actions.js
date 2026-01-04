@@ -49,6 +49,22 @@ function registerDefaults() {
     return { success: true, note: action.note };
   });
 
+  registerActionType('consumeItem', (action, { inventory, renderInventory }) => {
+    const itemId = action?.item;
+    if (!itemId) return { success: true };
+    const quantity = Number.isFinite(action?.quantity) ? Math.max(1, Math.floor(action.quantity)) : 1;
+    const consumed = inventory?.consumeItem?.(itemId, quantity);
+    if (!consumed) {
+      return {
+        success: false,
+        blockedDialogue: action.blockedDialogue,
+        blockedNote: action.blockedNote,
+      };
+    }
+    renderInventory?.(inventory);
+    return { success: true, note: action.note };
+  });
+
   registerActionType('unlock', (action, { level, game }) => {
     level?.unlock?.(action.targetId);
     game?.saveProgress?.({ auto: true });

@@ -171,6 +171,7 @@ export const demoLevel = {
       {
         id: 'mayor',
         name: 'Starostka Hana',
+        sprite: 'hana',
         tx: 3,
         ty: 2,
         dialogue: 'Hana ztiší hlas: „Potřebuji tě tady. Jde o tři ztracené děti.“',
@@ -178,6 +179,7 @@ export const demoLevel = {
       {
         id: 'caretaker',
         name: 'Správce Laboratoře',
+        sprite: 'caretaker',
         tx: 10,
         ty: 4,
         dialogue: 'Správce šeptá: „Sežeň články a nářadí. Tma tu nesmí vyhrát.“',
@@ -185,6 +187,7 @@ export const demoLevel = {
       {
         id: 'technician',
         name: 'Technik Jára',
+        sprite: 'jara',
         tx: 6,
         ty: 9,
         dialogue: 'Jára si drží baterku u hrudi: „Potřebujeme světlo, jinak jsme slepí.“',
