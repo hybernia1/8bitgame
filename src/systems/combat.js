@@ -1,4 +1,5 @@
 import { TILE } from '../core/constants.js';
+import { getTileDefinition, isBlockingTileId } from '../world/tile-registry.js';
 
 export function createCombatSystem({ ammo, projectiles, player, tileAt, damageTile, showNote }) {
   function attemptShoot() {
@@ -28,9 +29,13 @@ export function createCombatSystem({ ammo, projectiles, player, tileAt, damageTi
       bullet.y += bullet.dy * bullet.speed * dt;
       bullet.lifetime -= dt;
 
-      const tile = tileAt(bullet.x, bullet.y);
-      if (tile !== 0 || bullet.lifetime <= 0) {
-        if (tile !== 0 && typeof damageTile === 'function') {
+      const tileId = tileAt(bullet.x, bullet.y);
+      const tileDef = getTileDefinition(tileId);
+      const tileBlocks = tileId !== 0 && isBlockingTileId(tileId);
+      const destructibleTile = tileDef.hitPoints != null;
+
+      if (tileBlocks || destructibleTile || bullet.lifetime <= 0) {
+        if (destructibleTile && typeof damageTile === 'function') {
           damageTile(bullet.x, bullet.y);
         }
         projectiles.splice(i, 1);
