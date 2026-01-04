@@ -10,6 +10,7 @@ export const TILE_IDS = {
   WALL_CRACKED: 4,
   FLOOR_LIT: 5,
   DECOR_CONSOLE: 6,
+  FLOOR_BROKEN: 7,
 };
 
 /** @type {Record<number, TileDefinition>} */
@@ -80,6 +81,13 @@ export const TILE_DEFINITIONS = {
     variant: 'decor_console',
     spriteKey: 'decor.console',
     blocksMovement: false,
+  },
+  [TILE_IDS.FLOOR_BROKEN]: {
+    tileId: TILE_IDS.FLOOR_BROKEN,
+    id: 'floor_broken',
+    category: 'floor',
+    variant: 'floor_broken',
+    spriteKey: 'floor.broken',
   },
 };
 
