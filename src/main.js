@@ -834,6 +834,8 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     hudSystem.hideInteraction();
     hudSystem.showNote(deathNote || 'note.death.darkness');
     sessionState.dialogueTime = 0;
+    sessionState.activeSpeaker = '';
+    sessionState.activeLine = '';
     const currentLevelId = game.currentLevelId ?? levelId ?? DEFAULT_LEVEL_ID;
     deathTimeout = setTimeout(() => {
       setScene('loading', { levelId: currentLevelId });

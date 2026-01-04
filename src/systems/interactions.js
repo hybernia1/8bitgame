@@ -185,7 +185,7 @@ export function createInteractionSystem({
       }
 
       state.activeLine = dialogue;
-      state.dialogueTime = dialogueDuration;
+      state.dialogueTime = Number.POSITIVE_INFINITY;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
     } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
@@ -198,7 +198,7 @@ export function createInteractionSystem({
           showNote(gateState.consumeNote || 'note.gate.consumeKey');
         }
       }
-      state.dialogueTime = 3;
+      state.dialogueTime = Number.POSITIVE_INFINITY;
       hud.showDialogue(state.activeSpeaker, state.activeLine);
       if (gateState.nextLevelId && !sessionState.levelAdvanceQueued) {
         sessionState.levelAdvanceQueued = true;
@@ -232,8 +232,8 @@ export function createInteractionSystem({
 
   function updateInteractions(player, context) {
     const { nearestNpc, activeSwitch, switchDistance, nearGate } = context;
-    if (state.dialogueTime > 0) {
-      state.dialogueTime -= context.dt;
+    const hasActiveDialogue = Boolean(state.activeLine);
+    if (hasActiveDialogue) {
       hud.showDialogue(state.activeSpeaker, state.activeLine);
     } else if (nearestNpc?.nearby) {
       hud.showPrompt('prompt.talk', { name: nearestNpc.name });

@@ -5,10 +5,30 @@ export const demoLevelDialogues = {
       'Omlouvám se, že tě táhnu rovnou do laboratoře. Za poslední měsíc zmizely tři děti a mám strach, že jde o nějaký okultní rituál. Tohle je první místo, kde musíme hledat stopy.',
     lines: [
       {
-        id: 'mayor-intro',
-        when: [{ flag: 'mayorIntroduced', equals: false }],
+        id: 'mayor-intro-1',
+        when: [{ flag: 'mayorChatStep1', equals: false }],
         dialogue:
-          'Dostals můj telefonát. Prosím, projdi laboratoř a zjisti, jestli tu nenajdeš něco, co by vysvětlilo, kam děti mizí.',
+          'Hana tě vítá s unaveným úsměvem: „Dostals můj telefonát. V laboratoři zmizely tři děti a bojím se, že v tom jede někdo zevnitř.“',
+        setState: { mayorChatStep1: true },
+      },
+      {
+        id: 'mayor-intro-2',
+        when: [
+          { flag: 'mayorChatStep1', equals: true },
+          { flag: 'mayorChatStep2', equals: false },
+        ],
+        dialogue:
+          '„Jsem tady,“ odpovíš jí. „Nevzdám to, dokud nepochopím, co se v téhle budově děje.“ Hana přikývne a zhluboka se nadechne.',
+        setState: { mayorChatStep2: true },
+      },
+      {
+        id: 'mayor-intro-3',
+        when: [
+          { flag: 'mayorChatStep2', equals: true },
+          { flag: 'mayorIntroduced', equals: false },
+        ],
+        dialogue:
+          '„Začni prohlídkou laboratoře,“ dodá Hana. „Stopy tu někde jsou. Budu poblíž a budu tě krýt, kdybys něco našel.“',
         setState: { mayorIntroduced: true },
       },
     ],
@@ -16,6 +36,13 @@ export const demoLevelDialogues = {
   caretaker: {
     defaultDialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
     lines: [
+      {
+        id: 'caretaker-intro',
+        when: [{ flag: 'caretakerSharedLab', equals: false }],
+        dialogue:
+          'Správce si nervózně utře ruce do pláště: „Laboratoř je plná hluchých míst, někde se snadno ztratíš. Nic podezřelého jsem neviděl, ale Technik Jára se tady potuluje potmě – zkus se ho zeptat, možná něco zaslechl.“',
+        setState: { caretakerSharedLab: true },
+      },
       {
         id: 'give-apple',
         when: [{ flag: 'caretakerGaveApple', equals: false }],
@@ -42,6 +69,13 @@ export const demoLevelDialogues = {
     defaultDialogue: 'Hej, slyšel jsem šumění u zadního skladu. Možná tam něco blýská.',
     infoNote: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
     lines: [
+      {
+        id: 'technician-intro',
+        when: [{ flag: 'technicianSharedLab', equals: false }],
+        dialogue:
+          'Technik Jára ti přitáhne baterku k obličeji: „Tady je noc všechno rozmazaná. Nic konkrétního jsem neviděl, ale ve tmě občas slyším kroky od skladu. Drž se světla.“',
+        setState: { technicianSharedLab: true },
+      },
       {
         id: 'collect-first',
         when: [{ questIncomplete: 'collect-components' }],
