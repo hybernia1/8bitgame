@@ -48,6 +48,10 @@ function getFullscreenElement(root = shellState.documentRoot) {
   return root.fullscreenElement || root.webkitFullscreenElement || null;
 }
 
+function isFullscreenActive() {
+  return Boolean(getFullscreenElement());
+}
+
 function setFullscreenUi(active) {
   shellState.gameShell?.classList.toggle('is-fullscreen', active);
   if (shellState.fullscreenButton) {
@@ -185,6 +189,11 @@ export function initShell({
   return {
     ...domRefs,
     fullscreenSupported: shellState.fullscreenSupported,
+    requestFullscreen: () => {
+      if (!shellState.fullscreenSupported || isFullscreenActive()) return;
+      requestFullscreen();
+    },
+    isFullscreenActive,
     setFullscreenAvailability,
     setFullscreenUi,
   };

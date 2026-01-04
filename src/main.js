@@ -16,7 +16,7 @@ const shell = initShell({
   baseCanvas: { width: WORLD.width * TILE, height: WORLD.height * TILE },
 });
 
-const inventory = new Inventory(6);
+const inventory = new Inventory(10);
 const game = createGame({ inventory });
 const spriteSheetPromise = loadSpriteSheet();
 
