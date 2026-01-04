@@ -79,3 +79,12 @@ export const rooftopCorridorLevel = {
   quests: [],
   npcScripts: {},
 };
+
+export const dialogues = {};
+export const quests = [];
+
+export default {
+  config: rooftopCorridorLevel,
+  dialogues,
+  quests,
+};

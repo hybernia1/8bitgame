@@ -1,11 +1,72 @@
-import { demoLevelDialogues } from './demoLevel.js';
+const loadedDialogues = new Map();
+const processedModules = new Set();
+let levelModuleEntriesPromise = null;
 
-const dialogueRegistry = {
-  'level-1': demoLevelDialogues,
-  'level-2': {},
-  'level-3': {},
-};
+function deriveIdFromPath(path) {
+  const filename = path.split('/').pop() ?? '';
+  return filename.replace(/\.js$/, '');
+}
 
-export function getDialoguesForLevel(levelId) {
-  return dialogueRegistry[levelId] ?? {};
+async function getLevelModuleEntries() {
+  if (levelModuleEntriesPromise) return levelModuleEntriesPromise;
+
+  if (typeof import.meta?.glob === 'function') {
+    const globEntries = import.meta.glob('../levels/*.js');
+    levelModuleEntriesPromise = Promise.resolve(Object.entries(globEntries));
+    return levelModuleEntriesPromise;
+  }
+
+  levelModuleEntriesPromise = (async () => {
+    try {
+      const { readdir } = await import('fs/promises');
+      const directoryUrl = new URL('../levels/', import.meta.url);
+      const files = await readdir(directoryUrl);
+      return files
+        .filter((file) => file.endsWith('.js'))
+        .map((file) => {
+          const url = new URL(file, directoryUrl).href;
+          return [url, () => import(url)];
+        });
+    } catch {
+      return [];
+    }
+  })();
+
+  return levelModuleEntriesPromise;
+}
+
+function extractConfig(moduleValue) {
+  const candidate = moduleValue?.default ?? moduleValue;
+  if (candidate?.config?.meta) return candidate.config;
+  if (candidate?.meta) return candidate;
+  if (moduleValue?.config?.meta) return moduleValue.config;
+  return Object.values(moduleValue ?? {}).find((value) => value?.meta);
+}
+
+function extractDialogues(moduleValue) {
+  const candidate = moduleValue?.default ?? moduleValue;
+  return candidate?.dialogues ?? moduleValue?.dialogues ?? candidate?.npcScripts ?? {};
+}
+
+export async function getDialoguesForLevel(levelId) {
+  if (loadedDialogues.has(levelId)) return loadedDialogues.get(levelId) ?? {};
+
+  const entries = await getLevelModuleEntries();
+  for (const [path, loader] of entries) {
+    if (processedModules.has(path)) continue;
+    const moduleValue = await loader();
+    processedModules.add(path);
+
+    const dialogues = extractDialogues(moduleValue) ?? {};
+    const config = extractConfig(moduleValue);
+    const metaId = config?.meta?.id ?? deriveIdFromPath(path);
+
+    if (metaId) {
+      loadedDialogues.set(metaId, dialogues);
+      if (metaId === levelId) return dialogues;
+    }
+  }
+
+  loadedDialogues.set(levelId, {});
+  return {};
 }
