@@ -1,5 +1,5 @@
-import { TILE } from '../core/constants.js';
-import { TILE_IDS } from '../world/tile-registry.js';
+import { TILE } from '../../core/constants.js';
+import { TILE_IDS } from '../../world/tile-registry.js';
 
 const BASE_WIDTH = 16;
 const { FLOOR_PLAIN: F, WALL_SOLID: W, DOOR_CLOSED: D, WALL_WINDOW: WW, WALL_CRACKED: WC, FLOOR_LIT: FL } = TILE_IDS;
@@ -24,8 +24,8 @@ layoutWithVcrRoom[toIndex(12, 10)] = F;
 layoutWithVcrRoom[toIndex(13, 10)] = F;
 const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 
-/** @type {import('./types.js').LevelConfig} */
-export const levelOne = {
+/** @type {import('../types.js').LevelConfig} */
+export const northernWingLevel = {
   meta: {
     id: 'level-2',
     name: 'Severní Křídlo Laboratoře',

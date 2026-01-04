@@ -1,5 +1,5 @@
-import { TILE } from '../core/constants.js';
-import { TILE_IDS } from '../world/tile-registry.js';
+import { TILE } from '../../core/constants.js';
+import { TILE_IDS } from '../../world/tile-registry.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
@@ -64,7 +64,7 @@ const baseSwitches = [
   },
 ];
 
-/** @type {import('./types.js').LevelConfig} */
+/** @type {import('../types.js').LevelConfig} */
 const baseMap = [
   W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
   W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
@@ -101,7 +101,7 @@ const unlockedMap = [
   W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
 ];
 
-export const demoLevel = {
+export const abandonedLaboratoryLevel = {
   meta: {
     id: 'level-1',
     name: 'Opuštěná Laboratoř',

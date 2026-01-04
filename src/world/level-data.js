@@ -1,5 +1,4 @@
-import { demoLevel } from '../data/demoLevel.js';
-import { levelOne } from '../data/level1.js';
+import { abandonedLaboratoryLevel, northernWingLevel } from '../data/levels/index.js';
 import { getDialoguesForLevel } from '../data/dialogues/index.js';
 import { getQuestsForLevel } from '../data/quests/index.js';
 import { facilitySample } from '../data/maps/facility-sample.js';
@@ -12,8 +11,9 @@ import { normalizeLevelConfig } from './level-loader.js';
 export const registry = new Map();
 export const loaderRegistry = new Map();
 
-const demoId = demoLevel.meta?.id ?? 'level-1';
-export const DEFAULT_LEVEL_ID = demoId;
+const defaultLevel = abandonedLaboratoryLevel;
+const defaultLevelId = defaultLevel.meta?.id ?? 'level-1';
+export const DEFAULT_LEVEL_ID = defaultLevelId;
 
 function enrichLevelConfig(base, id) {
   const levelId = base.meta?.id ?? id;
@@ -38,12 +38,12 @@ export function registerLevelModule(id, modulePath) {
   registerLevelLoader(id, () => import(modulePath));
 }
 
-registerLevelConfig(demoId, demoLevel);
-registerLevelConfig(levelOne.meta?.id ?? 'level-2', levelOne);
+registerLevelConfig(defaultLevelId, defaultLevel);
+registerLevelConfig(northernWingLevel.meta?.id ?? 'level-2', northernWingLevel);
 registerLevelConfig(facilitySample.meta?.id ?? 'tiled-facility', facilitySample);
 
 export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {
-  const base = registry.get(id) ?? registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(demoLevel);
+  const base = registry.get(id) ?? registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(defaultLevel);
   return enrichLevelConfig(base, id);
 }
 
@@ -61,7 +61,7 @@ export async function loadLevelConfig(id = DEFAULT_LEVEL_ID) {
   }
 
   if (!base) {
-    base = registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(demoLevel);
+    base = registry.get(DEFAULT_LEVEL_ID) ?? normalizeLevelConfig(defaultLevel);
   }
 
   return enrichLevelConfig(base, id);
