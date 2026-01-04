@@ -204,6 +204,7 @@ function getHudDomRefs(root = documentRoot) {
     banner: root.querySelector('.interaction-banner'),
     bannerTitle: root.querySelector('.interaction-title'),
     bannerBody: root.querySelector('.interaction-text'),
+    bannerAvatar: root.querySelector('[data-dialogue-avatar]'),
     pauseBindings: root.querySelector('[data-pause-bindings]'),
   };
 }
@@ -527,6 +528,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     dialogueTime: 0,
     activeSpeaker: '',
     activeLine: '',
+    dialogueMeta: null,
     levelAdvanceQueued: false,
   };
 
@@ -534,6 +536,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     sessionState.dialogueTime = 0;
     sessionState.activeSpeaker = '';
     sessionState.activeLine = '';
+    sessionState.dialogueMeta = null;
     sessionState.levelAdvanceQueued = false;
   }
 
@@ -595,6 +598,12 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     set activeLine(value) {
       sessionState.activeLine = value;
     },
+    get dialogueMeta() {
+      return sessionState.dialogueMeta;
+    },
+    set dialogueMeta(value) {
+      sessionState.dialogueMeta = value;
+    },
     get objectivesCollected() {
       return objectivesCollected;
     },
@@ -637,6 +646,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       dialogueTime: 0,
       activeSpeaker: '',
       activeLine: '',
+      dialogueMeta: null,
       levelAdvanceQueued: false,
       pushables: serializePushables(pushables ?? []),
     };
@@ -824,6 +834,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
       projectiles,
       player,
       tileAt: level.tileAt.bind(level),
+      damageTile: level.damageTileAt.bind(level),
       showNote: hudSystem.showNote,
     });
 
@@ -942,6 +953,7 @@ function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     sessionState.dialogueTime = 0;
     sessionState.activeSpeaker = '';
     sessionState.activeLine = '';
+    sessionState.dialogueMeta = null;
     const currentLevelId = game.currentLevelId ?? levelId ?? DEFAULT_LEVEL_ID;
     deathTimeout = setTimeout(() => {
       setScene('loading', { levelId: currentLevelId });

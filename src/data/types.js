@@ -114,6 +114,7 @@
  * @property {boolean} [blocksMovement] Whether entities can move through this tile.
  * @property {boolean} [transparent] Whether the tile should be treated as see-through (e.g. window).
  * @property {{ mask?: 'glow'|'windowCone', color?: string, intensity?: number, radius?: number, length?: number, spread?: number, offsetY?: number }} [lighting]
+ * @property {number} [hitPoints] How many hits the tile can take before breaking. Defaults to 1 for destructible tiles.
  */
 
 /**

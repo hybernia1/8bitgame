@@ -14,15 +14,15 @@ const {
 } = TILE_IDS;
 
 const baseLayout = [
-  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
+  W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W,
   W, F, FL, FL, FL, F, F, F, F, F, F, F, F, F, F, W,
-  W, F, F, WW, W, W, F, F, F, W, WW, W, F, F, F, W,
+  W, F, F, W, W, W, F, F, F, W, W, W, F, F, F, W,
   W, F, F, W, F, F, F, F, F, WC, F, F, F, F, F, W,
-  W, F, F, W, F, F, WW, F, F, W, F, F, W, F, F, W,
+  W, F, F, W, F, F, W, F, F, W, F, F, W, F, F, W,
   W, F, F, F, F, F, W, FL, FL, F, F, F, F, F, F, W,
   W, F, F, W, W, W, F, F, F, W, W, W, F, F, F, W,
-  W, F, F, F, F, FL, F, F, F, F, F, F, WW, F, F, W,
-  W, F, F, W, F, F, W, W, W, F, F, WW, W, W, WC, W,
+  W, F, F, F, F, FL, F, F, F, F, F, F, W, F, F, W,
+  W, F, F, W, F, F, W, W, W, F, F, W, W, W, WC, W,
   W, F, FL, WC, F, F, F, F, F, F, FL, D, F, F, WC, W,
   W, F, F, F, F, F, FL, F, F, F, F, W, W, W, F, W,
   W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,

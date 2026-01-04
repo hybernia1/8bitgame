@@ -9,6 +9,18 @@ import { getTileDefinition, isBlockingTileId, TILE_IDS } from './tile-registry.j
 const DOOR_TILE = TILE_IDS.DOOR_CLOSED;
 const FLOOR_TILE = TILE_IDS.FLOOR_PLAIN;
 const DEFAULT_COLLISION_TILE = TILE_IDS.WALL_SOLID;
+const DEFAULT_DESTRUCTIBLE_HP = 1;
+
+function getTileHitPoints(tileId) {
+  const def = getTileDefinition(tileId);
+  const baseHp = def.hitPoints ?? DEFAULT_DESTRUCTIBLE_HP;
+  return Math.max(1, Math.floor(baseHp));
+}
+
+function isDestructibleTile(tileId) {
+  const def = getTileDefinition(tileId);
+  return def.category === 'wall' && def.variant?.includes('cracked');
+}
 
 function isOccupyingTile(entity, tx, ty) {
   if (!entity || typeof entity.x !== 'number' || typeof entity.y !== 'number') return false;
@@ -149,6 +161,7 @@ export class LevelInstance {
   resetState() {
     this.collisionTiles = [...this.collisionBase];
     this.decorTiles = [...this.decorBase];
+    this.destructibleTiles = new Map();
     this.gate = this.gateConfig
       ? {
           ...this.gateConfig,
@@ -185,6 +198,7 @@ export class LevelInstance {
 
     this.rebuildTileEffects();
     this.initializePressureSwitches();
+    this.initializeDestructibleTiles();
   }
 
   invalidateAllLayers() {
@@ -222,6 +236,48 @@ export class LevelInstance {
     if (dirty.length) {
       this.invalidateLighting(dirty);
     }
+  }
+
+  initializeDestructibleTiles() {
+    this.collisionTiles.forEach((tile, index) => this.refreshDestructibleTile(index));
+  }
+
+  refreshDestructibleTiles(indices = []) {
+    indices.forEach((index) => this.refreshDestructibleTile(index));
+  }
+
+  refreshDestructibleTile(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.collisionTiles.length) return;
+    const tileId = this.collisionTiles[index];
+    if (isDestructibleTile(tileId)) {
+      const currentHp = this.destructibleTiles.get(index);
+      this.destructibleTiles.set(index, currentHp ?? getTileHitPoints(tileId));
+    } else {
+      this.destructibleTiles.delete(index);
+    }
+  }
+
+  damageTileAt(x, y, amount = 1) {
+    const tx = Math.floor(x / TILE);
+    const ty = Math.floor(y / TILE);
+    if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) {
+      return false;
+    }
+    const index = ty * this.mapWidth + tx;
+    if (!this.destructibleTiles.has(index)) return false;
+
+    const damage = Math.max(1, Math.floor(amount));
+    const nextHp = (this.destructibleTiles.get(index) ?? getTileHitPoints(this.collisionTiles[index])) - damage;
+    if (nextHp > 0) {
+      this.destructibleTiles.set(index, nextHp);
+      return true;
+    }
+
+    this.destructibleTiles.delete(index);
+    this.collisionTiles[index] = FLOOR_TILE;
+    this.decorTiles[index] = FLOOR_TILE;
+    this.invalidateTiles([index]);
+    return true;
   }
 
   tileAt(x, y) {
@@ -403,6 +459,7 @@ export class LevelInstance {
     });
     if (changed.size) {
       this.rebuildTileEffects(Array.from(changed));
+      this.refreshDestructibleTiles(Array.from(changed));
     }
   }
 
@@ -467,6 +524,7 @@ export class LevelInstance {
     return {
       gateUnlocked: !this.gate?.locked,
       lighting: this.serializeLighting(),
+      destructibles: Array.from(this.destructibleTiles.entries()).map(([index, hp]) => ({ index, hp })),
     };
   }
 
@@ -477,6 +535,35 @@ export class LevelInstance {
     });
   }
 
+  restoreDestructibleState(destructibleState) {
+    if (!Array.isArray(destructibleState)) return;
+    const hpByIndex = new Map();
+    destructibleState.forEach((entry) => {
+      const safeIndex = Number.isInteger(entry?.index) ? entry.index : null;
+      if (safeIndex == null || safeIndex < 0 || safeIndex >= this.collisionTiles.length) return;
+      const safeHp = Math.max(1, Math.floor(entry.hp ?? getTileHitPoints(this.collisionTiles[safeIndex])));
+      hpByIndex.set(safeIndex, safeHp);
+    });
+
+    const changed = [];
+    this.collisionTiles.forEach((tile, index) => {
+      if (!isDestructibleTile(tile)) return;
+      if (!hpByIndex.has(index)) {
+        this.collisionTiles[index] = FLOOR_TILE;
+        this.decorTiles[index] = FLOOR_TILE;
+        this.destructibleTiles.delete(index);
+        changed.push(index);
+        return;
+      }
+      const nextHp = hpByIndex.get(index);
+      this.destructibleTiles.set(index, nextHp);
+    });
+
+    if (changed.length) {
+      this.invalidateTiles(changed);
+    }
+  }
+
   restoreState(levelState) {
     this.resetState();
     if (!levelState) return;
@@ -484,6 +571,7 @@ export class LevelInstance {
       this.unlockGate();
     }
     this.restoreLighting(levelState.lighting);
+    this.restoreDestructibleState(levelState.destructibles);
   }
 
   getDimensions() {
@@ -495,6 +583,7 @@ export class LevelInstance {
       if (!Number.isInteger(index)) return;
       if (index < 0 || index >= this.decorTiles.length) return;
       this.dirtyTileIndices.add(index);
+      this.refreshDestructibleTile(index);
       if (this.updateTileEffect(index)) {
         this.lightingDirtyAll = true;
       }

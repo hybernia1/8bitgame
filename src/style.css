@@ -493,10 +493,39 @@ canvas {
   border-radius: 12px;
   padding: 12px 14px;
   display: grid;
+  grid-template-columns: 1fr;
   gap: 6px;
+  align-items: center;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   min-width: min(640px, calc(100% - 32px));
   max-width: min(960px, calc(100% - 32px));
+}
+
+.interaction-banner.has-avatar {
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+
+.interaction-content {
+  display: grid;
+  gap: 6px;
+}
+
+.interaction-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid #23232e;
+  background: #0c1018;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: auto;
+  image-rendering: pixelated;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.interaction-banner:not(.has-avatar) .interaction-avatar {
+  display: none;
 }
 
 .interaction-title {

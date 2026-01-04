@@ -32,6 +32,7 @@ export function createInteractionSystem({
   sessionState.dialogueTime ??= 0;
   sessionState.activeSpeaker ??= '';
   sessionState.activeLine ??= '';
+  sessionState.dialogueMeta ??= null;
   sessionState.levelAdvanceQueued ??= false;
 
   function findNearestLightSwitch(player) {
@@ -194,8 +195,9 @@ export function createInteractionSystem({
       }
 
       state.activeLine = dialogue;
+      state.dialogueMeta = { speakerType: 'npc', spriteName: nearestNpc.sprite };
       state.dialogueTime = Number.POSITIVE_INFINITY;
-      hud.showDialogue(state.activeSpeaker, state.activeLine);
+      hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
     } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
       state.activeLine = gateState.unlockLine || 'dialogue.gateUnlocked';
@@ -208,7 +210,8 @@ export function createInteractionSystem({
         }
       }
       state.dialogueTime = Number.POSITIVE_INFINITY;
-      hud.showDialogue(state.activeSpeaker, state.activeLine);
+      state.dialogueMeta = { speakerType: 'system' };
+      hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
       if (gateState.nextLevelId && !sessionState.levelAdvanceQueued) {
         sessionState.levelAdvanceQueued = true;
         game?.advanceToNextMap?.(gateState.nextLevelId);
@@ -242,8 +245,11 @@ export function createInteractionSystem({
   function updateInteractions(player, context) {
     const { nearestNpc, activeSwitch, switchDistance, nearGate } = context;
     const hasActiveDialogue = Boolean(state.activeLine);
+    if (!hasActiveDialogue) {
+      state.dialogueMeta = null;
+    }
     if (hasActiveDialogue) {
-      hud.showDialogue(state.activeSpeaker, state.activeLine);
+      hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
     } else if (nearestNpc?.nearby) {
       hud.showPrompt('prompt.talk', { name: nearestNpc.name });
     } else if (activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
