@@ -1,5 +1,5 @@
 import { keyPressed } from '../kontra.mjs';
-import { COLORS, TEXTURE_SCALE } from '../core/constants.js';
+import { COLORS, TILE } from '../core/constants.js';
 import { attemptPush, findBlockingPushable, findNearbyPushable } from './pushables.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
@@ -25,7 +25,7 @@ export function createPlayer(spriteSheet, placements = {}) {
     x: playerStart.x,
     y: playerStart.y,
     speed: 120,
-    size: Math.round(22 * TEXTURE_SCALE),
+    size: TILE,
     color: '#5cf2cc',
     lastDirection: { x: 1, y: 0 },
     facing,

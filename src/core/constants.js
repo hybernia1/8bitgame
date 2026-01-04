@@ -5,6 +5,9 @@ export const TILE = 64;
 // images stay 32x32 but you want to upscale them to the rendered TILE size.
 export const TEXTURE_TILE = 32;
 
+// Ratio between rendered tile pixels and source texture pixels.
+export const TEXTURE_SCALE = TILE / TEXTURE_TILE;
+
 export const WORLD = {
   width: 32,
   height: 18,
