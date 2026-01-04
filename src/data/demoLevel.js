@@ -1,5 +1,5 @@
-import { TILE } from '../../core/constants.js';
-import { WIDESCREEN_DIMENSIONS, padLayer } from '../layout-utils.js';
+import { TILE } from '../core/constants.js';
+import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
@@ -50,7 +50,7 @@ const baseSwitches = [
   },
 ];
 
-/** @type {import('../types.js').LevelConfig} */
+/** @type {import('./types.js').LevelConfig} */
 const baseMap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,

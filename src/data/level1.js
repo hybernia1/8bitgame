@@ -1,5 +1,5 @@
-import { TILE } from '../../core/constants.js';
-import { WIDESCREEN_DIMENSIONS, padLayer } from '../layout-utils.js';
+import { TILE } from '../core/constants.js';
+import { WIDESCREEN_DIMENSIONS, padLayer } from './layout-utils.js';
 
 const BASE_WIDTH = 16;
 const { width: TARGET_WIDTH, height: TARGET_HEIGHT } = WIDESCREEN_DIMENSIONS;
@@ -19,7 +19,7 @@ const baseLayout = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 ];
 
-/** @type {import('../types.js').LevelConfig} */
+/** @type {import('./types.js').LevelConfig} */
 export const levelOne = {
   meta: {
     id: 'level-1',

@@ -1,4 +1,4 @@
-import { TILE, TILE_SCALE } from '../core/constants.js';
+import { TILE } from '../core/constants.js';
 import { runActions } from '../core/actions.js';
 import { evaluateQuestBatch, getActiveQuestSummary, prepareQuestState } from '../core/quests.js';
 export function createInteractionSystem({
@@ -15,8 +15,6 @@ export function createInteractionSystem({
   collectNearbyPickups,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
-  const SCALE = TILE_SCALE;
-  const GATE_INTERACT_DISTANCE = 26 * SCALE;
   const npcScripts = level.getNpcScripts();
   const rewards = level.getRewards();
   const questConfigs = level.getQuestConfigs();
@@ -133,7 +131,7 @@ export function createInteractionSystem({
     const { nearestNpc, guardCollision } = context;
     const gateState = level.getGateState();
     const gateDistance = gateState ? Math.hypot(gateState.x - player.x, gateState.y - player.y) : Infinity;
-    const nearGate = gateState ? gateDistance <= GATE_INTERACT_DISTANCE : false;
+    const nearGate = gateState ? gateDistance <= 26 : false;
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
 
     if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {

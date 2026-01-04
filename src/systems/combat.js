@@ -1,8 +1,4 @@
-import { TILE, TILE_SCALE } from '../core/constants.js';
-
-const SCALE = TILE_SCALE;
-const PROJECTILE_SPEED = 260 * SCALE;
-const PROJECTILE_RADIUS = 4 * SCALE;
+import { TILE } from '../core/constants.js';
 
 export function createCombatSystem({ inventory, projectiles, player, renderInventory, tileAt, showNote }) {
   function attemptShoot() {
@@ -16,7 +12,7 @@ export function createCombatSystem({ inventory, projectiles, player, renderInven
     renderInventory(inventory);
 
     const direction = player.lastDirection ?? { x: 1, y: 0 };
-    const speed = PROJECTILE_SPEED;
+    const speed = 260;
     const magnitude = Math.hypot(direction.x, direction.y) || 1;
     projectiles.push({
       x: player.x,
@@ -67,7 +63,7 @@ export function createCombatSystem({ inventory, projectiles, player, renderInven
     drawCtx.fillStyle = '#f28f5c';
     projectiles.forEach((bullet) => {
       drawCtx.beginPath();
-      drawCtx.arc(bullet.x - cam.x, bullet.y - cam.y, PROJECTILE_RADIUS, 0, Math.PI * 2);
+      drawCtx.arc(bullet.x - cam.x, bullet.y - cam.y, 4, 0, Math.PI * 2);
       drawCtx.fill();
     });
     drawCtx.restore();

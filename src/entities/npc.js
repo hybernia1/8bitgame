@@ -1,12 +1,9 @@
-import { TILE, TILE_SCALE } from '../core/constants.js';
+import { TILE } from '../core/constants.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
-const SCALE = TILE_SCALE;
-const TALK_RADIUS = 26 * SCALE;
-const CHARACTER_SIZE = 22 * SCALE;
-const MIN_TARGET_DISTANCE = 4 * SCALE;
-const DEFAULT_WANDER_SPEED = 36;
-const DEFAULT_PATROL_SPEED = 40;
+const TALK_RADIUS = 26;
+const CHARACTER_SIZE = 22;
+const MIN_TARGET_DISTANCE = 4;
 
 function toWorldPosition(point = {}) {
   return {
@@ -44,7 +41,7 @@ function updatePatrol(npc, dt) {
         return { dx: 0, dy: 0, moving: false };
       }
 
-      const step = (npc.speed ?? DEFAULT_WANDER_SPEED) * SCALE * dt;
+      const step = (npc.speed ?? 36) * dt;
       const move = Math.min(step, distance);
       const normalizedX = dx / (distance || 1);
       const normalizedY = dy / (distance || 1);
@@ -71,7 +68,7 @@ function updatePatrol(npc, dt) {
     return { dx: 0, dy: 0, moving: false };
   }
 
-  const step = (npc.speed ?? DEFAULT_PATROL_SPEED) * SCALE * dt;
+  const step = (npc.speed ?? 40) * dt;
   const move = Math.min(step, distance);
   const normalizedX = dx / (distance || 1);
   const normalizedY = dy / (distance || 1);
@@ -166,7 +163,7 @@ export function updateNpcStates(npcs, player, dt) {
     npc.nearby = distance <= TALK_RADIUS;
 
     const npcRadius = (npc.size ?? TILE) / 2;
-    if (npc.lethal && distance <= player.size / 2 + npcRadius - 2 * SCALE) {
+    if (npc.lethal && distance <= player.size / 2 + npcRadius - 2) {
       guardCollision = true;
     }
 
