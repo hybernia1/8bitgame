@@ -29,6 +29,8 @@ const spriteSheetPromise = loadSpriteSheet();
 const documentRoot = typeof document !== 'undefined' ? document : null;
 
 const menuPanel = documentRoot?.querySelector('.menu-panel');
+const fullscreenButton = documentRoot?.querySelector('[data-fullscreen-toggle]');
+const gameShell = documentRoot?.querySelector('.game-shell');
 const pausePanel = documentRoot?.querySelector('.pause-panel');
 const loadingPanel = documentRoot?.querySelector('.loading-panel');
 const continuePanel = documentRoot?.querySelector('.continue-panel');
@@ -40,6 +42,57 @@ const slotInput = documentRoot?.querySelector('[data-slot-input]');
 const menuSubtitle = documentRoot?.querySelector('.menu-subtitle');
 const saveSlotList = documentRoot?.querySelector('[data-save-slot-list]');
 const defaultMenuSubtitle = 'Vyber si akci pro další postup.';
+
+function getFullscreenElement(root = documentRoot) {
+  if (!root) return null;
+  return root.fullscreenElement || root.webkitFullscreenElement || null;
+}
+
+function setFullscreenUi(active) {
+  gameShell?.classList.toggle('is-fullscreen', active);
+  if (fullscreenButton) {
+    fullscreenButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+    fullscreenButton.textContent = active ? '⤢ Zavřít celou obrazovku' : '⛶ Celá obrazovka';
+  }
+}
+
+function requestFullscreen() {
+  const target = gameShell ?? documentRoot?.documentElement ?? null;
+  if (!target) return;
+  const enter =
+    target.requestFullscreen ??
+    target.webkitRequestFullscreen ??
+    target.msRequestFullscreen ??
+    target.mozRequestFullScreen;
+  enter?.call(target);
+}
+
+function exitFullscreen() {
+  if (!documentRoot) return;
+  const exit =
+    documentRoot.exitFullscreen ??
+    documentRoot.webkitExitFullscreen ??
+    documentRoot.msExitFullscreen ??
+    documentRoot.mozCancelFullScreen;
+  exit?.call(documentRoot);
+}
+
+function toggleFullscreen() {
+  const active = Boolean(getFullscreenElement());
+  if (active) {
+    exitFullscreen();
+  } else {
+    requestFullscreen();
+  }
+}
+
+if (documentRoot) {
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach((event) =>
+    documentRoot.addEventListener(event, () => setFullscreenUi(Boolean(getFullscreenElement()))),
+  );
+}
+fullscreenButton?.addEventListener('click', toggleFullscreen);
+setFullscreenUi(Boolean(getFullscreenElement()));
 
 function getHudDomRefs(root = documentRoot) {
   if (!root) return {};
