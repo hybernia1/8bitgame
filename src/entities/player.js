@@ -7,6 +7,12 @@ const PLAYER_SIZE = Math.round(TILE * 0.6875);
 const PLAYER_SPEED = 120 * TILE_SCALE;
 const GRAB_PADDING = 6 * TILE_SCALE;
 
+function overlapsEntity(x1, y1, size1, x2, y2, size2) {
+  const half1 = size1 / 2;
+  const half2 = size2 / 2;
+  return Math.abs(x1 - x2) < half1 + half2 && Math.abs(y1 - y2) < half1 + half2;
+}
+
 function getInputAxis() {
   let dx = 0;
   let dy = 0;
@@ -51,6 +57,7 @@ export function createPlayer(spriteSheet, placements = {}) {
 export function updatePlayer(player, dt, collision = {}) {
   const canMove = typeof collision?.canMove === 'function' ? collision.canMove : () => true;
   const pushables = collision?.pushables ?? [];
+  const blockers = Array.isArray(collision?.blockers) ? collision.blockers : [];
   const { dx, dy } = getInputAxis();
   const moving = dx !== 0 || dy !== 0;
   const actionPressed = keyPressed('e');
@@ -64,7 +71,12 @@ export function updatePlayer(player, dt, collision = {}) {
     return null;
   };
 
+  const findBlockingObstacle = (nx, ny, size = player.size) =>
+    blockers.find((blocker) => overlapsEntity(nx, ny, size, blocker.x, blocker.y, blocker.size ?? size));
+
   const findGrabbed = () => pushables.find((prop) => prop.id === player.grabbedPushableId);
+
+  const canMoveSafely = (size, nx, ny) => canMove(size, nx, ny) && !findBlockingObstacle(nx, ny, size);
 
   let grabbed = findGrabbed();
 
@@ -102,22 +114,36 @@ export function updatePlayer(player, dt, collision = {}) {
       if (delta === 0) return;
       const nx = axis === 'x' ? player.x + delta : player.x;
       const ny = axis === 'y' ? player.y + delta : player.y;
+      const obstacle = findBlockingObstacle(nx, ny);
+      if (obstacle) return;
       const blocking = findBlockingPushable(pushables, player.size, nx, ny);
       let grabbedMoved = false;
 
       if (blocking) {
         if (!grabbed || blocking !== grabbed) return;
-        const pushed = attemptPush(pushables, blocking, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0, canMove);
+        const pushed = attemptPush(
+          pushables,
+          blocking,
+          axis === 'x' ? delta : 0,
+          axis === 'y' ? delta : 0,
+          canMoveSafely,
+        );
         grabbedMoved = pushed && blocking === grabbed;
         if (!pushed) return;
       }
 
       if (grabbed && !grabbedMoved) {
-        const moved = attemptPush(pushables, grabbed, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0, canMove);
+        const moved = attemptPush(
+          pushables,
+          grabbed,
+          axis === 'x' ? delta : 0,
+          axis === 'y' ? delta : 0,
+          canMoveSafely,
+        );
         if (!moved) return;
       }
 
-      if (!canMove(player.size, nx, ny)) return;
+      if (!canMoveSafely(player.size, nx, ny)) return;
       const overlapAfterMove = findBlockingPushable(pushables, player.size, nx, ny);
       if (overlapAfterMove) return;
 
