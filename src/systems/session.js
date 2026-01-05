@@ -120,6 +120,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     selectButton,
     settingsButton,
     pauseResumeButton,
+    pauseRestartButton,
     pauseSaveButton,
     pauseMenuButton,
     alertLayer,
@@ -408,6 +409,11 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     } else {
       setScene('pause');
     }
+  }
+
+  function restartLevelFromPause() {
+    const levelId = currentInGameSession?.levelId?.() ?? game.currentLevelId ?? DEFAULT_LEVEL_ID;
+    setScene('loading', { levelId, slotId: resolveSlotId() });
   }
 
   function drawCameraBounds({ width, height }, camera) {
@@ -1193,6 +1199,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       resume();
     }
   });
+  pauseRestartButton?.addEventListener('click', () => restartLevelFromPause());
   pauseSaveButton?.addEventListener('click', () => currentInGameSession?.manualSave?.());
   pauseMenuButton?.addEventListener('click', () => showMenu());
 

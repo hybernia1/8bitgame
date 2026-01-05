@@ -199,6 +199,7 @@ export function initShell({
     selectButton: root?.querySelector('[data-menu-select]') ?? null,
     settingsButton: root?.querySelector('[data-menu-settings]') ?? null,
     pauseResumeButton: root?.querySelector('[data-pause-resume]') ?? null,
+    pauseRestartButton: root?.querySelector('[data-pause-restart]') ?? null,
     pauseSaveButton: root?.querySelector('[data-pause-save]') ?? null,
     pauseMenuButton: root?.querySelector('[data-pause-menu]') ?? null,
   };
