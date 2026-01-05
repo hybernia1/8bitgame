@@ -1,7 +1,7 @@
-import { TILE } from '../../core/constants.js';
-import { TILE_IDS } from '../../world/tile-registry.js';
-import { abandonedLaboratoryNpcPackage } from './1-abandoned-laboratory/npcs.js';
-import { demoLevelQuests } from '../quests/demoLevel.js';
+import { TILE } from '../../../core/constants.js';
+import { TILE_IDS } from '../../../world/tile-registry.js';
+import { abandonedLaboratoryNpcPackage } from './npcs.js';
+import { abandonedLaboratoryQuests } from '../../quests/abandonedLaboratory.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
@@ -74,7 +74,7 @@ const baseSwitches = [
   },
 ];
 
-/** @type {import('../types.js').LevelConfig} */
+/** @type {import('../../types.js').LevelConfig} */
 const baseLayout = [
   W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
   W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
@@ -227,7 +227,7 @@ export const abandonedLaboratoryLevel = {
 };
 
 export const dialogues = abandonedLaboratoryNpcPackage.scripts;
-export const quests = demoLevelQuests;
+export const quests = abandonedLaboratoryQuests;
 
 export default {
   config: abandonedLaboratoryLevel,

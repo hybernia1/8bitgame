@@ -14,7 +14,7 @@ function isTextInput(target) {
   return tagName === 'input' || tagName === 'textarea' || target?.isContentEditable === true;
 }
 
-export function createInputSystem({ inventorySlots = 6, onAction } = {}) {
+export function createInputSystem({ inventorySlots = 12, onAction } = {}) {
   let bindings = loadInputBindings();
   saveInputBindings(bindings);
 

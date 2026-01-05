@@ -6,6 +6,8 @@ const keyLabels = {
   Space: 'Mezerník',
   Escape: 'Esc',
   Tab: 'Tab',
+  Minus: '-',
+  Equal: '=',
 };
 
 const gamepadLabels = {

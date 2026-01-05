@@ -78,18 +78,11 @@ export function createHudSystem(passedElements = {}) {
     }
   }
 
-  function setAmmo(ammo, maxAmmo) {
+  function setAmmo(ammo) {
     const safeAmmo = Math.max(0, Number.isFinite(ammo) ? Math.floor(ammo) : 0);
-    const safeMaxAmmo = Number.isFinite(maxAmmo) ? Math.max(0, Math.floor(maxAmmo)) : null;
-    const displayAmmo =
-      safeMaxAmmo && safeMaxAmmo > 0 ? `${safeAmmo}/${Math.max(safeAmmo, safeMaxAmmo)}` : `${safeAmmo}`;
-    applyText(elements.ammoCurrentEl, displayAmmo);
+    applyText(elements.ammoCurrentEl, `${safeAmmo}`);
     if (elements.ammoEl) {
-      const label =
-        safeMaxAmmo && safeMaxAmmo > 0
-          ? `Stav nábojů: ${safeAmmo} z ${Math.max(safeAmmo, safeMaxAmmo)}`
-          : `Stav nábojů: ${safeAmmo}`;
-      elements.ammoEl.setAttribute('aria-label', label);
+      elements.ammoEl.setAttribute('aria-label', `Stav nábojů: ${safeAmmo}`);
     }
   }
 

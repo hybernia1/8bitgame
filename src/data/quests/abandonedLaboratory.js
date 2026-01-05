@@ -1,5 +1,5 @@
 /** @type {import('../types.js').LevelQuest[]} */
-export const demoLevelQuests = [
+export const abandonedLaboratoryQuests = [
   {
     id: 'collect-components',
     type: 'collect',

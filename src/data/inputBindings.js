@@ -15,6 +15,8 @@ const inputBindings = {
       'Digit8',
       'Digit9',
       'Digit0',
+      'Minus',
+      'Equal',
     ],
   },
   gamepad: {
