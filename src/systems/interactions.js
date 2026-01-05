@@ -79,6 +79,14 @@ export function createInteractionSystem({
     refreshQuestLog();
   }
 
+  function clearDialogue() {
+    state.activeSpeaker = '';
+    state.activeLine = '';
+    state.dialogueMeta = null;
+    state.dialogueTime = 0;
+    hud.hideInteraction();
+  }
+
   function evaluateLineConditions(conditions = []) {
     return conditions.every((cond) => {
       if (cond.flag) {
@@ -250,7 +258,14 @@ export function createInteractionSystem({
 
   function updateInteractions(player, context) {
     const { nearestNpc, activeSwitch, switchDistance, nearGate } = context;
-    const hasActiveDialogue = Boolean(state.activeLine);
+    let hasActiveDialogue = Boolean(state.activeLine);
+    const npcDialogueActive = hasActiveDialogue && state.dialogueMeta?.speakerType === 'npc';
+
+    if (npcDialogueActive && !nearestNpc?.nearby) {
+      clearDialogue();
+      hasActiveDialogue = false;
+    }
+
     if (!hasActiveDialogue) {
       state.dialogueMeta = null;
     }
