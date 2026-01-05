@@ -191,11 +191,30 @@ export const northernWingLevel = {
   ],
   npcScripts: northernWingNpcPackage.scripts,
   rewards: northernWingNpcPackage.rewards,
-  quests: [],
+  quests: [
+    {
+      id: 'play-security-footage',
+      type: 'escort',
+      name: 'Přehraj záznamy z kamer',
+      description: 'Najdi videokazetu a přehraj ji v přehrávači, ať víš, co se v severním křídle stalo.',
+      completedFlag: 'videoTapePlayed',
+      objectiveCount: 1,
+      completionNote: '[Úkol splněn] Kazeta je prázdná. Odsaď musíš pryč.',
+    },
+    {
+      id: 'escape-northern-wing',
+      type: 'escort',
+      name: 'Dostaň se pryč',
+      description: 'Kazeta ti nic neřekla. Získej klíček a proklouzni severním východem do dalšího křídla.',
+      completedFlag: 'northWingExited',
+      objectiveCount: 1,
+      completionNote: '[Úkol splněn] Opouštíš severní křídlo. Únikový koridor je na dosah.',
+    },
+  ],
 };
 
 export const dialogues = northernWingNpcPackage.scripts;
-export const quests = [];
+export const quests = northernWingLevel.quests;
 
 export default {
   config: northernWingLevel,

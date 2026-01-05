@@ -238,6 +238,14 @@ export function createInteractionSystem({
       state.dialogueTime = Number.POSITIVE_INFINITY;
       state.dialogueMeta = { speakerType: 'system' };
       hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
+      if (level?.meta?.id === 'level-2' && !flags.northWingExited) {
+        flags.northWingExited = true;
+        if (persistentState) {
+          persistentState.flags ??= {};
+          persistentState.flags.northWingExited = true;
+        }
+        evaluateQuestCompletion({ reason: 'gate' });
+      }
       if (gateState.nextLevelId && !sessionState.levelAdvanceQueued) {
         sessionState.levelAdvanceQueued = true;
         game?.advanceToNextMap?.(gateState.nextLevelId);
