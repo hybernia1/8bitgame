@@ -1,5 +1,6 @@
 import { TILE } from '../../../core/constants.js';
 import { TILE_IDS } from '../../../world/tile-registry.js';
+import { hospitalNpcPackage } from './npcs.js';
 
 const { FLOOR_PLAIN: F, WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
 
@@ -40,16 +41,31 @@ export const hospitalLevel = {
     playerStart: { x: TILE * 4.5, y: TILE * 3.5 },
     monsters: [],
     props: [],
-    npcs: [],
+    npcs: [...hospitalNpcPackage.placements],
   },
   pickups: [],
-  rewards: {},
-  quests: [],
-  npcScripts: {},
+  rewards: hospitalNpcPackage.rewards,
+  quests: [
+    {
+      id: 'talk-to-mayor',
+      type: 'escort',
+      name: 'Promluv se starostkou Hanou',
+      description: 'Prober se na nemocničním lůžku a zjisti od Hany, co se stalo.',
+      completedFlag: 'hospitalSpokeWithMayor',
+    },
+    {
+      id: 'talk-to-doctor',
+      type: 'escort',
+      name: 'Promluv se s lékařem',
+      description: 'Vyhledej doktora Viktora a nech si zkontrolovat stav i zvláštní vzpomínky.',
+      completedFlag: 'hospitalSpokeWithDoctor',
+    },
+  ],
+  npcScripts: hospitalNpcPackage.scripts,
 };
 
-export const dialogues = {};
-export const quests = [];
+export const dialogues = hospitalNpcPackage.scripts;
+export const quests = hospitalLevel.quests;
 
 export default {
   config: hospitalLevel,
