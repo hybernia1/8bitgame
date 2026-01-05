@@ -1,5 +1,5 @@
-import { TILE_SCALE } from '../../core/constants.js';
-import { createNpcs } from '../../entities/npc.js';
+import { TILE_SCALE } from '../../../core/constants.js';
+import { createNpcs } from '../../../entities/npc.js';
 
 function setDialogue(state, hud, speaker, line, meta) {
   state.activeSpeaker = speaker;

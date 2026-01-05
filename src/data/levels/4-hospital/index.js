@@ -1,5 +1,5 @@
-import { TILE } from '../../core/constants.js';
-import { TILE_IDS } from '../../world/tile-registry.js';
+import { TILE } from '../../../core/constants.js';
+import { TILE_IDS } from '../../../world/tile-registry.js';
 
 const { FLOOR_PLAIN: F, WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
 
@@ -16,7 +16,7 @@ const baseLayout = [
 ];
 const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 
-/** @type {import('../types.js').LevelConfig} */
+/** @type {import('../../types.js').LevelConfig} */
 export const hospitalLevel = {
   meta: {
     id: 'level-4',
