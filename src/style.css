@@ -1,3 +1,9 @@
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('../assets/fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
 :root {
   --bg: #1a120c;
   --panel: #21160f;
@@ -11,6 +17,7 @@
   --game-scale: 1.5;
   --page-padding: clamp(10px, 1.4vw, 20px);
   --canvas-rendering: pixelated;
+  --font-family: 'Press Start 2P', 'VT323', 'Courier New', monospace;
 }
 
 * {
@@ -24,7 +31,7 @@ body {
     radial-gradient(circle at 90% 10%, rgba(240, 194, 75, 0.06), transparent 24%),
     var(--bg);
   color: var(--text);
-  font-family: "Press Start 2P", "VT323", "Courier New", monospace;
+  font-family: var(--font-family);
   display: flex;
   align-items: stretch;
   justify-content: center;
