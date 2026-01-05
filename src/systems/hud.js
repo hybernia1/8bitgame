@@ -170,10 +170,7 @@ export function createHudSystem(passedElements = {}) {
   }
 
   function setInventoryBindingHint(bindingLabel) {
-    if (!elements.inventoryBinding) return;
-    const text = format('note.inventory.toggle', { binding: bindingLabel ?? '' });
-    applyText(elements.inventoryBinding, text);
-    elements.inventoryBinding.classList.toggle('hidden', !text);
+    applyText(elements.inventoryBinding, format('note.inventory.toggle', { binding: bindingLabel ?? '' }));
   }
 
   function setInventoryStatus(collapsed, bindingLabel) {
