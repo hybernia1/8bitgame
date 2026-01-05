@@ -34,9 +34,14 @@ import {
 } from '../entities/npc.js';
 import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor-script.js';
 
+const PROLOGUE_LEVEL_ID = 'level-0-prologue';
 const PROLOGUE_STEPS = [
   {
     title: 'Návrat snu',
+    kicker: 'Prolog',
+    speaker: 'Ty',
+    speakerType: 'player',
+    avatar: 'player',
     actionLabel: 'Probudit se',
     body: [
       'Zase se mi vrací sen o rodině – dětský smích, ruce, které už nedržím, a pak jen ticho prořezané sirénou.',
@@ -45,11 +50,24 @@ const PROLOGUE_STEPS = [
   },
   {
     title: 'Telefonát ve tmě',
-    actionLabel: 'Vyrazit do vesnice',
+    kicker: 'Zvonění uprostřed noci',
+    speaker: 'Hana',
+    speakerType: 'npc',
+    avatar: 'hana',
+    actionLabel: 'Vyrazím',
     body: [
-      'Telefon zazvoní uprostřed noci. Starostka Hana sotva skrývá paniku: během měsíce zmizely tři děti a policie tápe.',
-      '„Potřebuju tě,“ šeptá. „Všechny stopy vedou k opuštěné laboratoři na kopci.“ Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.',
+      '„Potřebuju tě,“ šeptá Hana. „Během měsíce zmizely tři děti a policie tápe.“',
+      '„Všechny stopy vedou k opuštěné laboratoři na kopci.“',
     ],
+  },
+  {
+    title: 'Odpověď',
+    kicker: 'Rozhodnutí',
+    speaker: 'Ty',
+    speakerType: 'player',
+    avatar: 'player',
+    actionLabel: 'Vyrazit do vesnice',
+    body: ['Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.'],
   },
 ];
 
@@ -116,6 +134,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     prologueStepTitle,
     prologueStepBody,
     prologueProgress,
+    prologueAvatar,
+    prologueSpeaker,
+    prologueKicker,
     levelSelectInput,
     slotInput,
     menuSubtitle,
@@ -282,17 +303,33 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     });
   }
 
-  function renderPrologueStep(index = 0) {
-    const step = PROLOGUE_STEPS[index] ?? PROLOGUE_STEPS[0];
-    const total = PROLOGUE_STEPS.length;
+  function renderPrologueStep(index = 0, steps = PROLOGUE_STEPS) {
+    const step = steps[index] ?? steps[0];
+    const total = steps.length;
     if (prologueStepTitle) {
       prologueStepTitle.textContent = step?.title ?? 'Prolog';
+    }
+    if (prologueSpeaker) {
+      prologueSpeaker.textContent = step?.speaker ?? '';
+    }
+    if (prologueKicker) {
+      prologueKicker.textContent = step?.kicker ?? 'Prolog';
     }
     if (prologueProgress) {
       prologueProgress.textContent = `${Math.min(index + 1, total)} / ${total}`;
     }
     if (prologueContinueButton && step?.actionLabel) {
       prologueContinueButton.textContent = step.actionLabel;
+    }
+    if (prologueAvatar) {
+      const avatarId = step?.avatar || step?.speakerType || '';
+      if (avatarId) {
+        prologueAvatar.dataset.avatar = avatarId;
+        prologueAvatar.classList.remove('hidden');
+      } else {
+        prologueAvatar.dataset.avatar = '';
+        prologueAvatar.classList.add('hidden');
+      }
     }
     if (prologueStepBody) {
       prologueStepBody.innerHTML = '';
@@ -315,15 +352,15 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     toggleVisibility(prologuePanel, false);
   }
 
-  function waitForPrologueContinue() {
+  function waitForPrologueContinue(steps = PROLOGUE_STEPS) {
     if (!prologuePanel) return Promise.resolve();
     let stepIndex = 0;
-    renderPrologueStep(stepIndex);
+    renderPrologueStep(stepIndex, steps);
     showProloguePanel();
 
     const updateNav = () => {
-      const step = PROLOGUE_STEPS[stepIndex];
-      const isLast = stepIndex >= PROLOGUE_STEPS.length - 1;
+      const step = steps[stepIndex];
+      const isLast = stepIndex >= steps.length - 1;
       if (prologueContinueButton) {
         prologueContinueButton.textContent = step?.actionLabel || (isLast ? 'Vyrazit' : 'Další');
       }
@@ -346,22 +383,22 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       const advance = (direction = 1) => {
         const nextIndex = stepIndex + direction;
         if (nextIndex < 0) return;
-        if (nextIndex >= PROLOGUE_STEPS.length) {
+        if (nextIndex >= steps.length) {
           cleanup();
           return;
         }
         stepIndex = nextIndex;
-        renderPrologueStep(stepIndex);
+        renderPrologueStep(stepIndex, steps);
         updateNav();
       };
       const keyHandler = (event) => {
         if (event.key === 'Tab') return;
-        if (event.key === 'ArrowLeft') {
+        if (event.key === 'ArrowLeft' || event.key === 'Backspace') {
           advance(-1);
         } else if (event.key === 'ArrowRight') {
           advance(1);
         } else if (event.key === 'Enter' || event.key === ' ') {
-          if (stepIndex >= PROLOGUE_STEPS.length - 1) {
+          if (stepIndex >= steps.length - 1) {
             cleanup();
           } else {
             advance(1);
@@ -537,6 +574,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let savedSnapshot = null;
     let interactQueued = false;
     let shootQueued = false;
+    let prologuePlayed = false;
+
+    const isPrologueLevel = () => (level?.meta?.id ?? levelId ?? '') === PROLOGUE_LEVEL_ID;
 
     function getLevelDimensions() {
       return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
@@ -582,6 +622,19 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         if (Math.abs(bullet.x) > maxX || Math.abs(bullet.y) > maxY) return;
         projectiles.push({ ...bullet });
       });
+    }
+
+    async function runPrologueSequence() {
+      if (prologuePlayed || !isPrologueLevel()) return false;
+      prologuePlayed = true;
+      inputSystem?.stop?.();
+      hudSystem?.hideInteraction?.();
+      await waitForPrologueContinue(PROLOGUE_STEPS);
+      state.levelAdvanceQueued = true;
+      setTimeout(() => {
+        game.advanceToNextMap?.(DEFAULT_LEVEL_ID);
+      }, 0);
+      return true;
     }
 
     function syncAmmoHud() {
@@ -956,6 +1009,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       pause: pauseSession,
       resume: resumeSession,
       cleanup,
+      runIntro: () => runPrologueSequence(),
       manualSave,
       updateFrame: (dt) => updateFrame(dt),
       renderFrame: () => renderFrame(),
@@ -970,26 +1024,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       setFullscreenAvailability(isFullscreenSupported);
       shell.showFullscreenPrompt?.();
       showMenuPanel();
-    },
-    onRender() {
-      ctx.fillStyle = COLORS.gridBackground;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    },
-  });
-
-  registerScene('prologue', {
-    async onEnter({ params }) {
-      setFullscreenAvailability(isFullscreenSupported);
-      const targetParams = {
-        levelId: params?.levelId || DEFAULT_LEVEL_ID,
-        slotId: params?.slotId || resolveSlotId(),
-        freshStart: params?.freshStart ?? true,
-      };
-      await waitForPrologueContinue();
-      await setScene('loading', targetParams);
-    },
-    async onExit() {
-      hideProloguePanel();
     },
     onRender() {
       ctx.fillStyle = COLORS.gridBackground;
@@ -1047,7 +1081,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       }
       hideAllPanels();
       await setScene('inGame');
-      currentInGameSession?.resume?.();
     },
     onRender() {
       ctx.fillStyle = COLORS.gridBackground;
@@ -1059,7 +1092,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     async onEnter() {
       hideAllPanels();
       setFullscreenAvailability(true);
-      currentInGameSession?.resume?.();
+      const introAdvanced = Boolean(await currentInGameSession?.runIntro?.());
+      if (!introAdvanced) {
+        currentInGameSession?.resume?.();
+      }
     },
     async onPause() {
       currentInGameSession?.pause?.();
@@ -1094,7 +1130,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   });
 
   startButton?.addEventListener('click', () =>
-    setScene('prologue', { levelId: DEFAULT_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
+    setScene('loading', { levelId: PROLOGUE_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
   );
   continueButton?.addEventListener('click', () => {
     const saves = game.listSaves();
@@ -1107,7 +1143,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   });
   selectButton?.addEventListener('click', () => {
     const chosen = levelSelectInput?.value || DEFAULT_LEVEL_ID;
-    setScene('prologue', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
+    setScene('loading', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
   });
   settingsButton?.addEventListener('click', () => {
     if (menuSubtitle) {
