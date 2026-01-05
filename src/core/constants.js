@@ -1,7 +1,5 @@
-import { deriveCanvasResolution, displaySettings } from '../config/display-settings.js';
-
-const TILE_BASE = displaySettings.textures?.baseTileSize ?? 32;
-const DEFAULT_TILE_SCALE = displaySettings.textures?.defaultScale ?? 2;
+const TILE_BASE = 32;
+const DEFAULT_TILE_SCALE = 2;
 
 function resolveTileScale() {
   const globalScale = Number.parseFloat(globalThis?.GAME_TILE_SCALE ?? '');
@@ -22,15 +20,14 @@ function resolveTileScale() {
   return DEFAULT_TILE_SCALE;
 }
 
-export const WORLD = {
-  width: displaySettings.world?.width ?? 32,
-  height: displaySettings.world?.height ?? 18,
-};
-
 export const TILE_SCALE = resolveTileScale();
 export const TILE = TILE_BASE * TILE_SCALE;
 export const TEXTURE_TILE = TILE_BASE;
-export const CANVAS_RESOLUTION = deriveCanvasResolution(TILE_SCALE, WORLD);
+
+export const WORLD = {
+  width: 32,
+  height: 18,
+};
 
 export const COLORS = {
   wall: '#1f2430',

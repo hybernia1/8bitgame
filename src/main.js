@@ -1,5 +1,5 @@
 import { init, initKeys } from './kontra.mjs';
-import { CANVAS_RESOLUTION } from './core/constants.js';
+import { TILE, WORLD } from './core/constants.js';
 import { getCurrentScene } from './core/scenes.js';
 import { createGame } from './core/game.js';
 import { createGameLoop } from './systems/game-loop.js';
@@ -13,7 +13,7 @@ initKeys();
 
 const shell = initShell({
   canvas,
-  baseCanvas: CANVAS_RESOLUTION,
+  baseCanvas: { width: WORLD.width * TILE, height: WORLD.height * TILE },
 });
 
 const inventory = new Inventory(12);
