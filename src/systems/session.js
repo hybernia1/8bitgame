@@ -32,44 +32,11 @@ import {
   serializeNpcs,
   updateNpcStates,
 } from '../entities/npc.js';
-import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor-script.js';
+import { prologueDialogues } from '../data/levels/0-prologue/index.js';
+import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor/script.js';
 
 const PROLOGUE_LEVEL_ID = 'level-0-prologue';
-const PROLOGUE_STEPS = [
-  {
-    title: 'Návrat snu',
-    kicker: 'Prolog',
-    speaker: 'Ty',
-    speakerType: 'player',
-    avatar: 'player',
-    actionLabel: 'Probudit se',
-    body: [
-      'Zase se mi vrací sen o rodině – dětský smích, ruce, které už nedržím, a pak jen ticho prořezané sirénou.',
-      'Probudím se s hlavou těžkou od léků, které mají ty obrazy utlumit. Ale místo klidu cítím jen stín, který mě žene dál.',
-    ],
-  },
-  {
-    title: 'Telefonát ve tmě',
-    kicker: 'Zvonění uprostřed noci',
-    speaker: 'Hana',
-    speakerType: 'npc',
-    avatar: 'hana',
-    actionLabel: 'Vyrazím',
-    body: [
-      '„Potřebuju tě,“ šeptá Hana. „Během měsíce zmizely tři děti a policie tápe.“',
-      '„Všechny stopy vedou k opuštěné laboratoři na kopci.“',
-    ],
-  },
-  {
-    title: 'Odpověď',
-    kicker: 'Rozhodnutí',
-    speaker: 'Ty',
-    speakerType: 'player',
-    avatar: 'player',
-    actionLabel: 'Vyrazit do vesnice',
-    body: ['Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.'],
-  },
-];
+const PROLOGUE_STEPS = Array.isArray(prologueDialogues) ? prologueDialogues : [];
 
 function getHudDomRefs(root) {
   if (!root) return {};
