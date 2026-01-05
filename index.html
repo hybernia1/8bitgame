@@ -34,6 +34,16 @@
                 </div>
               </header>
               <div class="hud-actions">
+                <button
+                  type="button"
+                  class="hud-button"
+                  data-inventory-toggle
+                  aria-pressed="false"
+                  aria-label="Otevřít batoh (B)"
+                  title="Otevřít batoh (B)"
+                >
+                  🎒
+                </button>
                 <button type="button" class="hud-button" data-fullscreen-toggle aria-pressed="false" aria-label="Celá obrazovka">
                   ⛶
                 </button>
@@ -157,7 +167,11 @@
             <button type="button" class="menu-button ghost" data-pause-menu>Hlavní menu</button>
           </div>
         </section>
-        <section class="overlay inventory inventory-modal" aria-label="Inventář s deseti sloty">
+        <section
+          class="overlay inventory inventory-modal collapsed"
+          aria-label="Inventář s deseti sloty"
+          aria-hidden="true"
+        >
           <div class="inventory-header">
             <div class="title">Výbava</div>
             <div class="binding-hint" data-inventory-binding></div>

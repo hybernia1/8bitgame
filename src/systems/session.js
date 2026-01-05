@@ -697,6 +697,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       renderInventory(inventory);
 
       const inventoryElement = documentRoot?.querySelector?.('.inventory') ?? null;
+      const inventoryToggleButton = documentRoot?.querySelector?.('[data-inventory-toggle]') ?? null;
+      let inventoryCollapsed = true;
+      let inventoryBindingLabel = '';
 
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
@@ -716,11 +719,19 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           handlers: itemHandlers,
         });
 
-      function pinInventory(bindingLabel) {
-        inventoryElement?.classList.remove('collapsed');
-        inventoryElement?.setAttribute('aria-hidden', 'false');
-        hudSystem.setInventoryStatus(false, bindingLabel);
+      function setInventoryCollapsed(collapsed, { silent = false } = {}) {
+        inventoryCollapsed = Boolean(collapsed);
+        inventoryElement?.classList.toggle('collapsed', inventoryCollapsed);
+        inventoryElement?.setAttribute('aria-hidden', inventoryCollapsed ? 'true' : 'false');
+        inventoryToggleButton?.setAttribute('aria-pressed', inventoryCollapsed ? 'false' : 'true');
+        if (!silent) {
+          hudSystem.setInventoryStatus(inventoryCollapsed, inventoryBindingLabel);
+          const noteKey = inventoryCollapsed ? 'note.inventory.collapsed' : 'note.inventory.pinnedStatus';
+          hudSystem.showNote(noteKey, { binding: inventoryBindingLabel });
+        }
       }
+
+      const toggleInventory = () => setInventoryCollapsed(!inventoryCollapsed);
 
       function handleAction(action, detail = {}) {
         switch (action) {
@@ -737,7 +748,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
             togglePauseScene();
             break;
           case 'toggle-inventory':
-            hudSystem.showNote('note.inventory.pinnedStatus');
+            toggleInventory();
             break;
           default:
             break;
@@ -754,11 +765,23 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         inventoryGrid: inventoryElement?.querySelector?.('.inventory-grid') ?? null,
       });
 
-      const controlsHint = formatControlsHint(inputSystem.getBindings());
-      controlsHint.inventory = format('note.inventory.pinnedShort');
+      const bindingConfig = formatControlsHint(inputSystem.getBindings());
+      inventoryBindingLabel = bindingConfig.inventory;
+      const controlsHint = {
+        ...bindingConfig,
+        inventory: format('note.inventory.pinnedShort', { binding: inventoryBindingLabel }),
+      };
       hudSystem.setControlsHint(controlsHint);
-      hudSystem.setInventoryBindingHint(controlsHint.inventory);
-      pinInventory(controlsHint.inventory);
+      hudSystem.setInventoryBindingHint(inventoryBindingLabel);
+      setInventoryCollapsed(true, { silent: true });
+      hudSystem.setInventoryStatus(true, inventoryBindingLabel);
+      hudSystem.showNote('note.inventory.collapsed', { binding: inventoryBindingLabel });
+
+      const handleInventoryToggleClick = (event) => {
+        event.preventDefault?.();
+        toggleInventory();
+      };
+      inventoryToggleButton?.addEventListener?.('click', handleInventoryToggleClick);
 
       const combatSystem = createCombatSystem({
         ammo: { consume: consumeAmmo },
@@ -969,6 +992,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       levelScript = null;
       game.setSnapshotProvider(null);
       hudSystem?.hideToast?.();
+      inventoryToggleButton?.removeEventListener?.('click', handleInventoryToggleClick);
     }
 
     return {

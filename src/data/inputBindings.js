@@ -3,7 +3,7 @@ const inputBindings = {
     interact: ['KeyE'],
     shoot: ['Space'],
     'toggle-pause': ['KeyP'],
-    'toggle-inventory': ['Tab'],
+    'toggle-inventory': ['KeyB'],
     'use-slot': [
       'Digit1',
       'Digit2',
