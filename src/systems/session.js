@@ -83,6 +83,9 @@ function formatSaveDate(timestamp) {
 export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetPromise, shell }) {
   const hudDomRefs = getHudDomRefs(shell.documentRoot);
 
+  let inventoryToggleButton = null;
+  let handleInventoryToggleClick = null;
+
   const defaultMenuSubtitle =
     'Zvol si novou misi, načti poslední save, nebo skoč na konkrétní level.';
 
@@ -697,7 +700,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       renderInventory(inventory);
 
       const inventoryElement = documentRoot?.querySelector?.('.inventory') ?? null;
-      const inventoryToggleButton = documentRoot?.querySelector?.('[data-inventory-toggle]') ?? null;
+      inventoryToggleButton = documentRoot?.querySelector?.('[data-inventory-toggle]') ?? null;
       let inventoryCollapsed = true;
       let inventoryBindingLabel = '';
 
@@ -777,7 +780,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hudSystem.setInventoryStatus(true, inventoryBindingLabel);
       hudSystem.showNote('note.inventory.collapsed', { binding: inventoryBindingLabel });
 
-      const handleInventoryToggleClick = (event) => {
+      handleInventoryToggleClick = (event) => {
         event.preventDefault?.();
         toggleInventory();
       };
