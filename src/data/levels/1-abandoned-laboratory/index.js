@@ -1,7 +1,6 @@
 import { TILE } from '../../../core/constants.js';
 import { TILE_IDS } from '../../../world/tile-registry.js';
 import { abandonedLaboratoryNpcPackage } from './npcs.js';
-import { abandonedLaboratoryQuests } from '../../quests/abandonedLaboratory.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
@@ -222,12 +221,23 @@ export const abandonedLaboratoryLevel = {
       quantity: 6,
     },
   ],
-  npcScripts: abandonedLaboratoryNpcPackage.scripts,
   rewards: abandonedLaboratoryNpcPackage.rewards,
+  quests: [
+    {
+      id: 'collect-components',
+      type: 'collect',
+      name: 'Prohledej laboratoř',
+      description:
+        'Sesbírej energoblok, klíčový fragment a servisní nářadí – možná skrývají stopy k únosům.',
+      objectiveCount: 3,
+      completionNote: 'note.quest.completed',
+    },
+  ],
+  npcScripts: abandonedLaboratoryNpcPackage.scripts,
 };
 
 export const dialogues = abandonedLaboratoryNpcPackage.scripts;
-export const quests = abandonedLaboratoryQuests;
+export const quests = abandonedLaboratoryLevel.quests;
 
 export default {
   config: abandonedLaboratoryLevel,
