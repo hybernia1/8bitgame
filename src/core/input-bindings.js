@@ -53,6 +53,10 @@ function sanitizeBindings(bindings = {}) {
         bindings.keyboard?.['toggle-inventory'],
         allowedKeyboard['toggle-inventory'],
       ),
+      'toggle-quest-log': sanitizeList(
+        bindings.keyboard?.['toggle-quest-log'],
+        allowedKeyboard['toggle-quest-log'],
+      ),
       'use-slot': sanitizeList(bindings.keyboard?.['use-slot'], allowedKeyboard['use-slot']),
     },
     gamepad: {
@@ -62,6 +66,10 @@ function sanitizeBindings(bindings = {}) {
       'toggle-inventory': sanitizeList(
         bindings.gamepad?.['toggle-inventory'],
         allowedGamepad['toggle-inventory'],
+      ),
+      'toggle-quest-log': sanitizeList(
+        bindings.gamepad?.['toggle-quest-log'],
+        allowedGamepad['toggle-quest-log'],
       ),
     },
   };

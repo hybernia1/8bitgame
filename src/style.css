@@ -675,6 +675,10 @@ canvas {
   right: 0;
 }
 
+.quest-log.is-collapsed {
+  display: none;
+}
+
 .quest-log-header {
   display: flex;
   align-items: center;

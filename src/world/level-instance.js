@@ -513,6 +513,28 @@ export class LevelInstance {
     return this.lightTiles[ty * this.mapWidth + tx] === true;
   }
 
+  findNearestLitPosition(x, y) {
+    let best = null;
+    let bestDistance = Infinity;
+
+    for (let ty = 0; ty < this.mapHeight; ty += 1) {
+      for (let tx = 0; tx < this.mapWidth; tx += 1) {
+        const index = ty * this.mapWidth + tx;
+        if (!this.lightTiles[index]) continue;
+        const centerX = tx * TILE + TILE / 2;
+        const centerY = ty * TILE + TILE / 2;
+        if (isBlockingTileId(this.collisionTiles[index])) continue;
+        const distance = Math.hypot(centerX - x, centerY - y);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = { x: centerX, y: centerY, tx, ty };
+        }
+      }
+    }
+
+    return best;
+  }
+
   getLightSwitches() {
     return this.lightSwitches;
   }
