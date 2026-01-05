@@ -21,6 +21,7 @@ export function createInteractionSystem({
   const questConfigs = level.getQuestConfigs();
   const persistentState = state.persistentState ?? (state.persistentState = {});
   const sessionState = state.sessionState ?? (state.sessionState = {});
+  let activeNpc = null;
   const questState = prepareQuestState(questConfigs, persistentState.quests ?? (persistentState.quests = {}));
   const flags = persistentState.flags ?? (persistentState.flags = {});
   if (flags.technicianLightOn !== true) {
@@ -58,6 +59,15 @@ export function createInteractionSystem({
     }
   }
 
+  function unlockNpcMovement() {
+    if (!activeNpc) return;
+    if (!Number.isFinite(activeNpc.busyTimer)) {
+      activeNpc.busyTimer = 0;
+    }
+    activeNpc.wanderCooldown = activeNpc.wanderInterval ?? 0;
+    activeNpc = null;
+  }
+
   function evaluateQuestCompletion(context = {}) {
     const { silent = false } = context;
     const results = evaluateQuestBatch(questConfigs, questState, {
@@ -80,6 +90,7 @@ export function createInteractionSystem({
   }
 
   function clearDialogue() {
+    unlockNpcMovement();
     state.activeSpeaker = '';
     state.activeLine = '';
     state.dialogueMeta = null;
@@ -193,8 +204,9 @@ export function createInteractionSystem({
       }
 
       nearestNpc.hasSpoken = true;
-      const dialogueDuration = 4;
-      nearestNpc.busyTimer = Math.max(nearestNpc.busyTimer ?? 0, dialogueDuration);
+      unlockNpcMovement();
+      activeNpc = nearestNpc;
+      nearestNpc.busyTimer = Number.POSITIVE_INFINITY;
       nearestNpc.wanderTarget = null;
       nearestNpc.wanderCooldown = nearestNpc.wanderInterval ?? 0;
       if (script?.infoNote && !nearestNpc.infoShared) {
