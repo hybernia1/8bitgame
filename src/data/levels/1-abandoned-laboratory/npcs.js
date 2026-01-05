@@ -18,7 +18,7 @@ const presets = {
     name: 'Technik Jára',
     sprite: 'jara',
     dialogue: 'Jára si drží baterku u hrudi: „Správce mi volal. Bez světla a dílů jsme tu slepí.“',
-    infoNote: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
+    infoNote: 'Technik Jára tě šeptem upozornil: „Energoblok visí u hlídače klíče. Drž se světla.“',
   },
   keyGuard: {
     id: 'key-guard',
@@ -93,12 +93,12 @@ const npcPackage = buildNpcPackage([
             { flag: 'caretakerIntroduced', equals: false },
           ],
           dialogue:
-            'Správce si nervózně utře ruce do pláště: „Tahle laboratoř kdysi testovala nové zdroje světla. Po výpadku jsme bloudili poslepu a lidi panikařili. Technik Jára má záznamy, které mohou říct víc. Najdeš ho u servisního stolu – ale nejdřív si rozviť vypínače kolem.“',
+            'Správce si nervózně utře ruce do pláště: „Tahle laboratoř kdysi testovala nové zdroje světla. Po výpadku jsme bloudili poslepu a lidi panikařili. Technik Jára má záznamy, které mohou říct víc a převezme sběr dílů. Najdeš ho u servisního stolu – ale nejdřív si rozviť vypínače kolem.“',
           actions: [
             { type: 'setFlag', flag: 'caretakerSharedLab', value: true },
             { type: 'setFlag', flag: 'caretakerIntroduced', value: true },
           ],
-          note: '[Úkol splněn] Správce tě posílá za technikem Járou.',
+          note: '[Úkol splněn] Správce tě posílá za technikem Járou, který ti předá další pokyny.',
         },
         {
           id: 'give-apple',
@@ -124,7 +124,7 @@ const npcPackage = buildNpcPackage([
         {
           id: 'caretaker-default',
           dialogue:
-            'Energoblok, servisní klíč i fragment karty jsme kdysi používali denně. Doneseš-li je Járovi, možná rozklíčuje, co se tu stalo. A pamatuj: tma není kamarád.',
+            'Energoblok, servisní klíč i fragment karty jsme kdysi používali denně. Doneseš-li je Járovi, možná rozklíčuje, co se tu stalo. Všechno řeš s ním – já ti jen držím světlo. A pamatuj: tma není kamarád.',
         },
       ],
     },
@@ -180,13 +180,13 @@ const npcPackage = buildNpcPackage([
             { flag: 'technicianQuestioned', equals: false },
           ],
           dialogue:
-            'Jára si zacloní oči před světlem: „Správce říkal, že víš, jak je to tu složité. Potřebuju tři věci – energoblok, servisní klíč a fragment klíčové karty. Když je doneseš, dostaneš ode mě klíč k technické místnosti.“',
+            'Jára si zacloní oči před světlem: „Správce říkal, že víš, jak je to tu složité. Potřebuju tři věci – energoblok, servisní klíč a fragment klíčové karty. Některé díly hlídá divná entita, tak doufám, že máš náboje. Přines je a klíč k technické místnosti je tvůj.“',
           actions: [
             { type: 'setFlag', flag: 'technicianQuestioned', value: true },
             { type: 'setFlag', flag: 'technicianSharedLab', value: true },
           ],
           note:
-            '[Nový úkol] Sesbírej energoblok, servisní klíč a fragment klíčové karty. Jára ti za ně předá klíč k technické místnosti.',
+            '[Nový úkol] Jára ti kolektivně zadal sběr energobloku, servisního klíče a fragmentu karty. Některé díly hlídá divná entita – měj náboje.',
         },
         {
           id: 'collect-first',
@@ -195,7 +195,7 @@ const npcPackage = buildNpcPackage([
             { flag: 'technicianQuestioned', equals: true },
           ],
           dialogue:
-            '„Ty fragmenty někde v téhle laborce musí být,“ naléhá Jára. „Energoblok, klíčový fragment i servisní klíč – přines je a klíč od technické místnosti je tvůj.“',
+            '„Ty fragmenty někde v téhle laborce musí být,“ naléhá Jára. „Energoblok u hlídače, fragment karty i servisní klíč – přines je a klíč od technické místnosti je tvůj. Dávej pozor na entitu a šetři náboje.“',
         },
         {
           id: 'give-key',

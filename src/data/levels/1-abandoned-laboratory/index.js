@@ -168,8 +168,8 @@ export const abandonedLaboratoryLevel = {
       id: 'battery-cell',
       name: 'Battery Cell',
       icon: '⚡',
-      x: TILE * 9 + TILE / 2,
-      y: TILE * 6 + TILE / 2,
+      x: TILE * 18 + TILE / 2,
+      y: TILE * 2 + TILE / 2,
       tint: '#f2d45c',
       description: 'A humming power source for the lab lights.',
       objective: true,
@@ -239,16 +239,26 @@ export const abandonedLaboratoryLevel = {
       description:
         'Hana chce, abys promluvil se správcem a zjistil, co se stalo v laboratoři, než půjdeš za technikem Járou.',
       completedFlag: 'caretakerIntroduced',
-      completionNote: '[Úkol splněn] Správce tě vybavil, připomněl historii laboratoře a odkázal tě na Járu.',
+      completionNote:
+        '[Úkol splněn] Správce tě vybavil, připomněl historii laboratoře a odkázal tě na Járu, který převezme sběr dílů.',
+    },
+    {
+      id: 'talk-to-technician',
+      type: 'escort',
+      name: 'Promluv s technikem Járou',
+      description: 'Jára musí převzít velení nad pátráním. Najdi ho u servisního stolu a rozsvěť mu, aby začal mluvit.',
+      completedFlag: 'technicianQuestioned',
+      completionNote:
+        '[Úkol splněn] Jára ti kolektivně zadal sběr dílů a varoval tě před entitou, která některé z nich hlídá.',
     },
     {
       id: 'collect-components',
       type: 'collect',
       name: 'Prohledej laboratoř',
       description:
-        'Sesbírej energoblok, klíčový fragment a servisní nářadí pro technika Járu a získej tak klíč k technické místnosti.',
+        'Jára ti kolektivně zadal sběr: energoblok, klíčový fragment a servisní nářadí. Některé kousky prý hlídá divná entita, tak měj připravené náboje.',
       objectiveCount: 3,
-      completionNote: 'note.quest.completed',
+      completionNote: '[Úkol splněn] Všechny části máš. Jára může použít klíč a zjistit, co se v laboratoři dělo.',
     },
   ],
   npcScripts: abandonedLaboratoryNpcPackage.scripts,
