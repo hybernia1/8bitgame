@@ -56,7 +56,6 @@ function getHudDomRefs(root) {
     ammoCurrentEl: root.querySelector('[data-ammo-count]'),
     inventoryNote: root.querySelector('[data-inventory-note]'),
     inventoryBinding: root.querySelector('[data-inventory-binding]'),
-    inventoryStatus: root.querySelector('[data-inventory-status]'),
     toast: root.querySelector('.hud-toast'),
     banner: root.querySelector('.interaction-banner'),
     bannerTitle: root.querySelector('.interaction-title'),
@@ -691,7 +690,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       hudSystem = createHudSystem(hudDomRefs);
       game.setHud(hudSystem);
-      hudSystem.showNote('note.inventory.intro');
       hudSystem.setObjectives(objectivesCollected, level.getObjectiveTotal());
       hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
       syncAmmoHud();
@@ -727,11 +725,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         inventoryElement?.classList.toggle('collapsed', inventoryCollapsed);
         inventoryElement?.setAttribute('aria-hidden', inventoryCollapsed ? 'true' : 'false');
         inventoryToggleButton?.setAttribute('aria-pressed', inventoryCollapsed ? 'false' : 'true');
-        if (!silent) {
-          hudSystem.setInventoryStatus(inventoryCollapsed, inventoryBindingLabel);
-          const noteKey = inventoryCollapsed ? 'note.inventory.collapsed' : 'note.inventory.pinnedStatus';
-          hudSystem.showNote(noteKey, { binding: inventoryBindingLabel });
-        }
       }
 
       const toggleInventory = () => setInventoryCollapsed(!inventoryCollapsed);
@@ -777,8 +770,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hudSystem.setControlsHint(controlsHint);
       hudSystem.setInventoryBindingHint(inventoryBindingLabel);
       setInventoryCollapsed(true, { silent: true });
-      hudSystem.setInventoryStatus(true, inventoryBindingLabel);
-      hudSystem.showNote('note.inventory.collapsed', { binding: inventoryBindingLabel });
+      hudSystem.showNote('note.inventory.intro', { binding: inventoryBindingLabel });
 
       handleInventoryToggleClick = (event) => {
         event.preventDefault?.();

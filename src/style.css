@@ -119,8 +119,8 @@ canvas {
 
 .hud-actions {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
   pointer-events: auto;
 }
@@ -768,7 +768,8 @@ canvas {
 }
 
 .inventory-modal {
-  inset: 124px 16px auto auto;
+  inset: auto 16px 32px auto;
+  top: auto;
   width: min(300px, calc(100% - 24px));
   max-height: calc(100% - 220px);
   overflow: hidden;
@@ -815,12 +816,6 @@ canvas {
   align-items: flex-end;
   justify-content: space-between;
   margin-top: auto;
-}
-
-.hud-bottom-left {
-  display: grid;
-  gap: 8px;
-  align-items: start;
 }
 
 .interaction-banner {

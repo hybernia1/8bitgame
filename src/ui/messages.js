@@ -16,9 +16,6 @@ export const messages = {
     'Pohyb: WASD/šipky · Interakce: {interact} · Střelba: {shoot} · Inventář: {inventory} · Pauza: {pause}',
   'note.inventory.intro': 'Mapa je ponořená do tmy. Hledej vypínače na zdech a seber všechny komponenty.',
   'note.inventory.toggle': 'Otevři nebo zavři batoh klávesou {binding} či ikonou batůžku.',
-  'note.inventory.collapsed': 'Batoh je zavřený – otevři ho klávesou {binding} nebo ikonou batůžku.',
-  'note.inventory.pinnedStatus':
-    'Batoh je otevřený – zavři ho klávesou {binding} nebo ikonou batůžku. Používej klávesy 1-0, - a = nebo klikání pro vybavení.',
   'note.inventory.pinnedShort': '{binding} nebo ikona batohu',
   'note.inventory.emptySlot': 'Slot {index} je prázdný.',
   'note.inventory.slotLabel': 'Slot {index}',

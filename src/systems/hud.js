@@ -173,13 +173,6 @@ export function createHudSystem(passedElements = {}) {
     applyText(elements.inventoryBinding, format('note.inventory.toggle', { binding: bindingLabel ?? '' }));
   }
 
-  function setInventoryStatus(collapsed, bindingLabel) {
-    if (!elements.inventoryStatus) return;
-    elements.inventoryStatus.classList.remove('hidden');
-    const messageKey = collapsed ? 'note.inventory.collapsed' : 'note.inventory.pinnedStatus';
-    applyText(elements.inventoryStatus, format(messageKey, { binding: bindingLabel ?? '' }));
-  }
-
   return {
     setLevelTitle,
     setObjectives,
@@ -196,6 +189,5 @@ export function createHudSystem(passedElements = {}) {
     showDialogue,
     hideInteraction,
     setInventoryBindingHint,
-    setInventoryStatus,
   };
 }
