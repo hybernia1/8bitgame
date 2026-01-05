@@ -539,7 +539,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let pushables = null;
     let spriteSheet = null;
     let savedSnapshot = null;
-    let inventoryCollapsed = true;
     let interactQueued = false;
     let shootQueued = false;
     let prologuePlayed = false;
@@ -698,15 +697,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       renderInventory(inventory);
 
       const inventoryElement = documentRoot?.querySelector?.('.inventory') ?? null;
-      let inventoryToggleBinding = '';
-
-      function setInventoryVisibility(collapsed, bindingLabel = inventoryToggleBinding) {
-        inventoryCollapsed = Boolean(collapsed);
-        inventoryToggleBinding = bindingLabel ?? inventoryToggleBinding;
-        inventoryElement?.classList.toggle('collapsed', inventoryCollapsed);
-        inventoryElement?.setAttribute('aria-hidden', inventoryCollapsed ? 'true' : 'false');
-        hudSystem.setInventoryStatus(inventoryCollapsed, inventoryToggleBinding);
-      }
 
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
@@ -726,6 +716,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           handlers: itemHandlers,
         });
 
+      function pinInventory(bindingLabel) {
+        inventoryElement?.classList.remove('collapsed');
+        inventoryElement?.setAttribute('aria-hidden', 'false');
+        hudSystem.setInventoryStatus(false, bindingLabel);
+      }
+
       function handleAction(action, detail = {}) {
         switch (action) {
           case 'interact':
@@ -741,7 +737,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
             togglePauseScene();
             break;
           case 'toggle-inventory':
-            setInventoryVisibility(!inventoryCollapsed);
+            hudSystem.showNote('note.inventory.pinnedStatus');
             break;
           default:
             break;
@@ -759,10 +755,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       });
 
       const controlsHint = formatControlsHint(inputSystem.getBindings());
-      inventoryToggleBinding = controlsHint.inventory;
+      controlsHint.inventory = format('note.inventory.pinnedShort');
       hudSystem.setControlsHint(controlsHint);
-      hudSystem.setInventoryBindingHint(inventoryToggleBinding);
-      setInventoryVisibility(true, inventoryToggleBinding);
+      hudSystem.setInventoryBindingHint(controlsHint.inventory);
+      pinInventory(controlsHint.inventory);
 
       const combatSystem = createCombatSystem({
         ammo: { consume: consumeAmmo },
