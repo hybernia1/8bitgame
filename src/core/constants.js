@@ -24,6 +24,11 @@ export const TILE_SCALE = resolveTileScale();
 export const TILE = TILE_BASE * TILE_SCALE;
 export const TEXTURE_TILE = TILE_BASE;
 
+export const VIEWPORT = {
+  width: 18,
+  height: 10,
+};
+
 export const WORLD = {
   width: 32,
   height: 18,

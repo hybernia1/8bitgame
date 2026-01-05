@@ -403,9 +403,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     }
   }
 
-  function drawCameraBounds({ width, height }) {
+  function drawCameraBounds({ width, height }, camera) {
     ctx.strokeStyle = COLORS.gridBorder;
-    ctx.strokeRect(1, 1, width * TILE - 2, height * TILE - 2);
+    ctx.strokeRect(1 - camera.x, 1 - camera.y, width * TILE - 2, height * TILE - 2);
   }
 
   function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
@@ -842,7 +842,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       };
 
       renderFrame = () => {
-        drawGrid(ctx, canvas, getLevelDimensions());
+        drawGrid(ctx, canvas, getLevelDimensions(), camera);
         level.drawLevel(ctx, camera, spriteSheet);
         level.drawPressureSwitches(ctx, camera);
         level.drawLightSwitches(ctx, camera);
@@ -852,7 +852,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         drawNpcs(ctx, camera, npcs);
         drawPlayer(ctx, camera, player, spriteSheet);
         level.drawLighting(ctx, camera);
-        drawCameraBounds(getLevelDimensions());
+        drawCameraBounds(getLevelDimensions(), camera);
       };
 
       game.setSnapshotProvider(() => ({

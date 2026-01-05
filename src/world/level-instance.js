@@ -795,24 +795,31 @@ export class LevelInstance {
   }
 }
 
-export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.height } = {}) {
+export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.height } = {}, camera = { x: 0, y: 0 }) {
   ctx.fillStyle = COLORS.gridBackground;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
   ctx.lineWidth = 1;
 
-  for (let x = 0; x <= width * TILE; x += TILE) {
+  const startX = Math.max(0, Math.floor(camera.x / TILE));
+  const startY = Math.max(0, Math.floor(camera.y / TILE));
+  const endX = Math.min(width, Math.ceil((camera.x + canvas.width) / TILE));
+  const endY = Math.min(height, Math.ceil((camera.y + canvas.height) / TILE));
+
+  for (let x = startX; x <= endX; x += 1) {
+    const px = x * TILE - camera.x;
     ctx.beginPath();
-    ctx.moveTo(x + 0.5, 0);
-    ctx.lineTo(x + 0.5, canvas.height);
+    ctx.moveTo(px + 0.5, 0);
+    ctx.lineTo(px + 0.5, canvas.height);
     ctx.stroke();
   }
 
-  for (let y = 0; y <= height * TILE; y += TILE) {
+  for (let y = startY; y <= endY; y += 1) {
+    const py = y * TILE - camera.y;
     ctx.beginPath();
-    ctx.moveTo(0, y + 0.5);
-    ctx.lineTo(canvas.width, y + 0.5);
+    ctx.moveTo(0, py + 0.5);
+    ctx.lineTo(canvas.width, py + 0.5);
     ctx.stroke();
   }
 }
