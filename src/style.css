@@ -603,14 +603,14 @@ canvas {
   background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
   border: 1px solid #3a271b;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 6px;
   align-items: center;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  min-width: min(540px, calc(100% - 24px));
-  max-width: min(880px, calc(100% - 24px));
+  min-width: min(460px, calc(100% - 20px));
+  max-width: min(760px, calc(100% - 20px));
 }
 
 .interaction-banner.has-avatar {
@@ -624,8 +624,8 @@ canvas {
 }
 
 .interaction-avatar {
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
   border-radius: 12px;
   border: 1px solid #3a271b;
   background: #1d110a;
