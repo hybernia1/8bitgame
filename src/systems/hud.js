@@ -20,6 +20,9 @@ export function createHudSystem(passedElements = {}) {
     ...passedElements,
   };
 
+  let questBindingLabel = 'I';
+  let questVisible = false;
+
   function resolveAvatarPath(meta = {}) {
     if (!meta || !elements.bannerAvatar) return null;
     const { speakerType, spriteName } = meta;
@@ -157,6 +160,28 @@ export function createHudSystem(passedElements = {}) {
     applyText(elements.questProgress, progressText);
   }
 
+  function setQuestVisibility(visible) {
+    const expanded = Boolean(visible);
+    questVisible = expanded;
+    elements.questLog?.classList.toggle('is-collapsed', !expanded);
+    elements.questLog?.setAttribute?.('aria-hidden', expanded ? 'false' : 'true');
+    if (elements.questToggle) {
+      elements.questToggle.setAttribute('aria-pressed', expanded ? 'true' : 'false');
+      const bindingText = questBindingLabel ? ` (${questBindingLabel})` : '';
+      const showLabel = `Zobrazit úkol${bindingText}`;
+      const hideLabel = `Skrýt úkol${bindingText}`;
+      elements.questToggle.setAttribute('aria-label', expanded ? hideLabel : showLabel);
+      elements.questToggle.setAttribute('title', expanded ? hideLabel : showLabel);
+    }
+  }
+
+  function setQuestBindingLabel(bindingLabel) {
+    if (bindingLabel) {
+      questBindingLabel = bindingLabel;
+    }
+    setQuestVisibility(questVisible);
+  }
+
   function setControlsHint({ interact, shoot, inventory, pause } = {}) {
     if (!elements.hudSubtitle && !elements.pauseBindings) return;
     const text = format('hud.controls', {
@@ -181,6 +206,8 @@ export function createHudSystem(passedElements = {}) {
     setSubtitle,
     setControlsHint,
     setQuestLog,
+    setQuestVisibility,
+    setQuestBindingLabel,
     showNote,
     showToast,
     showSaveToast,

@@ -1,5 +1,5 @@
 import { COLORS, TILE, WORLD } from '../core/constants.js';
-import { formatControlsHint } from '../core/input-bindings.js';
+import { formatBinding, formatControlsHint } from '../core/input-bindings.js';
 import { createCombatSystem } from './combat.js';
 import { createHudSystem } from './hud.js';
 import { createInputSystem } from './input.js';
@@ -49,6 +49,8 @@ function getHudDomRefs(root) {
     questTitle: root.querySelector('[data-quest-title]'),
     questDescription: root.querySelector('[data-quest-description]'),
     questProgress: root.querySelector('[data-quest-progress]'),
+    questLog: root.querySelector('.quest-log'),
+    questToggle: root.querySelector('[data-quest-toggle]'),
     healthHeartsEl: root.querySelector('[data-health-hearts]'),
     healthCurrentEl: root.querySelector('.hud-health-current'),
     healthTotalEl: root.querySelector('.hud-health-total'),
@@ -84,6 +86,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   let inventoryToggleButton = null;
   let handleInventoryToggleClick = null;
+  let questToggleButton = null;
+  let handleQuestToggleClick = null;
+  let questLogCollapsed = true;
 
   const defaultMenuSubtitle =
     'Zvol si novou misi, načti poslední save, nebo skoč na konkrétní level.';
@@ -699,8 +704,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       const inventoryElement = documentRoot?.querySelector?.('.inventory') ?? null;
       inventoryToggleButton = documentRoot?.querySelector?.('[data-inventory-toggle]') ?? null;
+      questToggleButton = documentRoot?.querySelector?.('[data-quest-toggle]') ?? null;
       let inventoryCollapsed = true;
       let inventoryBindingLabel = '';
+      questLogCollapsed = true;
 
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
@@ -729,6 +736,13 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       const toggleInventory = () => setInventoryCollapsed(!inventoryCollapsed);
 
+      const setQuestLogCollapsed = (collapsed) => {
+        questLogCollapsed = Boolean(collapsed);
+        hudSystem.setQuestVisibility?.(!questLogCollapsed);
+      };
+
+      const toggleQuestLog = () => setQuestLogCollapsed(!questLogCollapsed);
+
       function handleAction(action, detail = {}) {
         switch (action) {
           case 'interact':
@@ -746,6 +760,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           case 'toggle-inventory':
             toggleInventory();
             break;
+          case 'toggle-quest-log':
+            toggleQuestLog();
+            break;
           default:
             break;
         }
@@ -762,6 +779,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       });
 
       const bindingConfig = formatControlsHint(inputSystem.getBindings());
+      const questBindingLabel = formatBinding(inputSystem.getBindings(), 'toggle-quest-log');
       inventoryBindingLabel = bindingConfig.inventory;
       const controlsHint = {
         ...bindingConfig,
@@ -769,6 +787,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       };
       hudSystem.setControlsHint(controlsHint);
       hudSystem.setInventoryBindingHint(inventoryBindingLabel);
+      hudSystem.setQuestBindingLabel(questBindingLabel);
       setInventoryCollapsed(true, { silent: true });
       hudSystem.showNote('note.inventory.intro', { binding: inventoryBindingLabel });
 
@@ -777,6 +796,14 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         toggleInventory();
       };
       inventoryToggleButton?.addEventListener?.('click', handleInventoryToggleClick);
+
+      handleQuestToggleClick = (event) => {
+        event.preventDefault?.();
+        toggleQuestLog();
+      };
+      questToggleButton?.addEventListener?.('click', handleQuestToggleClick);
+
+      setQuestLogCollapsed(true);
 
       const combatSystem = createCombatSystem({
         ammo: { consume: consumeAmmo },
@@ -917,14 +944,36 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       });
     }
 
-    function handlePlayerDeath(deathNote) {
-      if (deathTimeout) return;
-      hudSystem.hideInteraction();
-      hudSystem.showNote(deathNote || 'note.death.darkness');
+    function clearDialogueState() {
       sessionState.dialogueTime = 0;
       sessionState.activeSpeaker = '';
       sessionState.activeLine = '';
       sessionState.dialogueMeta = null;
+    }
+
+    function handlePlayerDeath(deathNote) {
+      if (deathTimeout) return;
+      hudSystem.hideInteraction();
+      clearDialogueState();
+      const darknessDeath = deathNote === 'note.death.darkness';
+
+      if (darknessDeath) {
+        const safeSpot = level.findNearestLitPosition?.(player.x, player.y);
+        if (safeSpot) {
+          player.x = safeSpot.x;
+          player.y = safeSpot.y;
+          darknessTimer = 0;
+          playerVitals.health = Math.max(1, Math.min(playerVitals.maxHealth || 1, playerVitals.health || 0));
+          playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, 1.5);
+          player.flashTimer = Math.max(player.flashTimer ?? 0, 1.5);
+          player.flashVisible = true;
+          hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
+          hudSystem.showNote('note.death.darknessTeleport');
+          return;
+        }
+      }
+
+      hudSystem.showNote(deathNote || 'note.death.darkness');
       const currentLevelId = game.currentLevelId ?? levelId ?? DEFAULT_LEVEL_ID;
       deathTimeout = setTimeout(() => {
         setScene('loading', { levelId: currentLevelId });
@@ -988,6 +1037,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       game.setSnapshotProvider(null);
       hudSystem?.hideToast?.();
       inventoryToggleButton?.removeEventListener?.('click', handleInventoryToggleClick);
+      questToggleButton?.removeEventListener?.('click', handleQuestToggleClick);
     }
 
     return {

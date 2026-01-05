@@ -4,6 +4,7 @@ const inputBindings = {
     shoot: ['Space'],
     'toggle-pause': ['KeyP'],
     'toggle-inventory': ['KeyB'],
+    'toggle-quest-log': ['KeyI'],
     'use-slot': [
       'Digit1',
       'Digit2',
@@ -24,6 +25,7 @@ const inputBindings = {
     shoot: [1],
     'toggle-pause': [9],
     'toggle-inventory': [2],
+    'toggle-quest-log': [3],
   },
 };
 
