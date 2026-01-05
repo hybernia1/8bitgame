@@ -1,7 +1,7 @@
 import { format } from './messages.js';
 
 export class Inventory {
-  constructor(slots = 6) {
+  constructor(slots = 12) {
     this.slots = Array(slots).fill(null);
   }
 

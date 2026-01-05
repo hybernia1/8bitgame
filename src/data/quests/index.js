@@ -3,7 +3,11 @@ const processedModules = new Set();
 let levelModuleEntriesPromise = null;
 
 function deriveIdFromPath(path) {
-  const filename = path.split('/').pop() ?? '';
+  const segments = path.split('/');
+  const filename = segments.pop() ?? '';
+  if (filename === 'index.js') {
+    return segments.pop() ?? 'index';
+  }
   return filename.replace(/\.js$/, '');
 }
 
@@ -11,8 +15,12 @@ async function getLevelModuleEntries() {
   if (levelModuleEntriesPromise) return levelModuleEntriesPromise;
 
   if (typeof import.meta?.glob === 'function') {
-    const globEntries = import.meta.glob('../levels/*.js');
-    levelModuleEntriesPromise = Promise.resolve(Object.entries(globEntries));
+    const globEntries = {
+      ...import.meta.glob('../levels/*.js'),
+      ...import.meta.glob('../levels/**/index.js'),
+    };
+    const filtered = Object.entries(globEntries).filter(([path]) => !path.endsWith('/levels/index.js'));
+    levelModuleEntriesPromise = Promise.resolve(filtered);
     return levelModuleEntriesPromise;
   }
 
@@ -20,13 +28,38 @@ async function getLevelModuleEntries() {
     try {
       const { readdir } = await import('fs/promises');
       const directoryUrl = new URL('../levels/', import.meta.url);
-      const files = await readdir(directoryUrl);
-      return files
-        .filter((file) => file.endsWith('.js'))
-        .map((file) => {
-          const url = new URL(file, directoryUrl).href;
+
+      async function walk(dirUrl) {
+        const entries = await readdir(dirUrl, { withFileTypes: true });
+        const files = [];
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            files.push(...(await walk(new URL(`${entry.name}/`, dirUrl))));
+          } else if (entry.isFile() && entry.name === 'index.js') {
+            const url = new URL(entry.name, dirUrl).href;
+            files.push([url, () => import(url)]);
+          }
+        }
+        return files;
+      }
+
+      const topLevelEntries = await readdir(directoryUrl, { withFileTypes: true });
+      const files = topLevelEntries
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.js') && entry.name !== 'index.js')
+        .map((entry) => {
+          const url = new URL(entry.name, directoryUrl).href;
           return [url, () => import(url)];
         });
+
+      const nestedFiles = (
+        await Promise.all(
+          topLevelEntries
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => walk(new URL(`${entry.name}/`, directoryUrl))),
+        )
+      ).flat();
+
+      return [...files, ...nestedFiles];
     } catch {
       return [];
     }

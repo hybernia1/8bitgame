@@ -1,6 +1,6 @@
-import { TILE } from '../../core/constants.js';
-import { TILE_IDS } from '../../world/tile-registry.js';
-import { northernWingNpcPackage } from './2-northern-wing/npcs.js';
+import { TILE } from '../../../core/constants.js';
+import { TILE_IDS } from '../../../world/tile-registry.js';
+import { northernWingNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 16;
 const {
@@ -33,7 +33,7 @@ layoutWithVcrRoom[toIndex(12, 10)] = F;
 layoutWithVcrRoom[toIndex(13, 10)] = F;
 const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 
-/** @type {import('../types.js').LevelConfig} */
+/** @type {import('../../types.js').LevelConfig} */
 export const northernWingLevel = {
   meta: {
     id: 'level-2',

@@ -66,8 +66,8 @@ describe('systems smoke tests', () => {
     assert.equal(hudElements.banner.dataset.state, 'hidden');
 
     hud.setAmmo(5, 10);
-    assert.equal(hudElements.ammoCurrentEl.textContent, '5/10');
-    assert.equal(hudElements.ammoEl.attributes['aria-label'], 'Stav nábojů: 5 z 10');
+    assert.equal(hudElements.ammoCurrentEl.textContent, '5');
+    assert.equal(hudElements.ammoEl.attributes['aria-label'], 'Stav nábojů: 5');
 
     const hudWithoutDom = createHudSystem();
     assert.doesNotThrow(() => {

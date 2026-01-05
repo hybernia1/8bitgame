@@ -4,7 +4,20 @@
     "shoot": ["Space"],
     "toggle-pause": ["KeyP"],
     "toggle-inventory": ["Tab"],
-    "use-slot": ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6"]
+    "use-slot": [
+      "Digit1",
+      "Digit2",
+      "Digit3",
+      "Digit4",
+      "Digit5",
+      "Digit6",
+      "Digit7",
+      "Digit8",
+      "Digit9",
+      "Digit0",
+      "Minus",
+      "Equal"
+    ]
   },
   "gamepad": {
     "interact": [0],
