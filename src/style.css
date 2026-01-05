@@ -5,8 +5,8 @@
   --text: #f9ecd5;
   --shadow: #0c0805;
   --grid: #2a1a12;
-  --canvas-width: 2048px;
-  --canvas-height: 1152px;
+  --canvas-width: 4096px;
+  --canvas-height: 2304px;
   --shell-chrome: 96px;
   --game-scale: 1.5;
   --page-padding: clamp(10px, 1.6vw, 24px);
