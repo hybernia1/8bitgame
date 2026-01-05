@@ -714,12 +714,12 @@ canvas {
 .inventory-slot {
   border: 1px solid #3a271b;
   border-radius: 10px;
-  padding: 11px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   background: radial-gradient(circle at 0% 0%, rgba(240, 194, 75, 0.1), rgba(24, 14, 10, 0.7));
   transition: border-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   aspect-ratio: 1 / 1;
@@ -737,13 +737,13 @@ canvas {
 }
 
 .inventory-icon {
-  font-size: 14px;
+  font-size: 12px;
   text-align: center;
 }
 
 .inventory-label {
-  font-size: 9px;
-  letter-spacing: 0.6px;
+  font-size: 8px;
+  letter-spacing: 0.5px;
 }
 
 .title {
@@ -769,9 +769,9 @@ canvas {
 
 .inventory-modal {
   inset: 124px 16px auto auto;
-  width: min(280px, calc(100% - 24px));
+  width: min(300px, calc(100% - 24px));
   max-height: calc(100% - 220px);
-  overflow: auto;
+  overflow: hidden;
   z-index: 4;
   align-content: start;
 }
@@ -785,8 +785,8 @@ canvas {
 
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .inventory-status {
