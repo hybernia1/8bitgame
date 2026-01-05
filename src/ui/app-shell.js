@@ -174,6 +174,7 @@ export function initShell({
     menuPanel: root?.querySelector('.menu-panel') ?? null,
     fullscreenButton: shellState.fullscreenButton,
     gameShell: shellState.gameShell,
+    alertLayer: root?.querySelector('[data-alert-layer]') ?? null,
     pausePanel: root?.querySelector('.pause-panel') ?? null,
     loadingPanel: root?.querySelector('.loading-panel') ?? null,
     continuePanel: root?.querySelector('.continue-panel') ?? null,

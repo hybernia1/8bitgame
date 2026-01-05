@@ -15,13 +15,33 @@ function toWorldPosition(point = {}) {
   };
 }
 
-function updatePatrol(npc, dt) {
+function updatePatrol(npc, dt, player) {
   const wanderSpeed = npc.wanderSpeed ?? npc.speed ?? DEFAULT_WANDER_SPEED;
   const patrolSpeed = npc.speed ?? DEFAULT_PATROL_SPEED;
 
   if (npc.busyTimer > 0) {
     npc.busyTimer = Math.max(0, npc.busyTimer - dt);
     return { dx: 0, dy: 0, moving: false };
+  }
+
+  if (npc.pursuesPlayer && player) {
+    const dx = player.x - npc.x;
+    const dy = player.y - npc.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance > 0) {
+      const chaseSpeed = (npc.chaseSpeed ?? patrolSpeed) * dt;
+      const move = Math.min(chaseSpeed, distance);
+      const normalizedX = dx / (distance || 1);
+      const normalizedY = dy / (distance || 1);
+      const facing = resolveDirection(normalizedX, normalizedY, npc.facing);
+
+      npc.lastDirection = { x: normalizedX, y: normalizedY };
+      npc.facing = facing;
+      npc.x += normalizedX * move;
+      npc.y += normalizedY * move;
+
+      return { dx: normalizedX, dy: normalizedY, moving: move > 0 };
+    }
   }
 
   if (npc.wanderRadius > 0) {
@@ -175,7 +195,7 @@ export function updateNpcStates(npcs, player, dt) {
   npcs.forEach((npc) => {
     if (npc.defeated) return;
 
-    const movement = updatePatrol(npc, dt);
+    const movement = updatePatrol(npc, dt, player);
     updateNpcAnimation(npc, movement, dt);
 
     const distance = Math.hypot(npc.x - player.x, npc.y - player.y);
