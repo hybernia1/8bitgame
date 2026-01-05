@@ -5,19 +5,19 @@ const presets = {
     id: 'mayor',
     name: 'Starostka Hana',
     sprite: 'hana',
-    dialogue: 'Hana ztiší hlas: „Potřebuji tě tady. Jde o tři ztracené děti.“',
+    dialogue: 'Hana ti nastaví ruku: „Nechodíš potmě, jasné? Světlo je tady jediná jistota.“',
   },
   caretaker: {
     id: 'caretaker',
     name: 'Správce Laboratoře',
     sprite: 'caretaker',
-    dialogue: 'Správce šeptá: „Sežeň články a nářadí. Tma tu nesmí vyhrát.“',
+    dialogue: 'Správce šeptá: „Tady se potmě chodit nesmí. Posviť si, než začneš pátrat.“',
   },
   technician: {
     id: 'technician',
     name: 'Technik Jára',
     sprite: 'jara',
-    dialogue: 'Jára si drží baterku u hrudi: „Potřebujeme světlo, jinak jsme slepí.“',
+    dialogue: 'Jára si drží baterku u hrudi: „Správce mi volal. Bez světla a dílů jsme tu slepí.“',
     infoNote: 'Technik Jára ti pošeptal: "V rohu skladiště u zdi zůstal energoblok, zkus ho vzít."',
   },
   keyGuard: {
@@ -38,13 +38,13 @@ const npcPackage = buildNpcPackage([
     ty: 2,
     script: {
       defaultDialogue:
-        'Hana ztiší hlas: „Potřebuji tě tady. Jde o tři ztracené děti a všechny stopy vedou do téhle laboratoře.“',
+        'Hana ztiší hlas: „Drž se světla. V téhle laboratoři je tma největší nepřítel.“',
       lines: [
         {
           id: 'mayor-intro-1',
           when: [{ flag: 'mayorChatStep1', equals: false }],
           dialogue:
-            'Hana tě vítá s unaveným úsměvem: „Díky, žes přijel. V laboratoři zmizely tři děti a někdo je v tom namočený. Potřebuju někoho, komu věřím.“',
+            'Hana tě zastaví hned u dveří: „Nechoď do té laboratoře potmě. Světlo ti zachrání kůži a vypínače jsou všude kolem.“',
           setState: { mayorChatStep1: true },
         },
         {
@@ -54,7 +54,7 @@ const npcPackage = buildNpcPackage([
             { flag: 'mayorChatStep2', equals: false },
           ],
           dialogue:
-            '„Jsem tady a nenechám to být,“ ujistíš ji. Hana přikývne: „Nejsi na to sám. Budu poblíž a pomůžu, jak jen to půjde.“',
+            '„Zmizely tři děti a tahle budova je poslední stopa,“ vysvětluje Hana. „Musíme postupovat opatrně, žádné hrdinství ve tmě.“',
           setState: { mayorChatStep2: true },
         },
         {
@@ -64,8 +64,10 @@ const npcPackage = buildNpcPackage([
             { flag: 'mayorIntroduced', equals: false },
           ],
           dialogue:
-            '„Prohledej laboratoř,“ šeptá Hana. „Stopy tu někde jsou. Kdyby se něco zvrtlo, dej mi znamení.“',
+            'Hana ti podá mapku vstupu: „Správce laboratoře zná tyhle chodby a ví, kde bývalo světlo. Najdeš ho kousek od generátoru. Promluv s ním a drž se osvětlených míst.“',
+          actions: [{ type: 'setFlag', flag: 'mayorIntroduced', value: true }],
           setState: { mayorIntroduced: true },
+          note: '[Úkol splněn] Seznámil ses se starostkou. Nový úkol: promluv si se správcem laboratoře.',
         },
       ],
     },
@@ -76,19 +78,36 @@ const npcPackage = buildNpcPackage([
     ty: 4,
     script: {
       defaultDialogue:
-        'Správce nervózně kouká do stínu: „Sežeň náhradní články a nářadí, jinak tu tma neskončí.“',
+        'Správce nervózně kouká do stínu: „Tahle chodba bývala plná světla. Teď musíš rozsvítit, než se vydáš dál.“',
       lines: [
         {
-          id: 'caretaker-intro',
-          when: [{ flag: 'caretakerSharedLab', equals: false }],
+          id: 'caretaker-wait-mayor',
+          when: [{ flag: 'mayorIntroduced', equals: false }],
           dialogue:
-            'Správce si nervózně utře ruce do pláště: „Laboratoř je plná hluchých míst. Technik Jára se tu potuluje potmě – u jeho stolu je vypínač, třeba se ti přizná, proč nechává tmu všude kolem.“',
-          setState: { caretakerSharedLab: true },
+            'Správce si tě měří: „Starostka Hana tě chce nejdřív vidět. Promluv si s ní a hlavně nechoď do té tmy sám.“',
+        },
+        {
+          id: 'caretaker-intro',
+          when: [
+            { flag: 'mayorIntroduced', equals: true },
+            { flag: 'caretakerIntroduced', equals: false },
+          ],
+          dialogue:
+            'Správce si nervózně utře ruce do pláště: „Tahle laboratoř kdysi testovala nové zdroje světla. Po výpadku jsme bloudili poslepu a lidi panikařili. Technik Jára má záznamy, které mohou říct víc. Najdeš ho u servisního stolu – ale nejdřív si rozviť vypínače kolem.“',
+          actions: [
+            { type: 'setFlag', flag: 'caretakerSharedLab', value: true },
+            { type: 'setFlag', flag: 'caretakerIntroduced', value: true },
+          ],
+          note: '[Úkol splněn] Správce tě posílá za technikem Járou.',
         },
         {
           id: 'give-apple',
-          when: [{ flag: 'caretakerGaveApple', equals: false }],
-          dialogue: 'Tady máš jablko, doplní ti síly. Stiskni číslo slotu nebo na něj klikni v inventáři.',
+          when: [
+            { flag: 'caretakerIntroduced', equals: true },
+            { flag: 'caretakerGaveApple', equals: false },
+          ],
+          dialogue:
+            'Správce sáhne do kapsy: „Na cestu vezmi tohle jablko. Dodá ti sílu, když se ti ve tmě zatmí před očima. Stiskni číslo slotu nebo na něj klikni v inventáři.“',
           note: 'Správce ti předal jablko. Použij číslo slotu (1-12) nebo klikni na slot pro doplnění jednoho života.',
           rewardId: 'caretaker-apple',
           actions: [{ type: 'setFlag', flag: 'caretakerGaveApple', value: true }],
@@ -96,6 +115,7 @@ const npcPackage = buildNpcPackage([
         {
           id: 'apple-reminder',
           when: [
+            { flag: 'caretakerIntroduced', equals: true },
             { flag: 'caretakerGaveApple', equals: true },
             { hasItem: 'apple' },
           ],
@@ -103,7 +123,8 @@ const npcPackage = buildNpcPackage([
         },
         {
           id: 'caretaker-default',
-          dialogue: 'Potřebuji náhradní články a nářadí. Najdeš je ve skladišti.',
+          dialogue:
+            'Energoblok, servisní klíč i fragment karty jsme kdysi používali denně. Doneseš-li je Járovi, možná rozklíčuje, co se tu stalo. A pamatuj: tma není kamarád.',
         },
       ],
     },
@@ -118,7 +139,7 @@ const npcPackage = buildNpcPackage([
             blockedNote: 'Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.',
           },
         ],
-      note: 'Správce ti předal jablko. Použij číslo slotu (1-12) nebo klikni na slot pro doplnění jednoho života.',
+        note: 'Správce ti předal jablko. Použij číslo slotu (1-12) nebo klikni na slot pro doplnění jednoho života.',
       },
     },
   }),
@@ -134,9 +155,15 @@ const npcPackage = buildNpcPackage([
     ],
     script: {
       defaultDialogue:
-        'Jára si drží baterku u hrudi: „Tady je tma na každém kroku. Rozhlížej se – jestli chceš odpovědi, potřebuješ světlo.“',
+        'Jára si drží baterku u hrudi: „Bez světla a náhradních dílů se nikam nepohneme. U vypínače budeme v bezpečí.“',
       infoNote: presets.technician.infoNote,
       lines: [
+        {
+          id: 'technician-waiting-caretaker',
+          when: [{ flag: 'caretakerIntroduced', equals: false }],
+          dialogue:
+            'Jára si tě prohlíží přes záři baterky: „Správce tě musí nejdřív zasvětit. Vrať se za mnou, až ti řekne, co se tady dělo.“',
+        },
         {
           id: 'technician-dark',
           when: [
@@ -144,7 +171,7 @@ const npcPackage = buildNpcPackage([
             { flag: 'technicianQuestioned', equals: false },
           ],
           dialogue:
-            'Technik Jára tě přeměří ve tmě: „Vidíš ten vypínač vedle mě? Rozsviť to. V téhle tmě se bavit nebudu.“',
+            'Technik Jára tě přeměří ve tmě: „Vidíš ten vypínač vedle mě? Rozsviť to. Dokud tu nehoří světlo, nic ti neřeknu.“',
         },
         {
           id: 'technician-interview',
@@ -153,8 +180,13 @@ const npcPackage = buildNpcPackage([
             { flag: 'technicianQuestioned', equals: false },
           ],
           dialogue:
-            'Jára si zacloní oči před světlem: „Dobře, ptáš se proč jsem bloudil potmě? Protože tu nic není... nebo to tak aspoň musí vypadat.“ Nakonec dodá tiše: „Sežeň mi potřebné fragmenty vybavení a já ti dám klíče. V technické místnosti jsou kamery – možná na nich něco uvidíš.“',
-          setState: { technicianQuestioned: true, technicianSharedLab: true },
+            'Jára si zacloní oči před světlem: „Správce říkal, že víš, jak je to tu složité. Potřebuju tři věci – energoblok, servisní klíč a fragment klíčové karty. Když je doneseš, dostaneš ode mě klíč k technické místnosti.“',
+          actions: [
+            { type: 'setFlag', flag: 'technicianQuestioned', value: true },
+            { type: 'setFlag', flag: 'technicianSharedLab', value: true },
+          ],
+          note:
+            '[Nový úkol] Sesbírej energoblok, servisní klíč a fragment klíčové karty. Jára ti za ně předá klíč k technické místnosti.',
         },
         {
           id: 'collect-first',
@@ -163,7 +195,7 @@ const npcPackage = buildNpcPackage([
             { flag: 'technicianQuestioned', equals: true },
           ],
           dialogue:
-            '„Ty fragmenty někde v téhle laborce musí být,“ naléhá Jára. „Dones je a já odemknu technickou místnost s kamerami. Bez nich jsme slepí.“',
+            '„Ty fragmenty někde v téhle laborce musí být,“ naléhá Jára. „Energoblok, klíčový fragment i servisní klíč – přines je a klíč od technické místnosti je tvůj.“',
         },
         {
           id: 'give-key',
@@ -172,7 +204,7 @@ const npcPackage = buildNpcPackage([
             { flag: 'technicianGaveKey', equals: false },
           ],
           dialogue:
-            'Jára kývne a podává klíč: „Držíš slovo. Tenhle klíč ti otevře technickou místnost s kamerami. Zjisti, co tam skrývají.“',
+            'Jára kývne a podává klíč: „Držíš slovo. Tady máš klíč k technické místnosti. Kamery a záznamy ti prozradí, co se tu stalo.“',
           rewardId: 'technician-gate-key',
           actions: [{ type: 'setFlag', flag: 'technicianGaveKey', value: true }],
         },

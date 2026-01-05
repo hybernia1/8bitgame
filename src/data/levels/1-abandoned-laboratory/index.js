@@ -224,11 +224,29 @@ export const abandonedLaboratoryLevel = {
   rewards: abandonedLaboratoryNpcPackage.rewards,
   quests: [
     {
+      id: 'talk-to-mayor',
+      type: 'escort',
+      name: 'Promluv si se starostkou Hanou',
+      description:
+        'Najdi starostku u vstupu do laboratoře a vyslechni její varování, abys nechodil potmě.',
+      completedFlag: 'mayorIntroduced',
+      completionNote: '[Úkol splněn] Starostka tě varovala před tmou a poslala tě za správcem laboratoře.',
+    },
+    {
+      id: 'talk-to-caretaker',
+      type: 'escort',
+      name: 'Promluv se správcem laboratoře',
+      description:
+        'Hana chce, abys promluvil se správcem a zjistil, co se stalo v laboratoři, než půjdeš za technikem Járou.',
+      completedFlag: 'caretakerIntroduced',
+      completionNote: '[Úkol splněn] Správce tě vybavil, připomněl historii laboratoře a odkázal tě na Járu.',
+    },
+    {
       id: 'collect-components',
       type: 'collect',
       name: 'Prohledej laboratoř',
       description:
-        'Sesbírej energoblok, klíčový fragment a servisní nářadí – možná skrývají stopy k únosům.',
+        'Sesbírej energoblok, klíčový fragment a servisní nářadí pro technika Járu a získej tak klíč k technické místnosti.',
       objectiveCount: 3,
       completionNote: 'note.quest.completed',
     },
