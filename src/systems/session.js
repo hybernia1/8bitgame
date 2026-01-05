@@ -570,6 +570,14 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let safes = [];
     let spriteSheet = null;
     let savedSnapshot = null;
+    let safePanel = null;
+    let safeForm = null;
+    let safeTitle = null;
+    let safeDescription = null;
+    let safeInput = null;
+    let safeSubmit = null;
+    let safeCancel = null;
+    let safeFeedback = null;
     let hideSafePanel = () => {};
     let handleSafeSubmit = null;
     let interactQueued = false;
@@ -736,8 +744,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       let inventoryCollapsed = true;
       let inventoryBindingLabel = '';
       questLogCollapsed = true;
-      const { safePanel, safeForm, safeTitle, safeDescription, safeInput, safeSubmit, safeCancel, safeFeedback } =
-        safeDomRefs;
+      ({
+        safePanel,
+        safeForm,
+        safeTitle,
+        safeDescription,
+        safeInput,
+        safeSubmit,
+        safeCancel,
+        safeFeedback,
+      } = safeDomRefs || {});
       let activeSafe = null;
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
