@@ -80,6 +80,28 @@
             <div class="interaction-text">Přibliž se ke starostce a stiskni E.</div>
           </div>
         </div>
+        <section class="overlay safe-panel hidden" aria-label="Kód k sejfu" data-safe-panel aria-hidden="true">
+          <div class="panel-title" data-safe-title>Sejf</div>
+          <p class="menu-subtitle" data-safe-description>Zadej 4místnou kombinaci.</p>
+          <form class="safe-form" data-safe-form>
+            <label for="safe-code-input" class="menu-label">Kombinace</label>
+            <div class="safe-row">
+              <input
+                id="safe-code-input"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="4"
+                placeholder="0000"
+                autocomplete="one-time-code"
+                data-safe-input
+              />
+              <button type="submit" class="menu-button" data-safe-submit>Otevřít</button>
+              <button type="button" class="menu-button ghost" data-safe-cancel>Zavřít</button>
+            </div>
+          </form>
+          <p class="menu-subtitle safe-feedback" data-safe-feedback></p>
+        </section>
         <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
           <div class="panel-title">Hlavní menu</div>
           <p class="menu-subtitle">Zvol si novou misi, pokračuj z posledního savu, nebo skoč na konkrétní level.</p>

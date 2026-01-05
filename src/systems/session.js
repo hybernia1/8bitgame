@@ -25,6 +25,7 @@ import {
   serializePickups,
 } from '../entities/pickups.js';
 import { createPushables, drawPushables, restorePushables, serializePushables } from '../entities/pushables.js';
+import { createSafes, drawSafes, restoreSafes, serializeSafes } from '../entities/safes.js';
 import {
   createNpcs,
   drawNpcs,
@@ -67,6 +68,20 @@ function getHudDomRefs(root) {
   };
 }
 
+function getSafeDomRefs(root) {
+  if (!root) return {};
+  return {
+    safePanel: root.querySelector('[data-safe-panel]'),
+    safeForm: root.querySelector('[data-safe-form]'),
+    safeTitle: root.querySelector('[data-safe-title]'),
+    safeDescription: root.querySelector('[data-safe-description]'),
+    safeInput: root.querySelector('[data-safe-input]'),
+    safeSubmit: root.querySelector('[data-safe-submit]'),
+    safeCancel: root.querySelector('[data-safe-cancel]'),
+    safeFeedback: root.querySelector('[data-safe-feedback]'),
+  };
+}
+
 function toggleVisibility(element, visible) {
   if (!element) return;
   element.classList.toggle('hidden', !visible);
@@ -83,11 +98,13 @@ function formatSaveDate(timestamp) {
 
 export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetPromise, shell }) {
   const hudDomRefs = getHudDomRefs(shell.documentRoot);
+  const safeDomRefs = getSafeDomRefs(shell.documentRoot);
 
   let inventoryToggleButton = null;
   let handleInventoryToggleClick = null;
   let questToggleButton = null;
   let handleQuestToggleClick = null;
+  let handleSafeCancelClick = null;
   let questLogCollapsed = true;
 
   const defaultMenuSubtitle =
@@ -550,8 +567,11 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let placements = null;
     let pickups = null;
     let pushables = null;
+    let safes = [];
     let spriteSheet = null;
     let savedSnapshot = null;
+    let hideSafePanel = () => {};
+    let handleSafeSubmit = null;
     let interactQueued = false;
     let shootQueued = false;
     let prologuePlayed = false;
@@ -673,6 +693,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       restoreNpcs(npcs, savedSnapshot?.npcs);
       pushables = createPushables(placements);
       restorePushables(pushables, savedSnapshot?.sessionState?.pushables);
+      safes = createSafes(level.config?.interactables ?? {});
+      restoreSafes(safes, savedSnapshot?.safes);
 
       if (savedSnapshot?.playerVitals) {
         Object.assign(playerVitals, savedSnapshot.playerVitals);
@@ -714,13 +736,128 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       let inventoryCollapsed = true;
       let inventoryBindingLabel = '';
       questLogCollapsed = true;
-
+      const { safePanel, safeForm, safeTitle, safeDescription, safeInput, safeSubmit, safeCancel, safeFeedback } =
+        safeDomRefs;
+      let activeSafe = null;
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
           const amount = Number.isFinite(pickup.quantity) ? pickup.quantity : 1;
           addAmmo(amount);
         }
       };
+
+      const setSafeFeedback = (messageId, params) => {
+        if (!safeFeedback) return;
+        if (!messageId) {
+          safeFeedback.textContent = '';
+          return;
+        }
+        safeFeedback.textContent = format(messageId, params);
+      };
+
+      hideSafePanel = () => {
+        if (safePanel) {
+          safePanel.classList.add('hidden');
+          safePanel.setAttribute('aria-hidden', 'true');
+        }
+        activeSafe = null;
+        setSafeFeedback();
+      };
+
+      function grantSafeReward(safe) {
+        if (!safe?.reward || safe.rewardClaimed) {
+          return { granted: false, note: safe?.emptyNote ?? 'note.safe.empty' };
+        }
+        const rewardItem = { ...safe.reward };
+        const stored = inventory.addItem(rewardItem);
+        if (!stored) {
+          return {
+            granted: false,
+            blocked: true,
+            note: 'note.safe.inventoryFull',
+            params: { item: rewardItem.name ?? rewardItem.id ?? 'loot' },
+          };
+        }
+        safe.rewardClaimed = true;
+        renderInventory(inventory);
+        return {
+          granted: true,
+          note: safe.rewardNote ?? 'note.safe.itemReceived',
+          params: { item: rewardItem.name ?? rewardItem.id ?? 'loot' },
+        };
+      }
+
+      function showSafePanel(targetSafe) {
+        if (!targetSafe || !safePanel || !safeInput) return;
+        activeSafe = targetSafe;
+        safePanel.classList.remove('hidden');
+        safePanel.setAttribute('aria-hidden', 'false');
+        const digits = Math.max(1, targetSafe.codeLength ?? 4);
+        if (safeTitle) {
+          safeTitle.textContent = targetSafe.name ?? 'Sejf';
+        }
+        if (safeDescription) {
+          safeDescription.textContent = format('note.safe.enterCode', { digits });
+        }
+        safeInput.value = '';
+        safeInput.maxLength = digits;
+        safeInput.setAttribute('aria-label', format('note.safe.enterCode', { digits }));
+        setSafeFeedback();
+        safeInput.focus?.({ preventScroll: true });
+      }
+
+      handleSafeSubmit = (event) => {
+        event?.preventDefault?.();
+        if (!activeSafe) {
+          hideSafePanel();
+          return;
+        }
+        const digits = Math.max(1, activeSafe.codeLength ?? 4);
+        const entered = (safeInput?.value ?? '').trim();
+        const numericEntry = entered.replace(/\D/g, '');
+        if (numericEntry.length !== digits) {
+          setSafeFeedback('note.safe.enterCode', { digits });
+          return;
+        }
+        const normalized = numericEntry.padStart(digits, '0');
+        const expected = (activeSafe.code ?? '').padStart(digits, '0');
+        if (normalized !== expected) {
+          setSafeFeedback('note.safe.wrongCode');
+          return;
+        }
+        activeSafe.opened = true;
+        const rewardResult = grantSafeReward(activeSafe);
+        const noteId =
+          rewardResult.note ??
+          (rewardResult.granted ? 'note.safe.itemReceived' : activeSafe.emptyNote ?? 'note.safe.empty');
+        hudSystem.showNote(noteId, rewardResult.params);
+        if (rewardResult.blocked) {
+          setSafeFeedback(rewardResult.note, rewardResult.params);
+          return;
+        }
+        setSafeFeedback('note.safe.unlocked');
+        game.saveProgress?.({ auto: true });
+        hideSafePanel();
+      };
+
+      function handleSafeInteract(targetSafe) {
+        if (!targetSafe) return;
+        if (targetSafe.opened) {
+          if (targetSafe.reward && !targetSafe.rewardClaimed) {
+            const rewardResult = grantSafeReward(targetSafe);
+            const noteId = rewardResult.note ?? 'note.safe.itemReceived';
+            hudSystem.showNote(noteId, rewardResult.params);
+            if (!rewardResult.blocked) {
+              game.saveProgress?.({ auto: true });
+            }
+            return;
+          }
+          const messageId = targetSafe.emptyNote ?? 'note.safe.empty';
+          hudSystem.showNote(messageId);
+          return;
+        }
+        showSafePanel(targetSafe);
+      }
 
       const handleInventoryUse = (slotIndex) =>
         useInventorySlot({
@@ -809,6 +946,14 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       };
       questToggleButton?.addEventListener?.('click', handleQuestToggleClick);
 
+      safeForm?.addEventListener?.('submit', handleSafeSubmit);
+      safeSubmit?.addEventListener?.('click', handleSafeSubmit);
+      handleSafeCancelClick = (event) => {
+        event?.preventDefault?.();
+        hideSafePanel();
+      };
+      safeCancel?.addEventListener?.('click', handleSafeCancelClick);
+
       setQuestLogCollapsed(true);
 
       const combatSystem = createCombatSystem({
@@ -834,6 +979,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           hudSystem.setObjectives(count ?? state.objectivesCollected, level.getObjectiveTotal()),
         collectNearbyPickups,
         onPickupCollected: handlePickupCollected,
+        safes,
+        onSafeInteract: handleSafeInteract,
       });
 
       levelScript =
@@ -849,7 +996,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         }) || null;
 
       updateFrame = (dt) => {
-        updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables });
+        updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables, blockers: safes });
         level.updatePressureSwitches(getSwitchOccupants());
         level.clampCamera(camera, player, canvas);
 
@@ -899,6 +1046,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         level.drawLightSwitches(ctx, camera);
         drawPickups(ctx, camera, pickups, spriteSheet);
         drawPushables(ctx, camera, pushables, spriteSheet);
+        drawSafes(ctx, camera, safes, spriteSheet);
         combatSystem.drawProjectiles(ctx, camera);
         drawNpcs(ctx, camera, npcs);
         drawPlayer(ctx, camera, player, spriteSheet);
@@ -914,6 +1062,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         persistentState: serializePersistentState(),
         pickups: serializePickups(pickups),
         npcs: serializeNpcs(npcs),
+        safes: serializeSafes(safes),
       }));
     }
 
@@ -1023,6 +1172,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
     function pauseSession() {
       resetActionQueue();
+      hideSafePanel();
       inputSystem?.stop?.();
     }
 
@@ -1044,6 +1194,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hudSystem?.hideToast?.();
       inventoryToggleButton?.removeEventListener?.('click', handleInventoryToggleClick);
       questToggleButton?.removeEventListener?.('click', handleQuestToggleClick);
+      safeForm?.removeEventListener?.('submit', handleSafeSubmit);
+      safeSubmit?.removeEventListener?.('click', handleSafeSubmit);
+      safeCancel?.removeEventListener?.('click', handleSafeCancelClick);
+      hideSafePanel();
     }
 
     return {

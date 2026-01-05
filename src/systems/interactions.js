@@ -1,6 +1,7 @@
 import { TILE } from '../core/constants.js';
 import { runActions } from '../core/actions.js';
 import { evaluateQuestBatch, getActiveQuestSummary, prepareQuestState } from '../core/quests.js';
+import { findNearestSafe, SAFE_INTERACT_DISTANCE } from '../entities/safes.js';
 export function createInteractionSystem({
   inventory,
   pickups,
@@ -14,6 +15,8 @@ export function createInteractionSystem({
   setObjectives,
   collectNearbyPickups,
   onPickupCollected,
+  safes = [],
+  onSafeInteract,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
   const npcScripts = level.getNpcScripts();
@@ -159,6 +162,8 @@ export function createInteractionSystem({
     const gateState = level.getGateState();
     const gateDistance = gateState ? Math.hypot(gateState.x - player.x, gateState.y - player.y) : Infinity;
     const nearGate = gateState ? gateDistance <= 26 : false;
+    const { nearestSafe, safeDistance } = findNearestSafe(safes, player.x, player.y);
+    const nearSafe = nearestSafe ? safeDistance <= SAFE_INTERACT_DISTANCE : false;
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
 
     if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
@@ -172,6 +177,8 @@ export function createInteractionSystem({
       } else {
         showNote('note.switch.alreadyOn');
       }
+    } else if (context.interactRequested && nearSafe) {
+      onSafeInteract?.(nearestSafe);
     } else if (context.interactRequested && nearestNpc?.nearby) {
       state.activeSpeaker = nearestNpc.name;
       const script = npcScripts[nearestNpc.id];
@@ -273,11 +280,13 @@ export function createInteractionSystem({
       switchDistance,
       guardCollision,
       nearestNpc,
+      nearestSafe,
+      nearSafe,
     };
   }
 
   function updateInteractions(player, context) {
-    const { nearestNpc, activeSwitch, switchDistance, nearGate } = context;
+    const { nearestNpc, nearestSafe, nearSafe, activeSwitch, switchDistance, nearGate } = context;
     let hasActiveDialogue = Boolean(state.activeLine);
     const npcDialogueActive = hasActiveDialogue && state.dialogueMeta?.speakerType === 'npc';
 
@@ -291,6 +300,12 @@ export function createInteractionSystem({
     }
     if (hasActiveDialogue) {
       hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
+    } else if (nearSafe && nearestSafe) {
+      if (nearestSafe.opened) {
+        hud.showPrompt('prompt.safeOpened');
+      } else {
+        hud.showPrompt('prompt.safeLocked');
+      }
     } else if (nearestNpc?.nearby) {
       hud.showPrompt('prompt.talk', { name: nearestNpc.name });
     } else if (activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {

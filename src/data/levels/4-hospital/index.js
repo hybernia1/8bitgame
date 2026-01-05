@@ -36,7 +36,26 @@ export const hospitalLevel = {
     litZones: [{ x: 1, y: 1, w: BASE_WIDTH - 2, h: BASE_HEIGHT - 2 }],
     switches: [],
   },
-  interactables: {},
+  interactables: {
+    safes: [
+      {
+        id: 'demo-safe',
+        name: 'Nemocniční sejf',
+        tx: 7,
+        ty: 2,
+        code: '0000',
+        codeLength: 4,
+        reward: {
+          id: 'apple',
+          name: 'Jablko',
+          icon: '🍎',
+          tint: '#f25c5c',
+        },
+        rewardNote: 'note.safe.itemReceived',
+        emptyNote: 'note.safe.empty',
+      },
+    ],
+  },
   actors: {
     playerStart: { x: TILE * 4.5, y: TILE * 3.5 },
     monsters: [],

@@ -1,7 +1,7 @@
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 
-const SAVE_VERSION = 3;
+const SAVE_VERSION = 4;
 const saveMigrations = new Map();
 
 export function createGame({ inventory, hudSystem } = {}) {
@@ -77,6 +77,7 @@ export function createGame({ inventory, hudSystem } = {}) {
       projectiles: extraSnapshot.projectiles ?? [],
       pickups: extraSnapshot.pickups ?? [],
       npcs: extraSnapshot.npcs ?? [],
+      safes: extraSnapshot.safes ?? [],
       sessionState: extraSnapshot.sessionState ?? null,
       persistentState: extraSnapshot.persistentState ?? null,
       savedAt: Date.now(),
@@ -174,6 +175,7 @@ export function createGame({ inventory, hudSystem } = {}) {
     'savedAt',
     'pickups',
     'npcs',
+    'safes',
   ];
 
   function addSnapshotDefaults(snapshot = {}) {
@@ -194,6 +196,7 @@ export function createGame({ inventory, hudSystem } = {}) {
       pickups: snapshot?.pickups ?? [],
       npcs: snapshot?.npcs ?? [],
       projectiles: snapshot?.projectiles ?? [],
+      safes: snapshot?.safes ?? [],
     };
   }
 
@@ -216,6 +219,11 @@ export function createGame({ inventory, hudSystem } = {}) {
     version: SAVE_VERSION,
   }));
   saveMigrations.set(2, (payload) => ({
+    ...payload,
+    progress: addPersistentStateToProgress(payload?.progress ?? {}),
+    version: SAVE_VERSION,
+  }));
+  saveMigrations.set(3, (payload) => ({
     ...payload,
     progress: addPersistentStateToProgress(payload?.progress ?? {}),
     version: SAVE_VERSION,

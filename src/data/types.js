@@ -88,10 +88,26 @@
  */
 
 /**
+ * @typedef {Object} InteractableSafe
+ * @property {string} id
+ * @property {string} [name]
+ * @property {number} [tx]
+ * @property {number} [ty]
+ * @property {number} [x]
+ * @property {number} [y]
+ * @property {string|number} [code]
+ * @property {number} [codeLength]
+ * @property {{ id: string, name: string, icon?: string, tint?: string, quantity?: number, stackable?: boolean }} [reward]
+ * @property {string} [rewardNote]
+ * @property {string} [emptyNote]
+ */
+
+/**
  * @typedef {Object} Interactables
  * @property {InteractableGate} [gate]
  * @property {Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }>} [switches]
  * @property {InteractablePressureSwitch[]} [pressureSwitches]
+ * @property {InteractableSafe[]} [safes]
  */
 
 /**
