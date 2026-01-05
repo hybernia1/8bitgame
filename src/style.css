@@ -246,6 +246,41 @@ canvas {
   height: 100%;
 }
 
+.alert-layer {
+  position: absolute;
+  inset: 8px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 56, 56, 0.06), rgba(255, 56, 56, 0.22)),
+    radial-gradient(circle at 70% 70%, rgba(255, 120, 120, 0.08), rgba(255, 56, 56, 0.2));
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, filter 120ms ease;
+  filter: saturate(0.6);
+  z-index: 2;
+}
+
+.alert-layer.is-active {
+  opacity: 0.32;
+  filter: saturate(1);
+}
+
+.alert-layer.is-flashing {
+  animation: alert-flash 0.42s steps(2, start) infinite;
+}
+
+@keyframes alert-flash {
+  0% {
+    opacity: 0.08;
+  }
+  50% {
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 0.08;
+  }
+}
+
 .overlay {
   position: absolute;
   inset: 8px;

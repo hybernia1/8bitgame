@@ -32,6 +32,7 @@ import {
   serializeNpcs,
   updateNpcStates,
 } from '../entities/npc.js';
+import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor-script.js';
 
 const PROLOGUE_STEPS = [
   {
@@ -126,6 +127,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     pauseResumeButton,
     pauseSaveButton,
     pauseMenuButton,
+    alertLayer,
     setFullscreenAvailability,
     fullscreenSupported,
   } = shell;
@@ -407,6 +409,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let objectivesCollected = 0;
     let deathTimeout = null;
     let darknessTimer = 0;
+    let levelScript = null;
 
     const camera = { x: 0, y: 0 };
     const projectiles = [];
@@ -762,6 +765,18 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         onPickupCollected: handlePickupCollected,
       });
 
+      levelScript =
+        createRooftopCorridorScript({
+          state,
+          hud: hudSystem,
+          npcs,
+          spriteSheet,
+          alertLayer,
+          level,
+          player,
+          game,
+        }) || null;
+
       updateFrame = (dt) => {
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables });
         level.updatePressureSwitches(getSwitchOccupants());
@@ -798,6 +813,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
         combatSystem.updateProjectiles(dt, npcs);
         applyDarknessDamage(dt);
+        levelScript?.update?.(dt);
 
         interactionSystem.updateInteractions(player, {
           ...interactContext,
@@ -929,6 +945,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         clearTimeout(deathTimeout);
         deathTimeout = null;
       }
+      levelScript?.destroy?.();
+      levelScript = null;
       game.setSnapshotProvider(null);
       hudSystem?.hideToast?.();
     }
