@@ -5,7 +5,7 @@
 
 import { TILE } from '../core/constants.js';
 import { DEFAULT_TILED_IMPORT_OPTIONS } from '../data/tiled-presets.js';
-import { TILE_DEFINITIONS, TILE_IDS } from './tile-registry.js';
+import { TILE_DEFINITIONS, TILE_IDS, getFloorVariantTileId } from './tile-registry.js';
 
 const DEFAULT_LAYER_NAMES = {
   collision: 'collision',
@@ -26,9 +26,17 @@ function isTiledMap(payload) {
 
 function normalizeVariantToken(token) {
   if (typeof token === 'number') return token;
-  const numeric = Number.parseInt(token, 10);
+
+  const stringValue = String(token).trim();
+  const numeric = Number.parseInt(stringValue, 10);
   if (!Number.isNaN(numeric)) return numeric;
-  return String(token).toLowerCase();
+
+  const floorMatch = stringValue.match(/^f(?:loor)?\.?(\d+)$/i);
+  if (floorMatch) {
+    return getFloorVariantTileId(Number.parseInt(floorMatch[1], 10));
+  }
+
+  return stringValue.toLowerCase();
 }
 
 function buildVariantLookup(custom = {}) {
@@ -106,7 +114,9 @@ function resolveTileFromProperties(props = {}, { propertyKeys, variantLookup, ca
 
   const variant = props.variant ?? props.material;
   if (variant) {
-    const resolvedVariant = variantLookup.get(normalizeVariantToken(variant));
+    const normalizedVariant = normalizeVariantToken(variant);
+    if (typeof normalizedVariant === 'number') return normalizedVariant;
+    const resolvedVariant = variantLookup.get(normalizedVariant);
     if (resolvedVariant != null) return resolvedVariant;
   }
 

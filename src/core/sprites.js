@@ -546,6 +546,12 @@ export async function loadSpriteSheet() {
     } else {
       animations[name] = { frames: [startIndex] };
     }
+
+    if (name === 'floor' && spriteFrames.length > 1) {
+      for (let i = 1; i < spriteFrames.length; i += 1) {
+        animations[`floor.${i + 1}`] = { frames: [startIndex + i] };
+      }
+    }
   });
 
   const image = await canvasToImage(makeCanvas(frames));

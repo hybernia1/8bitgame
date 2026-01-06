@@ -14,15 +14,42 @@ export const TILE_IDS = {
   FLOOR_BROKEN: 7,
 };
 
+const DYNAMIC_FLOOR_BASE = 1000;
+
+function resolveFloorVariantIndex(tileId) {
+  if (tileId === TILE_IDS.FLOOR_PLAIN) return 1;
+  if (tileId >= DYNAMIC_FLOOR_BASE) return tileId - DYNAMIC_FLOOR_BASE;
+  return null;
+}
+
+function createFloorTileDefinition(tileId) {
+  const variantIndex = resolveFloorVariantIndex(tileId);
+  if (!variantIndex) return null;
+
+  const variantKey = variantIndex === 1 ? 'floor' : `floor.${variantIndex}`;
+
+  return {
+    tileId,
+    id: variantIndex === 1 ? 'floor_plain' : `floor_${variantIndex}`,
+    category: 'floor',
+    variant: variantKey,
+    spriteKey: variantKey,
+  };
+}
+
+export function getFloorVariantTileId(variant = 1) {
+  const parsed = Number.parseInt(variant, 10);
+  const variantIndex = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  return variantIndex === 1 ? TILE_IDS.FLOOR_PLAIN : DYNAMIC_FLOOR_BASE + variantIndex;
+}
+
+export function getFloorVariantIndex(tileId) {
+  return resolveFloorVariantIndex(tileId) ?? undefined;
+}
+
 /** @type {Record<number, TileDefinition>} */
 export const TILE_DEFINITIONS = {
-  [TILE_IDS.FLOOR_PLAIN]: {
-    tileId: TILE_IDS.FLOOR_PLAIN,
-    id: 'floor_plain',
-    category: 'floor',
-    variant: 'floor',
-    spriteKey: 'floor',
-  },
+  [TILE_IDS.FLOOR_PLAIN]: createFloorTileDefinition(TILE_IDS.FLOOR_PLAIN),
   [TILE_IDS.WALL_SOLID]: {
     tileId: TILE_IDS.WALL_SOLID,
     id: 'wall_solid',
@@ -105,7 +132,7 @@ const FALLBACK_TILE = {
  * @returns {TileDefinition}
  */
 export function getTileDefinition(tileId) {
-  return TILE_DEFINITIONS[tileId] ?? FALLBACK_TILE;
+  return TILE_DEFINITIONS[tileId] ?? createFloorTileDefinition(tileId) ?? FALLBACK_TILE;
 }
 
 /**
