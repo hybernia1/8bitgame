@@ -934,15 +934,6 @@ function drawWallTile(context, def, x, y) {
     context.strokeRect(x + 3.5, y + 3.5, TILE - 7, TILE - 9);
   }
 
-  if (def.variant?.includes('cracked')) {
-    context.strokeStyle = 'rgba(0, 0, 0, 0.28)';
-    context.lineWidth = 1;
-    context.beginPath();
-    context.moveTo(x + 4, y + TILE / 2);
-    context.lineTo(x + TILE / 2, y + TILE / 2 + 3);
-    context.lineTo(x + TILE - 5, y + TILE - 6);
-    context.stroke();
-  }
 }
 
 function drawDoorTile(context, def, x, y) {
@@ -958,20 +949,11 @@ function drawDoorTile(context, def, x, y) {
 }
 
 function drawFloorTile(context, def, x, y) {
-  const brightFloor = def.variant === 'floor_lit';
   const crackedFloor = def.variant === 'floor_broken';
-  const hasWindowLight = def.variant?.includes('window');
-  context.fillStyle = brightFloor ? '#344159' : COLORS.floor;
+  context.fillStyle = COLORS.floor;
   context.fillRect(x, y, TILE, TILE);
-  context.fillStyle = brightFloor ? '#6ef2a4' : COLORS.floorGlow;
+  context.fillStyle = COLORS.floorGlow;
   context.fillRect(x, y + TILE - 6, TILE, 6);
-
-  if (hasWindowLight) {
-    context.fillStyle = 'rgba(110, 242, 164, 0.2)';
-    context.fillRect(x + 4, y + 4, TILE - 8, TILE - 8);
-    context.fillStyle = 'rgba(255, 255, 255, 0.08)';
-    context.fillRect(x + TILE / 3, y + 6, TILE / 3, TILE / 3);
-  }
 
   if (crackedFloor) {
     context.strokeStyle = 'rgba(0, 0, 0, 0.22)';

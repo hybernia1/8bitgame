@@ -18,7 +18,7 @@ const BASE_SPRITE_ORDER = [
   'spider',
   'prop',
 ];
-const VARIANT_SPRITE_ORDER = ['floor.window_light', 'wall.cracked', 'wall.window', 'decor.console'];
+const VARIANT_SPRITE_ORDER = ['wall.window', 'decor.console'];
 const SPRITE_ORDER = [...BASE_SPRITE_ORDER, ...VARIANT_SPRITE_ORDER];
 const TEXTURE_SEED = 1337;
 // Textures are loaded only from their canonical subfolders under assets/.
@@ -41,8 +41,6 @@ const TEXTURE_PATHS = {
 };
 
 const VARIANT_TEXTURE_PATHS = {
-  'floor.window_light': ['assets/tiles/floor.window_light.png', 'assets/floor.window_light.png'],
-  'wall.cracked': ['assets/walls/wall.cracked.png', 'assets/wall.cracked.png'],
   'wall.window': ['assets/walls/wall.window.png', 'assets/wall.window.png'],
   'decor.console': ['assets/props/console.png', 'assets/console.png'],
 };
@@ -435,25 +433,6 @@ function drawProp(ctx, random) {
   ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 7);
 }
 
-function drawFloorWindowLight(ctx, random) {
-  drawFloor(ctx, random);
-  ctx.fillStyle = 'rgba(110, 242, 164, 0.22)';
-  ctx.fillRect(3, 3, TILE - 6, TILE - 6);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.fillRect(TILE / 3, 6, TILE / 3, TILE / 3);
-}
-
-function drawWallCracked(ctx, random) {
-  drawWall(ctx, random);
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(4, TILE / 2);
-  ctx.lineTo(TILE / 2, TILE / 2 + 3);
-  ctx.lineTo(TILE - 5, TILE - 6);
-  ctx.stroke();
-}
-
 function drawWallWindow(ctx, random) {
   drawWall(ctx, random);
   ctx.fillStyle = 'rgba(110, 242, 164, 0.18)';
@@ -497,9 +476,7 @@ function getAnimationDefs(name, frameCount) {
 
 const DRAWERS = {
   floor: drawFloor,
-  'floor.window_light': drawFloorWindowLight,
   wall: drawWall,
-  'wall.cracked': drawWallCracked,
   'wall.window': drawWallWindow,
   door: drawDoor,
   'door.open': drawDoorOpen,
@@ -584,9 +561,7 @@ export async function loadSpriteSheet() {
 
 export const SPRITE_NAMES = {
   floor: 'floor',
-  floorWindowLight: 'floor.window_light',
   wall: 'wall',
-  wallCracked: 'wall.cracked',
   wallWindow: 'wall.window',
   door: 'door',
   doorOpen: 'door.open',

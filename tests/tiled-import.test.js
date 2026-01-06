@@ -26,7 +26,7 @@ test('importTiledLevel maps tiled properties and tileset defaults to tile IDs', 
         firstgid: 1,
         name: 'Walls',
         properties: [{ name: 'category', value: 'wall' }],
-        tiles: [{ id: 0, properties: [{ name: 'material', value: 'wall_cracked' }] }],
+        tiles: [{ id: 0, properties: [{ name: 'material', value: 'wall' }] }],
       },
       {
         firstgid: 101,
@@ -41,7 +41,7 @@ test('importTiledLevel maps tiled properties and tileset defaults to tile IDs', 
 
   const config = importTiledLevel(mapData, { presets: DEFAULT_TILED_IMPORT_OPTIONS });
 
-  assert.equal(config.tileLayers.collision[0], TILE_IDS.WALL_CRACKED);
+  assert.equal(config.tileLayers.collision[0], TILE_IDS.WALL_SOLID);
   assert.equal(config.tileLayers.collision[1], TILE_IDS.FLOOR_BROKEN);
   assert.equal(config.tileLayers.collision[2], TILE_IDS.FLOOR_PLAIN);
 });
