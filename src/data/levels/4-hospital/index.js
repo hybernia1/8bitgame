@@ -1,19 +1,16 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS } from '../../../world/tile-registry.js';
 import { hospitalNpcPackage } from './npcs.js';
-
-const { FLOOR_PLAIN: F, WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
 
 const BASE_WIDTH = 10;
 const baseLayout = [
-  W, W, W, W, W, W, W, W, W, W,
-  W, FL, F, F, FL, F, F, F, FL, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, FL, F, FL, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, FL, F, F, FL, F, F, F, FL, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, W, W, W, W, W, W, W, W, W,
+  'W', 'W2', 'W', 'W', 'W3', 'W', 'W2', 'W', 'W', 'W',
+  'W', 'F2', 'F', 'F3', 'F2', 'F', 'F', 'F3', 'F2', 'W',
+  'W', 'F', 'F', 'F', 'F3', 'F', 'F', 'F', 'F', 'W2',
+  'W', 'F', 'F3', 'F2', 'F', 'F2', 'F', 'F', 'F', 'W',
+  'W3', 'F', 'F', 'F', 'F', 'F', 'F3', 'F', 'F', 'W',
+  'W', 'F2', 'F', 'F', 'F2', 'F', 'F', 'F3', 'F2', 'W3',
+  'W', 'F', 'F', 'F3', 'F', 'F', 'F', 'F', 'F', 'W',
+  'W', 'W', 'W2', 'W', 'W', 'W3', 'W', 'W2', 'W', 'W',
 ];
 const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
 
