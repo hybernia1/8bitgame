@@ -28,28 +28,35 @@ function parseVariantNumber(raw) {
 
 function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
   if (typeof token === 'number') {
-    return { collision: token, decor: token };
+    return { collision: token, decor: token, destroyedFloor: null };
   }
 
   const stringToken = String(token ?? '').trim();
   const numeric = Number.parseInt(stringToken, 10);
   if (Number.isFinite(numeric)) {
-    return { collision: numeric, decor: numeric };
+    return { collision: numeric, decor: numeric, destroyedFloor: null };
   }
 
   const named = NAMED_TOKEN_MAP.get(stringToken.toUpperCase());
   if (named != null) {
-    return { collision: named, decor: named };
+    return { collision: named, decor: named, destroyedFloor: null };
   }
 
-  const compositeMatch = stringToken.match(/^(w|f)(\d+)?d(\d+)$/i);
+  const compositeMatch = stringToken.match(/^(w|f)(\d+)?d(\d+)(?:f(\d+)?)?$/i);
   if (compositeMatch) {
     const baseToken = compositeMatch[1].toLowerCase();
     const baseVariant = parseVariantNumber(compositeMatch[2]);
     const destroyVariant = parseVariantNumber(compositeMatch[3]);
+    const fallbackFloorVariant = compositeMatch[4] ? parseVariantNumber(compositeMatch[4]) : null;
     const collision =
       baseToken === 'w' ? getWallVariantTileId(baseVariant) : getFloorVariantTileId(baseVariant);
-    return { collision, decor: getDestroyOverlayTileId(destroyVariant) };
+    const destroyedFloor =
+      fallbackFloorVariant != null
+        ? getFloorVariantTileId(fallbackFloorVariant)
+        : baseToken === 'f'
+          ? collision
+          : defaultBase;
+    return { collision, decor: getDestroyOverlayTileId(destroyVariant), destroyedFloor };
   }
 
   const baseMatch = stringToken.match(/^(w|f)(\d+)?$/i);
@@ -58,7 +65,7 @@ function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
     const baseVariant = parseVariantNumber(baseMatch[2]);
     const collision =
       baseToken === 'w' ? getWallVariantTileId(baseVariant) : getFloorVariantTileId(baseVariant);
-    return { collision, decor: collision };
+    return { collision, decor: collision, destroyedFloor: null };
   }
 
   const destroyOnlyMatch = stringToken.match(/^d(\d+)$/i);
@@ -66,10 +73,11 @@ function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
     return {
       collision: defaultBase,
       decor: getDestroyOverlayTileId(parseVariantNumber(destroyOnlyMatch[1])),
+      destroyedFloor: defaultBase,
     };
   }
 
-  return { collision: defaultBase, decor: defaultBase };
+  return { collision: defaultBase, decor: defaultBase, destroyedFloor: null };
 }
 
 /**
@@ -90,12 +98,14 @@ export function resolveTileToken(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
 export function buildTileLayersFromTokens(tokens = [], { defaultBase = TILE_IDS.FLOOR_PLAIN } = {}) {
   const collision = [];
   const decor = [];
+  const destroyedFloors = [];
 
   tokens.forEach((entry) => {
     const resolved = normalizeTokenEntry(entry, defaultBase);
     collision.push(resolved.collision);
     decor.push(resolved.decor);
+    destroyedFloors.push(resolved.destroyedFloor);
   });
 
-  return { collision, decor };
+  return { collision, decor, destroyedFloors };
 }

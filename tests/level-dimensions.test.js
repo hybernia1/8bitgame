@@ -12,6 +12,7 @@ function resolveTileLayers(config) {
   return {
     collision: [...collision],
     decor: [...decor],
+    destroyedFloors: layers.destroyedFloors ? [...layers.destroyedFloors] : [],
     unlockMask: layers.unlockMask ?? config.unlockMask ?? [],
   };
 }
@@ -33,6 +34,13 @@ function validateLevelDimensions(name, config) {
     `${name}: collision layer length ${layers.collision.length} does not match ${expectedSize}`,
   );
   assert.equal(layers.decor.length, expectedSize, `${name}: decor layer length ${layers.decor.length} does not match ${expectedSize}`);
+  if (layers.destroyedFloors.length) {
+    assert.equal(
+      layers.destroyedFloors.length,
+      expectedSize,
+      `${name}: destroyed floor layer length ${layers.destroyedFloors.length} does not match ${expectedSize}`,
+    );
+  }
 
   layers.unlockMask.forEach((entry, idx) => {
     const index = Number.isInteger(entry?.index)
