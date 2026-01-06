@@ -903,20 +903,20 @@ function drawTileBase(context, def, x, y) {
 function drawTile(context, tile, x, y, spriteSheet, { overlayBase } = {}) {
   const def = getTileDefinition(tile);
   const sprite = resolveSpriteForTile(def, spriteSheet);
-  const hasSprite = Boolean(sprite);
+  const baseDef = overlayBase != null && def.category === 'overlay' ? getTileDefinition(overlayBase) : null;
+  const baseSprite = baseDef ? resolveSpriteForTile(baseDef, spriteSheet) : null;
 
   context.clearRect(x, y, TILE, TILE);
   context.save();
 
-  if (def.category === 'overlay') {
-    if (overlayBase != null) {
-      drawTileBase(context, getTileDefinition(overlayBase), x, y);
-    }
+  if (baseDef) {
+    drawTileBase(context, baseDef, x, y);
+    if (baseSprite) baseSprite.render({ context, x, y, width: TILE, height: TILE });
   } else {
     drawTileBase(context, def, x, y);
   }
 
-  if (hasSprite) {
+  if (sprite) {
     sprite.render({ context, x, y, width: TILE, height: TILE });
   }
   context.restore();
