@@ -39,6 +39,7 @@ Token-based layouts avoid hard-coded IDs. Examples:
 - Floors: `F1`, `F2`, …
 - Walls: `W1`, `W2`, …
 - Doors: `DOOR`, `DOOR_OPEN`
+- Decor overlays: `E1`, `E2`, … (GIFs pulled from `assets/decor/<n>.gif`; use `W1E5` or `F2E3` to overlay decor on walls or floors)
 - Destroy overlays: `D1`, `W1D1` (overlay + base in one token). Use `W#D#` for destructible walls; the transparent destroy sprite partially covers the chosen wall variant and replaces the old `WC` token. You can reveal a specific floor after destruction with `W#D#F#` (e.g., `W6D1F2` shows floor variant 2); if you omit the floor suffix, it defaults to the plain floor.
 
 Use `buildTileLayersFromTokens` and `resolveTileToken` from `src/data/levels/map-utils.js` to convert these tokens into numeric layers. See `docs/map-authoring.md` for the full cheatsheet.

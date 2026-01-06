@@ -15,6 +15,7 @@ export const TILE_IDS = {
 const DYNAMIC_FLOOR_BASE = 1000;
 const DYNAMIC_WALL_BASE = 2000;
 const DYNAMIC_DESTROY_BASE = 3000;
+const DYNAMIC_DECOR_BASE = 4000;
 
 function resolveFloorVariantIndex(tileId) {
   if (tileId === TILE_IDS.FLOOR_PLAIN) return 1;
@@ -33,7 +34,14 @@ function resolveWallVariantIndex(tileId) {
 }
 
 function resolveDestroyVariantIndex(tileId) {
-  if (tileId >= DYNAMIC_DESTROY_BASE) return tileId - DYNAMIC_DESTROY_BASE;
+  if (tileId >= DYNAMIC_DESTROY_BASE && tileId < DYNAMIC_DECOR_BASE) {
+    return tileId - DYNAMIC_DESTROY_BASE;
+  }
+  return null;
+}
+
+function resolveDecorVariantIndex(tileId) {
+  if (tileId >= DYNAMIC_DECOR_BASE) return tileId - DYNAMIC_DECOR_BASE;
   return null;
 }
 
@@ -86,6 +94,23 @@ function createDestroyTileDefinition(tileId) {
   };
 }
 
+function createDecorTileDefinition(tileId) {
+  const variantIndex = resolveDecorVariantIndex(tileId);
+  if (!variantIndex) return null;
+
+  const variantKey = `decor.${variantIndex}`;
+
+  return {
+    tileId,
+    id: `decor_${variantIndex}`,
+    category: 'decor',
+    variant: variantKey,
+    spriteKey: variantKey,
+    blocksMovement: false,
+    transparent: true,
+  };
+}
+
 export function getFloorVariantTileId(variant = 1) {
   const parsed = Number.parseInt(variant, 10);
   const variantIndex = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
@@ -104,6 +129,12 @@ export function getDestroyOverlayTileId(variant = 1) {
   return DYNAMIC_DESTROY_BASE + variantIndex;
 }
 
+export function getDecorVariantTileId(variant = 1) {
+  const parsed = Number.parseInt(variant, 10);
+  const variantIndex = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  return DYNAMIC_DECOR_BASE + variantIndex;
+}
+
 export function getFloorVariantIndex(tileId) {
   return resolveFloorVariantIndex(tileId) ?? undefined;
 }
@@ -114,6 +145,10 @@ export function getWallVariantIndex(tileId) {
 
 export function getDestroyVariantIndex(tileId) {
   return resolveDestroyVariantIndex(tileId) ?? undefined;
+}
+
+export function getDecorVariantIndex(tileId) {
+  return resolveDecorVariantIndex(tileId) ?? undefined;
 }
 
 /** @type {Record<number, TileDefinition>} */
@@ -179,6 +214,7 @@ export function getTileDefinition(tileId) {
     createFloorTileDefinition(tileId) ??
     createWallTileDefinition(tileId) ??
     createDestroyTileDefinition(tileId) ??
+    createDecorTileDefinition(tileId) ??
     FALLBACK_TILE
   );
 }
