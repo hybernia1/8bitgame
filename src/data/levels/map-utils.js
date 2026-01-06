@@ -2,6 +2,7 @@ import {
   TILE_IDS,
   getDestroyOverlayTileId,
   getFloorVariantTileId,
+  getDecorVariantTileId,
   getWallVariantTileId,
 } from '../../world/tile-registry.js';
 
@@ -59,6 +60,16 @@ function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
     return { collision, decor: getDestroyOverlayTileId(destroyVariant), destroyedFloor };
   }
 
+  const decorMatch = stringToken.match(/^(w|f)(\d+)?e(\d+)$/i);
+  if (decorMatch) {
+    const baseToken = decorMatch[1].toLowerCase();
+    const baseVariant = parseVariantNumber(decorMatch[2]);
+    const decorVariant = parseVariantNumber(decorMatch[3]);
+    const collision =
+      baseToken === 'w' ? getWallVariantTileId(baseVariant) : getFloorVariantTileId(baseVariant);
+    return { collision, decor: getDecorVariantTileId(decorVariant), destroyedFloor: null };
+  }
+
   const baseMatch = stringToken.match(/^(w|f)(\d+)?$/i);
   if (baseMatch) {
     const baseToken = baseMatch[1].toLowerCase();
@@ -74,6 +85,15 @@ function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
       collision: defaultBase,
       decor: getDestroyOverlayTileId(parseVariantNumber(destroyOnlyMatch[1])),
       destroyedFloor: defaultBase,
+    };
+  }
+
+  const decorOnlyMatch = stringToken.match(/^e(\d+)$/i);
+  if (decorOnlyMatch) {
+    return {
+      collision: defaultBase,
+      decor: getDecorVariantTileId(parseVariantNumber(decorOnlyMatch[1])),
+      destroyedFloor: null,
     };
   }
 

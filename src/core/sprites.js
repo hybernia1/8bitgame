@@ -1,6 +1,7 @@
 import { SpriteSheet } from '../kontra.mjs';
 import { TILE, TEXTURE_TILE, COLORS } from './constants.js';
 
+const DECOR_VARIANT_LIMIT = 32;
 const BASE_SPRITE_ORDER = [
   'floor',
   'wall',
@@ -19,7 +20,11 @@ const BASE_SPRITE_ORDER = [
   'prop',
 ];
 const VARIANT_SPRITE_ORDER = ['wall.window', 'decor.console'];
-const SPRITE_ORDER = [...BASE_SPRITE_ORDER, ...VARIANT_SPRITE_ORDER];
+const DECOR_SPRITE_ORDER = Array.from(
+  { length: DECOR_VARIANT_LIMIT },
+  (_, index) => `decor.${index + 1}`,
+);
+const SPRITE_ORDER = [...BASE_SPRITE_ORDER, ...VARIANT_SPRITE_ORDER, ...DECOR_SPRITE_ORDER];
 const TEXTURE_SEED = 1337;
 // Textures are loaded only from their canonical subfolders under assets/.
 const TEXTURE_PATHS = {
@@ -143,21 +148,39 @@ function loadTextureImage(path) {
   });
 }
 
-async function loadTextureMap() {
+async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
   const entries = await Promise.all(
-    [...Object.entries(TEXTURE_PATHS), ...Object.entries(VARIANT_TEXTURE_PATHS)].map(async ([name, paths]) => {
-      const candidates = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
-      const image = await candidates.reduce(async (foundPromise, candidate) => {
-        const found = await foundPromise;
-        if (found) return found;
-        return loadTextureImage(candidate);
-      }, Promise.resolve(null));
-
-      return [name, image];
+    Array.from({ length: limit }, (_, index) => index + 1).map(async (variant) => {
+      const image = await loadTextureImage(`assets/decor/${variant}.gif`);
+      return [variant, image];
     }),
   );
 
-  return entries.reduce((textures, [name, image]) => {
+  return entries
+    .filter(([, image]) => Boolean(image))
+    .map(([variant, image]) => [`decor.${variant}`, image]);
+}
+
+async function loadTextureMap() {
+  const [staticEntries, decorEntries] = await Promise.all([
+    Promise.all(
+      [...Object.entries(TEXTURE_PATHS), ...Object.entries(VARIANT_TEXTURE_PATHS)].map(
+        async ([name, paths]) => {
+          const candidates = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
+          const image = await candidates.reduce(async (foundPromise, candidate) => {
+            const found = await foundPromise;
+            if (found) return found;
+            return loadTextureImage(candidate);
+          }, Promise.resolve(null));
+
+          return [name, image];
+        },
+      ),
+    ),
+    loadDecorTextures(),
+  ]);
+
+  return [...staticEntries, ...decorEntries].reduce((textures, [name, image]) => {
     if (image) textures[name] = image;
     return textures;
   }, {});
@@ -229,11 +252,14 @@ function resolveTextureTileSize(texture) {
 
 function buildSpriteFrames(name, texture) {
   if (!texture) {
+    const drawer = DRAWERS[name] ?? DRAWERS[name.split('.')[0]] ?? DRAWERS.prop;
+    const variantMatch = name.match(/\.([0-9]+)$/);
+    const variantSeed = variantMatch ? TEXTURE_SEED + Number.parseInt(variantMatch[1], 10) : TEXTURE_SEED;
     if (name === 'player') {
       const seeds = [TEXTURE_SEED, TEXTURE_SEED + 1, TEXTURE_SEED + 2, TEXTURE_SEED + 3, TEXTURE_SEED + 4];
-      return seeds.map((seed) => withTexture(DRAWERS[name], seed));
+      return seeds.map((seed) => withTexture(drawer, seed));
     }
-    return [withTexture(DRAWERS[name])];
+    return [withTexture(drawer, variantSeed)];
   }
 
   const sourceTile = resolveTextureTileSize(texture);
@@ -468,6 +494,26 @@ function drawDestroyOverlay(ctx, random) {
   ctx.fillRect(6, 6, TILE - 12, TILE - 12);
 }
 
+function drawDecorOverlay(ctx, random) {
+  const base = jitterColor('#1d1d23', 10, random);
+  drawNoise(ctx, 0, 0, TILE, TILE, base, '#0c0c15', 0.02, random);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+  ctx.fillRect(4, 4, TILE - 8, TILE - 8);
+  ctx.strokeStyle = 'rgba(110, 242, 164, 0.35)';
+  ctx.strokeRect(4.5, 4.5, TILE - 9, TILE - 9);
+
+  const emberColor = jitterColor('#f2d45c', 24, random);
+  ctx.fillStyle = emberColor;
+  ctx.beginPath();
+  ctx.arc(TILE / 2, TILE / 2 + 2, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(242, 116, 92, 0.4)';
+  ctx.beginPath();
+  ctx.arc(TILE / 2, TILE / 2 - 2, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function getAnimationDefs(name, frameCount) {
   const definitions = SPRITE_ANIMATIONS[name];
   if (!definitions) return null;
@@ -492,6 +538,7 @@ const DRAWERS = {
   spider: drawSpider,
   prop: drawProp,
   'decor.console': drawConsole,
+  decor: drawDecorOverlay,
 };
 
 function setCanvasRenderingMode(mode) {
@@ -512,7 +559,12 @@ export async function loadSpriteSheet() {
   const animations = {};
   setCanvasRenderingMode(hasHighResolutionTextures(textures) ? 'auto' : 'pixelated');
 
-  SPRITE_ORDER.forEach((name) => {
+  const spriteNames = [
+    ...SPRITE_ORDER,
+    ...Object.keys(textures).filter((name) => !SPRITE_ORDER.includes(name)),
+  ];
+
+  spriteNames.forEach((name) => {
     const texture = textures[name];
     const startIndex = frames.length;
     const spriteFrames = buildSpriteFrames(name, texture);
@@ -577,4 +629,5 @@ export const SPRITE_NAMES = {
   spider: 'spider',
   prop: 'prop',
   decorConsole: 'decor.console',
+  decor: 'decor',
 };

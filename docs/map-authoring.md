@@ -9,6 +9,7 @@ This project lets you write maps by hand (JS modules) or import them from Tiled 
 - **Doors:** `DOOR`/`DOOR_CLOSED`, `DOOR_OPEN`.
 - **Special walls:** `WW` (`WALL_WINDOW`). Use the composite tokens below for destructible walls.
 - **Decor:** `CONSOLE`/`DECOR`.
+- **Decor overlays:** `E1`, `E2`, … (GIFs loaded from `assets/decor/<n>.gif`). Use `W1E5` or `F2E3` to place a decor element on a specific wall or floor tile without changing collision.
 - **Broken floor:** `FLOOR_BROKEN`.
 - **Destroy overlays:** `D1`, `D2`, … A transparent sprite that sits on top of whatever collision tile is present and carries the destructible texture.
 - **Composite with destroy:** `W1D1`, `F2D1`, `W6D1F2`, etc. Sets collision to the base tile and decor to the destroy overlay in one go; this replaces the old `WC` destructible wall token and lets the destroy texture partially cover the selected wall variant. Append a floor variant after the destroy overlay (e.g., `F2` in `W6D1F2`) to pick which floor is revealed once the tile breaks; if omitted, it defaults to the base floor (`F1`). Floors with destroy overlays automatically fall back to their own variant when broken.
