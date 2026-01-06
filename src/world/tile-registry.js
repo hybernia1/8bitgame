@@ -7,7 +7,6 @@ export const TILE_IDS = {
   WALL_SOLID: 1,
   DOOR_CLOSED: 2,
   DOOR_OPEN: 8,
-  WALL_WINDOW: 3,
   DECOR_CONSOLE: 6,
   FLOOR_BROKEN: 7,
 };
@@ -170,14 +169,6 @@ export const TILE_DEFINITIONS = {
     variant: 'door_open',
     spriteKey: 'door.open',
     blocksMovement: false,
-  },
-  [TILE_IDS.WALL_WINDOW]: {
-    tileId: TILE_IDS.WALL_WINDOW,
-    id: 'wall_window',
-    category: 'wall',
-    variant: 'wall_window',
-    spriteKey: 'wall.window',
-    transparent: true,
   },
   [TILE_IDS.DECOR_CONSOLE]: {
     tileId: TILE_IDS.DECOR_CONSOLE,

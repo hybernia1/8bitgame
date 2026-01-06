@@ -5,7 +5,7 @@ import { northernWingNpcPackage } from './npcs.js';
 const BASE_WIDTH = 16;
 
 const baseLayoutTokens = [
-  'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
   'W1', 'F1', 'F2', 'F2', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1D1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',

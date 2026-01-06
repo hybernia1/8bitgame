@@ -66,7 +66,7 @@ const baseSwitches = [
 
 /** @type {import('../../types.js').LevelConfig} */
 const baseLayoutTokens = [
-  'W1', 'W1D1', 'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1', 'W1', 'W1',
+  'W1', 'W1D1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F2', 'F2', 'F2', 'W1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1E1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1D1', 'F1', 'W1',
@@ -84,7 +84,7 @@ const baseLayoutTokens = [
 ];
 const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
 const baseUnlockMask = [
-  { tx: 5, ty: 3, tile: resolveTileToken('WW') },
+  { tx: 5, ty: 3, tile: resolveTileToken('W1') },
   { tx: 17, ty: 8, tile: resolveTileToken('W1') },
   { tx: 14, ty: 9, tile: resolveTileToken('F1') },
   { tx: 16, ty: 9, tile: resolveTileToken('F1') },

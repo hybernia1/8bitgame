@@ -7,7 +7,6 @@ This project lets you write maps by hand (JS modules) or import them from Tiled 
 - **Floors:** `F1`, `F2`, … (default is `F1`).
 - **Walls:** `W1`, `W2`, … (default is `W1`).
 - **Doors:** `DOOR`/`DOOR_CLOSED`, `DOOR_OPEN`.
-- **Special walls:** `WW` (`WALL_WINDOW`). Use the composite tokens below for destructible walls.
 - **Decor:** `CONSOLE`/`DECOR`.
 - **Decor overlays:** `E1`, `E2`, … (GIFs loaded from `assets/decor/<n>.gif`). Use `W1E5` or `F2E3` to place a decor element on a specific wall or floor tile without changing collision.
 - **Broken floor:** `FLOOR_BROKEN`.
