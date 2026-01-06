@@ -117,6 +117,7 @@ function resolveTileLayers(config) {
   return {
     collision: [...collision],
     decor: [...decor],
+    destroyedFloors: layers.destroyedFloors ? [...layers.destroyedFloors] : [],
     collisionUnlocked: layers.collisionUnlocked ? [...layers.collisionUnlocked] : [],
     decorUnlocked: layers.decorUnlocked ? [...layers.decorUnlocked] : [],
     unlockMask: layers.unlockMask ?? config.unlockMask ?? [],
@@ -197,6 +198,7 @@ export class LevelInstance {
 
     this.collisionBase = tileLayers.collision;
     this.decorBase = tileLayers.decor;
+    this.destroyedFloorBase = tileLayers.destroyedFloors;
     this.unlockMask = normalizeUnlockMask(tileLayers, this.mapWidth);
     this.unlockMaskByIndex = new Map(this.unlockMask.map((entry) => [entry.index, entry]));
 
@@ -209,6 +211,11 @@ export class LevelInstance {
     if (this.decorBase.length !== expectedSize) {
       throw new Error(
         `Decor layer size mismatch: expected ${expectedSize} tiles but received ${this.decorBase.length}.`,
+      );
+    }
+    if (this.destroyedFloorBase.length && this.destroyedFloorBase.length !== expectedSize) {
+      throw new Error(
+        `Destroyed floor layer size mismatch: expected ${expectedSize} tiles but received ${this.destroyedFloorBase.length}.`,
       );
     }
 
@@ -228,6 +235,11 @@ export class LevelInstance {
   resetState() {
     this.collisionTiles = [...this.collisionBase];
     this.decorTiles = [...this.decorBase];
+    const destroyedFloorDefault = new Array(this.mapWidth * this.mapHeight).fill(null);
+    this.destroyedFloors =
+      this.destroyedFloorBase.length === this.mapWidth * this.mapHeight
+        ? [...this.destroyedFloorBase]
+        : destroyedFloorDefault;
     this.destructibleTiles = new Map();
     this.gate = this.gateConfig
       ? {
@@ -366,6 +378,12 @@ export class LevelInstance {
     }
   }
 
+  getDestroyedFloorTile(index) {
+    const fallback = this.destroyedFloors?.[index];
+    if (Number.isInteger(fallback)) return fallback;
+    return FLOOR_TILE;
+  }
+
   damageTileAt(x, y, amount = 1) {
     const index = this.getTileIndexAt(x, y);
     if (index === null) {
@@ -387,8 +405,9 @@ export class LevelInstance {
     }
 
     this.destructibleTiles.delete(index);
-    this.collisionTiles[index] = FLOOR_TILE;
-    this.decorTiles[index] = FLOOR_TILE;
+    const destroyedFloor = this.getDestroyedFloorTile(index);
+    this.collisionTiles[index] = destroyedFloor;
+    this.decorTiles[index] = destroyedFloor;
     this.invalidateTiles([index]);
     return true;
   }
@@ -710,8 +729,9 @@ export class LevelInstance {
       const destructible = resolveDestructibleTile(this.collisionTiles[index], this.decorTiles[index]);
       if (!destructible) return;
       if (!hpByIndex.has(index)) {
-        this.collisionTiles[index] = FLOOR_TILE;
-        this.decorTiles[index] = FLOOR_TILE;
+        const destroyedFloor = this.getDestroyedFloorTile(index);
+        this.collisionTiles[index] = destroyedFloor;
+        this.decorTiles[index] = destroyedFloor;
         this.destructibleTiles.delete(index);
         changed.push(index);
         return;

@@ -137,6 +137,7 @@
  * @typedef {Object} TileLayers
  * @property {number[]} collision
  * @property {number[]} decor
+ * @property {number[]} [destroyedFloors] Tile to reveal after a destructible wall/overlay breaks; must match map dimensions if provided.
  * @property {Array<{ index?: number, tx?: number, ty?: number, tile?: number, tileId?: number, collision?: number, decor?: number }>} [unlockMask]
  */
 
