@@ -1,18 +1,19 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS } from '../../../world/tile-registry.js';
+import { TILE_IDS, getFloorVariantTileId } from '../../../world/tile-registry.js';
 import { hospitalNpcPackage } from './npcs.js';
 
-const { FLOOR_PLAIN: F, WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
+const { WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
+const F2 = getFloorVariantTileId(2);
 
 const BASE_WIDTH = 10;
 const baseLayout = [
   W, W, W, W, W, W, W, W, W, W,
-  W, FL, F, F, FL, F, F, F, FL, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, FL, F, FL, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, FL, F, F, FL, F, F, F, FL, W,
-  W, F, F, F, F, F, F, F, F, W,
+  W, FL, F2, F2, FL, F2, F2, F2, FL, W,
+  W, F2, F2, F2, F2, F2, F2, F2, F2, W,
+  W, F2, F2, FL, F2, FL, F2, F2, F2, W,
+  W, F2, F2, F2, F2, F2, F2, F2, F2, W,
+  W, FL, F2, F2, FL, F2, F2, F2, FL, W,
+  W, F2, F2, F2, F2, F2, F2, F2, F2, W,
   W, W, W, W, W, W, W, W, W, W,
 ];
 const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
