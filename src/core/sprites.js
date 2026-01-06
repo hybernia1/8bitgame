@@ -148,65 +148,11 @@ function loadTextureImage(path) {
   });
 }
 
-async function decodeAnimatedTexture(path) {
-  if (typeof ImageDecoder === 'undefined') return null;
-
-  try {
-    const resolvedPath = resolveTexturePath(path);
-    const response = await fetch(resolvedPath);
-    if (!response.ok) return null;
-    const buffer = await response.arrayBuffer();
-    const type = path.endsWith('.gif') ? 'image/gif' : undefined;
-    const decoder = new ImageDecoder({ data: buffer, type });
-    const track = decoder.tracks?.[0];
-    const frameCount = track?.frameCount ?? decoder.frameCount ?? 0;
-    if (!frameCount || frameCount <= 1) return null;
-
-    const frames = [];
-    for (let index = 0; index < frameCount; index += 1) {
-      const { image, duration } = await decoder.decode({ frameIndex: index });
-      frames.push({ image, duration });
-    }
-
-    return frames;
-  } catch (error) {
-    return null;
-  }
-}
-
-function resolveFrameRateFromDurations(durations = []) {
-  if (!durations.length) return null;
-  const averageDuration = durations.reduce((sum, value) => sum + value, 0) / durations.length;
-  if (!averageDuration) return null;
-  const durationMs = averageDuration > 1000 ? averageDuration / 1000 : averageDuration;
-  if (!durationMs) return null;
-  return 1000 / durationMs;
-}
-
-function normalizeTexture(texture) {
-  if (!texture) return null;
-  if (texture.frames?.length) {
-    return texture;
-  }
-  return { frames: [texture] };
-}
-
 async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
   const entries = await Promise.all(
     Array.from({ length: limit }, (_, index) => index + 1).map(async (variant) => {
-      const path = `assets/decor/${variant}.gif`;
-      const decodedFrames = await decodeAnimatedTexture(path);
-      if (decodedFrames?.length) {
-        const frames = decodedFrames.map((frame) => frame.image);
-        const durations = decodedFrames
-          .map((frame) => frame.duration)
-          .filter((value) => Number.isFinite(value));
-        const frameRate = resolveFrameRateFromDurations(durations);
-        return [variant, { frames, frameRate }];
-      }
-
-      const image = await loadTextureImage(path);
-      return [variant, image ? { frames: [image] } : null];
+      const image = await loadTextureImage(`assets/decor/${variant}.gif`);
+      return [variant, image];
     }),
   );
 
@@ -296,48 +242,38 @@ function drawFromImageFrame(image, sx, sy, sourceTile = TEXTURE_TILE) {
 
 function resolveTextureTileSize(texture) {
   if (!texture) return TILE;
-  const rawTexture = texture.frames?.[0] ?? texture;
-  if (!rawTexture?.width || !rawTexture?.height) return TILE;
   const preferredSizes = [TEXTURE_TILE * 2, TEXTURE_TILE];
   const matchingSize = preferredSizes.find(
-    (size) => rawTexture.width % size === 0 && rawTexture.height % size === 0,
+    (size) => texture.width % size === 0 && texture.height % size === 0,
   );
   if (matchingSize) return matchingSize;
-  return Math.min(TEXTURE_TILE, rawTexture.width, rawTexture.height);
+  return Math.min(TEXTURE_TILE, texture.width, texture.height);
 }
 
 function buildSpriteFrames(name, texture) {
-  const normalizedTexture = normalizeTexture(texture);
-
-  if (!normalizedTexture) {
+  if (!texture) {
     const drawer = DRAWERS[name] ?? DRAWERS[name.split('.')[0]] ?? DRAWERS.prop;
     const variantMatch = name.match(/\.([0-9]+)$/);
     const variantSeed = variantMatch ? TEXTURE_SEED + Number.parseInt(variantMatch[1], 10) : TEXTURE_SEED;
     if (name === 'player') {
       const seeds = [TEXTURE_SEED, TEXTURE_SEED + 1, TEXTURE_SEED + 2, TEXTURE_SEED + 3, TEXTURE_SEED + 4];
-      return { frames: seeds.map((seed) => withTexture(drawer, seed)) };
+      return seeds.map((seed) => withTexture(drawer, seed));
     }
-    return { frames: [withTexture(drawer, variantSeed)] };
+    return [withTexture(drawer, variantSeed)];
   }
 
-  const firstFrame = normalizedTexture.frames[0];
-  const sourceTile = resolveTextureTileSize(firstFrame);
-  const cols = Math.max(1, Math.floor(firstFrame.width / sourceTile));
-  const rows = Math.max(1, Math.floor(firstFrame.height / sourceTile));
+  const sourceTile = resolveTextureTileSize(texture);
+  const cols = Math.max(1, Math.floor(texture.width / sourceTile));
+  const rows = Math.max(1, Math.floor(texture.height / sourceTile));
 
   const frames = [];
-  normalizedTexture.frames.forEach((frame) => {
-    const frameCols = Math.max(1, Math.floor(frame.width / sourceTile));
-    const frameRows = Math.max(1, Math.floor(frame.height / sourceTile));
-
-    for (let row = 0; row < frameRows; row += 1) {
-      for (let col = 0; col < frameCols; col += 1) {
-        frames.push(drawFromImageFrame(frame, col * sourceTile, row * sourceTile, sourceTile));
-      }
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      frames.push(drawFromImageFrame(texture, col * sourceTile, row * sourceTile, sourceTile));
     }
-  });
+  }
 
-  return { frames, frameRate: normalizedTexture.frameRate };
+  return frames;
 }
 
 function expandFrameSpec(frameSpec, offset) {
@@ -631,7 +567,7 @@ export async function loadSpriteSheet() {
   spriteNames.forEach((name) => {
     const texture = textures[name];
     const startIndex = frames.length;
-    const { frames: spriteFrames, frameRate: textureFrameRate } = buildSpriteFrames(name, texture);
+    const spriteFrames = buildSpriteFrames(name, texture);
     frames.push(...spriteFrames);
 
     const animationDefs = getAnimationDefs(name, spriteFrames.length);
@@ -646,11 +582,6 @@ export async function loadSpriteSheet() {
       if (!animations[name]) {
         animations[name] = { frames: [startIndex] };
       }
-    } else if (spriteFrames.length > 1) {
-      animations[name] = {
-        frames: expandFrameSpec(`0..${spriteFrames.length - 1}`, startIndex),
-        frameRate: textureFrameRate ?? 8,
-      };
     } else {
       animations[name] = { frames: [startIndex] };
     }
