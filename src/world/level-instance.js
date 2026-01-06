@@ -4,7 +4,6 @@
  */
 
 import { COLORS, TILE, WORLD } from '../core/constants.js';
-import { getDecorTexture } from '../core/sprites.js';
 import { getTileDefinition, isBlockingTileId, TILE_IDS } from './tile-registry.js';
 
 const DOOR_TILE = TILE_IDS.DOOR_CLOSED;
@@ -191,7 +190,6 @@ export class LevelInstance {
     this.lightingDirtyAll = true;
     this.dirtyTileIndices = new Set();
     this.dirtyLightingIndices = new Set();
-    this.animatedDecorTiles = new Map();
 
     const tileLayers = resolveTileLayers(levelConfig);
     const { width, height } = resolveDimensions(levelConfig, tileLayers);
@@ -275,7 +273,6 @@ export class LevelInstance {
       }
     }
 
-    this.rebuildAnimatedDecorTiles();
     this.rebuildTileEffects();
     this.initializePressureSwitches();
     this.initializeDestructibleTiles();
@@ -465,19 +462,6 @@ export class LevelInstance {
     const sourceWidth = Math.min(ctx.canvas.width, decorCanvas.width - sourceX);
     const sourceHeight = Math.min(ctx.canvas.height, decorCanvas.height - sourceY);
     ctx.drawImage(decorCanvas, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
-
-    if (this.animatedDecorTiles.size) {
-      ctx.save();
-      this.animatedDecorTiles.forEach((image, index) => {
-        const tx = index % this.mapWidth;
-        const ty = Math.floor(index / this.mapWidth);
-        const drawX = tx * TILE - camera.x;
-        const drawY = ty * TILE - camera.y;
-        if (drawX > ctx.canvas.width || drawY > ctx.canvas.height || drawX + TILE < 0 || drawY + TILE < 0) return;
-        ctx.drawImage(image, drawX, drawY, TILE, TILE);
-      });
-      ctx.restore();
-    }
   }
 
   drawLightSwitches(ctx, camera) {
@@ -785,7 +769,6 @@ export class LevelInstance {
         this.lightingDirtyAll = true;
       }
     });
-    this.rebuildAnimatedDecorTiles(indices);
   }
 
   invalidateLighting(indices) {
@@ -827,36 +810,6 @@ export class LevelInstance {
     const def = getTileDefinition(Number.isInteger(decorTile) ? decorTile : collisionTile);
     if (!def.lighting) return null;
     return { ...def.lighting };
-  }
-
-  resolveAnimatedDecorTexture(index) {
-    const tileId = this.decorTiles[index];
-    const def = getTileDefinition(tileId);
-    if (def.category !== 'decor') return null;
-    const variantKey = typeof def.variant === 'string' ? def.variant : def.spriteKey;
-    if (!variantKey) return null;
-    return getDecorTexture(variantKey);
-  }
-
-  rebuildAnimatedDecorTiles(indices) {
-    if (!indices || !indices.length) {
-      this.animatedDecorTiles.clear();
-      this.decorTiles.forEach((_, index) => {
-        const texture = this.resolveAnimatedDecorTexture(index);
-        if (texture) this.animatedDecorTiles.set(index, texture);
-      });
-      return;
-    }
-
-    indices.forEach((index) => {
-      if (!Number.isInteger(index) || index < 0 || index >= this.decorTiles.length) return;
-      const texture = this.resolveAnimatedDecorTexture(index);
-      if (texture) {
-        this.animatedDecorTiles.set(index, texture);
-      } else {
-        this.animatedDecorTiles.delete(index);
-      }
-    });
   }
 
   createLayerCanvas(tiles, spriteSheet, baseTiles) {
