@@ -26,7 +26,6 @@ const BUILTIN_VARIANT_MAP = Object.values(TILE_DEFINITIONS).reduce((acc, def) =>
 
 export const TILE_VARIANT_MAP = {
   ...BUILTIN_VARIANT_MAP,
-  wall_cracked: TILE_IDS.WALL_CRACKED,
   wall_window: TILE_IDS.WALL_WINDOW,
   floor_broken: TILE_IDS.FLOOR_BROKEN,
   decor_console: TILE_IDS.DECOR_CONSOLE,

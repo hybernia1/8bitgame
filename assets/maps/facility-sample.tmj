@@ -50,7 +50,7 @@
       "columns": 2,
       "properties": [{ "name": "category", "value": "wall" }],
       "tiles": [
-        { "id": 0, "properties": [{ "name": "material", "value": "wall_cracked" }] },
+        { "id": 0, "properties": [{ "name": "material", "value": "wall" }] },
         { "id": 1, "properties": [{ "name": "variant", "value": "wall_window" }] }
       ]
     },
@@ -67,7 +67,7 @@
       ],
       "tiles": [
         { "id": 0, "properties": [{ "name": "variant", "value": "floor_broken" }] },
-        { "id": 1, "properties": [{ "name": "variant", "value": "floor_lit" }] }
+        { "id": 1, "properties": [{ "name": "variant", "value": "floor.2" }] }
       ]
     },
     {

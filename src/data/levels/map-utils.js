@@ -37,14 +37,6 @@ function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
     return { collision: numeric, decor: numeric };
   }
 
-  const normalized = stringToken.toUpperCase();
-  if (normalized === 'WC' || normalized === 'WALL_CRACKED' || normalized === 'CRACKED_WALL') {
-    return {
-      collision: getWallVariantTileId(1),
-      decor: getDestroyOverlayTileId(1),
-    };
-  }
-
   const named = NAMED_TOKEN_MAP.get(stringToken.toUpperCase());
   if (named != null) {
     return { collision: named, decor: named };
