@@ -2,7 +2,6 @@ import { SpriteSheet } from '../kontra.mjs';
 import { TILE, TEXTURE_TILE, COLORS } from './constants.js';
 
 const DECOR_VARIANT_LIMIT = 32;
-const decorTextureCache = new Map();
 const BASE_SPRITE_ORDER = [
   'floor',
   'wall',
@@ -150,19 +149,16 @@ function loadTextureImage(path) {
 }
 
 async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
-  decorTextureCache.clear();
-  const entries = [];
+  const entries = await Promise.all(
+    Array.from({ length: limit }, (_, index) => index + 1).map(async (variant) => {
+      const image = await loadTextureImage(`assets/decor/${variant}.gif`);
+      return [variant, image];
+    }),
+  );
 
-  for (let variant = 1; variant <= limit; variant += 1) {
-    const image = await loadTextureImage(`assets/decor/${variant}.gif`);
-    if (image) {
-      entries.push([variant, image]);
-      decorTextureCache.set(`decor.${variant}`, image);
-      continue;
-    }
-  }
-
-  return entries.map(([variant, image]) => [`decor.${variant}`, image]);
+  return entries
+    .filter(([, image]) => Boolean(image))
+    .map(([variant, image]) => [`decor.${variant}`, image]);
 }
 
 async function loadTextureMap() {
@@ -555,10 +551,6 @@ function hasHighResolutionTextures(textures) {
     if (!texture) return false;
     return resolveTextureTileSize(texture) > TEXTURE_TILE;
   });
-}
-
-export function getDecorTexture(name) {
-  return decorTextureCache.get(name);
 }
 
 export async function loadSpriteSheet() {
