@@ -164,6 +164,71 @@ a {
   margin-bottom: 8px;
 }
 
+.texture-preview {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--panel-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.texture-preview .label {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.texture-preview-box {
+  background: #0f0f16;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.texture-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  display: none;
+}
+
+.texture-placeholder {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px;
+  font-size: 0.95rem;
+}
+
+.texture-status {
+  margin: 0;
+}
+
+[data-texture-preview][data-state="ready"] img,
+[data-texture-preview][data-state="placeholder"] img {
+  display: block;
+}
+
+[data-texture-preview][data-state="ready"] .texture-placeholder,
+[data-texture-preview][data-state="placeholder"] .texture-placeholder {
+  display: none;
+}
+
+[data-texture-preview][data-state="loading"] .texture-placeholder {
+  color: var(--text);
+  font-weight: 600;
+}
+
+[data-texture-preview][data-state="error"] .texture-status {
+  color: var(--danger);
+}
+
 .token-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -209,6 +274,14 @@ a {
   cursor: pointer;
   transition: border-color 120ms ease, transform 120ms ease;
   min-height: 44px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
 }
 
 .grid button:hover {
@@ -219,6 +292,11 @@ a {
 .grid button.is-active {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px rgba(59, 224, 161, 0.35);
+}
+
+.grid button.has-texture {
+  color: #f6f7ff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .output-panel {

@@ -8,6 +8,9 @@ const applySizeBtn = document.querySelector('[data-apply-size]');
 const fillBtn = document.querySelector('[data-fill-grid]');
 const resetBtn = document.querySelector('[data-reset-grid]');
 const copyBtn = document.querySelector('[data-copy-output]');
+const texturePreviewEl = document.querySelector('[data-texture-preview]');
+const texturePreviewImage = document.querySelector('[data-texture-image]');
+const texturePreviewStatus = document.querySelector('[data-texture-status]');
 
 const MAX_SIZE = 30;
 const DEFAULT_TOKEN = 'F1';
@@ -15,6 +18,131 @@ let grid = [];
 let width = Number.parseInt(widthInput.value, 10) || 10;
 let height = Number.parseInt(heightInput.value, 10) || 8;
 let activeToken = tokenInput.value.trim() || DEFAULT_TOKEN;
+const placeholderTextureCache = new Map();
+
+function resolveAssetUrl(path) {
+  const assetsBase = new URL('../assets/', window.location.href);
+  return new URL(path, assetsBase).toString();
+}
+
+function createPlaceholderTexture(token) {
+  if (placeholderTextureCache.has(token)) return placeholderTextureCache.get(token);
+
+  const size = 96;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#1b1b22';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#3be0a1';
+  ctx.fillRect(8, 8, size - 16, size - 16);
+  ctx.fillStyle = '#0f0f16';
+  ctx.font = '700 18px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(token.slice(0, 8), size / 2, size / 2);
+
+  const dataUrl = canvas.toDataURL('image/png');
+  placeholderTextureCache.set(token, dataUrl);
+  return dataUrl;
+}
+
+function resolveTextureForToken(token) {
+  const normalized = String(token ?? '').trim();
+  if (!normalized) return null;
+
+  const upper = normalized.toUpperCase();
+  const isDoorOpen = upper.includes('DOOR_OPEN') || upper.includes('OPEN_DOOR');
+  const isDoor = upper.includes('DOOR');
+  const isWindowWall = upper === 'WW' || upper.includes('WINDOW');
+
+  if (isDoorOpen) {
+    return { url: resolveAssetUrl('doors/door.open.png'), label: 'Otevřené dveře', isPlaceholder: false };
+  }
+  if (isDoor) {
+    return { url: resolveAssetUrl('doors/door.png'), label: 'Zavřené dveře', isPlaceholder: false };
+  }
+  if (isWindowWall) {
+    return {
+      url: resolveAssetUrl('walls/wall.window.png'),
+      label: 'Zeď s oknem',
+      isPlaceholder: false,
+    };
+  }
+
+  const destroyOverlayMatch = upper.match(/^D\d+/);
+  if (destroyOverlayMatch) {
+    return {
+      url: resolveAssetUrl('walls/wall.png'),
+      label: 'Destrukce (náhled sdílí texturu zdi)',
+      isPlaceholder: false,
+    };
+  }
+
+  const baseLetter = upper.charAt(0);
+  if (baseLetter === 'W') {
+    return { url: resolveAssetUrl('walls/wall.png'), label: 'Varianta zdi', isPlaceholder: false };
+  }
+  if (baseLetter === 'F') {
+    return { url: resolveAssetUrl('tiles/floor.png'), label: 'Varianta podlahy', isPlaceholder: false };
+  }
+
+  return {
+    url: createPlaceholderTexture(normalized),
+    label: `Generovaný náhled pro ${normalized}`,
+    isPlaceholder: true,
+  };
+}
+
+function applyTextureToCell(cell, token) {
+  const texture = resolveTextureForToken(token);
+  if (texture?.url) {
+    cell.style.backgroundImage = `url("${texture.url}")`;
+    cell.classList.add('has-texture');
+    cell.dataset.placeholderTexture = texture.isPlaceholder ? 'true' : 'false';
+  } else {
+    cell.style.backgroundImage = '';
+    cell.classList.remove('has-texture');
+    cell.dataset.placeholderTexture = 'false';
+  }
+}
+
+function updateTexturePreview(token) {
+  if (!texturePreviewEl || !texturePreviewImage || !texturePreviewStatus) return;
+  const texture = resolveTextureForToken(token);
+
+  if (!texture) {
+    texturePreviewEl.dataset.state = 'empty';
+    texturePreviewImage.removeAttribute('src');
+    texturePreviewImage.alt = '';
+    texturePreviewStatus.textContent = 'Pro tento token není dostupný náhled.';
+    return;
+  }
+
+  const { url, label, isPlaceholder } = texture;
+  texturePreviewEl.dataset.state = 'loading';
+  texturePreviewStatus.textContent = 'Načítám texturu…';
+  texturePreviewImage.dataset.expectedUrl = url;
+  texturePreviewImage.alt = label || `Textura pro ${token}`;
+
+  texturePreviewImage.onload = () => {
+    if (texturePreviewImage.dataset.expectedUrl !== url) return;
+    texturePreviewEl.dataset.state = isPlaceholder ? 'placeholder' : 'ready';
+    texturePreviewStatus.textContent = isPlaceholder
+      ? 'Nenašel jsem soubor, zobrazuji generovaný náhled.'
+      : label || 'Textura načtena';
+  };
+
+  texturePreviewImage.onerror = () => {
+    if (texturePreviewImage.dataset.expectedUrl !== url) return;
+    texturePreviewEl.dataset.state = 'error';
+    texturePreviewStatus.textContent = 'Textura se nepodařilo načíst (soubor chybí?).';
+  };
+
+  texturePreviewImage.src = url;
+}
 
 function clampSize(value) {
   const parsed = Number.parseInt(value, 10) || 1;
@@ -41,6 +169,7 @@ function resizeGrid(newW, newH) {
 function setActiveToken(token) {
   activeToken = token.trim() || DEFAULT_TOKEN;
   tokenInput.value = activeToken;
+  updateTexturePreview(activeToken);
 }
 
 function formatLayoutTokens() {
@@ -67,6 +196,7 @@ function renderGrid() {
       cell.addEventListener('click', () => {
         grid[y][x] = activeToken;
         cell.textContent = activeToken;
+        applyTextureToCell(cell, activeToken);
         updateOutput();
       });
       cell.addEventListener('contextmenu', (event) => {
@@ -74,6 +204,7 @@ function renderGrid() {
         const lastToken = grid[y][x];
         setActiveToken(lastToken);
       });
+      applyTextureToCell(cell, token);
       gridEl.appendChild(cell);
     });
   });
@@ -131,4 +262,5 @@ copyBtn.addEventListener('click', async () => {
 });
 
 // Initial render
+setActiveToken(activeToken);
 resizeGrid(width, height);
