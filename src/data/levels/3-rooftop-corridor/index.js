@@ -1,21 +1,20 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS } from '../../../world/tile-registry.js';
-
-const { FLOOR_PLAIN: F, WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
+import { buildTileLayersFromTokens } from '../map-utils.js';
 
 const BASE_WIDTH = 9;
-const baseLayout = [
-  W, W, W, W, W, W, W, W, W,
-  W, FL, F, F, F, F, F, FL, W,
-  W, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, W,
-  W, F, F, F, FL, F, F, F, W,
-  W, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, W,
-  W, FL, F, F, F, F, F, FL, W,
-  W, W, W, W, W, W, W, W, W,
+const baseLayoutTokens = [
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
+  'W1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
-const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
+const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
+const BASE_HEIGHT = baseLayout.collision.length / BASE_WIDTH;
 
 /** @type {import('../../types.js').LevelConfig} */
 export const rooftopCorridorLevel = {
@@ -29,8 +28,8 @@ export const rooftopCorridorLevel = {
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
-    collision: [...baseLayout],
-    decor: [...baseLayout],
+    collision: [...baseLayout.collision],
+    decor: [...baseLayout.decor],
   },
   lighting: {
     litZones: [{ x: 1, y: 1, w: 7, h: 7 }],

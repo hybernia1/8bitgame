@@ -123,7 +123,7 @@
 /**
  * @typedef {Object} TileDefinition
  * @property {number} tileId Numeric identifier used in level layers.
- * @property {'wall'|'floor'|'door'|'decor'} category
+ * @property {'wall'|'floor'|'door'|'decor'|'overlay'} category
  * @property {string} id Stable identifier, e.g. "wall_window".
  * @property {string} [variant] Optional sprite/variant label for rendering.
  * @property {string} [spriteKey] Optional animation key used to pick a sprite-sheet frame.

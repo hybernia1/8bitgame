@@ -9,16 +9,28 @@ export const TILE_IDS = {
   DOOR_OPEN: 8,
   WALL_WINDOW: 3,
   WALL_CRACKED: 4,
-  FLOOR_LIT: 5,
   DECOR_CONSOLE: 6,
   FLOOR_BROKEN: 7,
 };
 
 const DYNAMIC_FLOOR_BASE = 1000;
+const DYNAMIC_WALL_BASE = 2000;
+const DYNAMIC_DESTROY_BASE = 3000;
 
 function resolveFloorVariantIndex(tileId) {
   if (tileId === TILE_IDS.FLOOR_PLAIN) return 1;
   if (tileId >= DYNAMIC_FLOOR_BASE) return tileId - DYNAMIC_FLOOR_BASE;
+  return null;
+}
+
+function resolveWallVariantIndex(tileId) {
+  if (tileId === TILE_IDS.WALL_SOLID) return 1;
+  if (tileId >= DYNAMIC_WALL_BASE) return tileId - DYNAMIC_WALL_BASE;
+  return null;
+}
+
+function resolveDestroyVariantIndex(tileId) {
+  if (tileId >= DYNAMIC_DESTROY_BASE) return tileId - DYNAMIC_DESTROY_BASE;
   return null;
 }
 
@@ -37,26 +49,74 @@ function createFloorTileDefinition(tileId) {
   };
 }
 
+function createWallTileDefinition(tileId) {
+  const variantIndex = resolveWallVariantIndex(tileId);
+  if (!variantIndex) return null;
+
+  const variantKey = variantIndex === 1 ? 'wall' : `wall.${variantIndex}`;
+
+  return {
+    tileId,
+    id: variantIndex === 1 ? 'wall_solid' : `wall_${variantIndex}`,
+    category: 'wall',
+    variant: variantKey,
+    spriteKey: variantKey,
+    blocksMovement: true,
+  };
+}
+
+function createDestroyTileDefinition(tileId) {
+  const variantIndex = resolveDestroyVariantIndex(tileId);
+  if (!variantIndex) return null;
+
+  const variantKey = variantIndex === 1 ? 'destroy' : `destroy.${variantIndex}`;
+
+  return {
+    tileId,
+    id: variantIndex === 1 ? 'destroy_overlay' : `destroy_${variantIndex}`,
+    category: 'overlay',
+    variant: variantKey,
+    spriteKey: variantKey,
+    hitPoints: 1,
+    blocksMovement: false,
+    transparent: true,
+  };
+}
+
 export function getFloorVariantTileId(variant = 1) {
   const parsed = Number.parseInt(variant, 10);
   const variantIndex = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
   return variantIndex === 1 ? TILE_IDS.FLOOR_PLAIN : DYNAMIC_FLOOR_BASE + variantIndex;
 }
 
+export function getWallVariantTileId(variant = 1) {
+  const parsed = Number.parseInt(variant, 10);
+  const variantIndex = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  return variantIndex === 1 ? TILE_IDS.WALL_SOLID : DYNAMIC_WALL_BASE + variantIndex;
+}
+
+export function getDestroyOverlayTileId(variant = 1) {
+  const parsed = Number.parseInt(variant, 10);
+  const variantIndex = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  return DYNAMIC_DESTROY_BASE + variantIndex;
+}
+
 export function getFloorVariantIndex(tileId) {
   return resolveFloorVariantIndex(tileId) ?? undefined;
+}
+
+export function getWallVariantIndex(tileId) {
+  return resolveWallVariantIndex(tileId) ?? undefined;
+}
+
+export function getDestroyVariantIndex(tileId) {
+  return resolveDestroyVariantIndex(tileId) ?? undefined;
 }
 
 /** @type {Record<number, TileDefinition>} */
 export const TILE_DEFINITIONS = {
   [TILE_IDS.FLOOR_PLAIN]: createFloorTileDefinition(TILE_IDS.FLOOR_PLAIN),
-  [TILE_IDS.WALL_SOLID]: {
-    tileId: TILE_IDS.WALL_SOLID,
-    id: 'wall_solid',
-    category: 'wall',
-    variant: 'wall',
-    spriteKey: 'wall',
-  },
+  [TILE_IDS.WALL_SOLID]: createWallTileDefinition(TILE_IDS.WALL_SOLID),
   [TILE_IDS.DOOR_CLOSED]: {
     tileId: TILE_IDS.DOOR_CLOSED,
     id: 'door_closed',
@@ -89,19 +149,6 @@ export const TILE_DEFINITIONS = {
     spriteKey: 'wall.cracked',
     hitPoints: 1,
   },
-  [TILE_IDS.FLOOR_LIT]: {
-    tileId: TILE_IDS.FLOOR_LIT,
-    id: 'floor_lit',
-    category: 'floor',
-    variant: 'floor_lit',
-    spriteKey: 'floor.lit',
-    lighting: {
-      mask: 'glow',
-      color: 'rgba(110, 242, 164, 0.28)',
-      intensity: 0.45,
-      radius: 1,
-    },
-  },
   [TILE_IDS.DECOR_CONSOLE]: {
     tileId: TILE_IDS.DECOR_CONSOLE,
     id: 'decor_console',
@@ -132,7 +179,13 @@ const FALLBACK_TILE = {
  * @returns {TileDefinition}
  */
 export function getTileDefinition(tileId) {
-  return TILE_DEFINITIONS[tileId] ?? createFloorTileDefinition(tileId) ?? FALLBACK_TILE;
+  return (
+    TILE_DEFINITIONS[tileId] ??
+    createFloorTileDefinition(tileId) ??
+    createWallTileDefinition(tileId) ??
+    createDestroyTileDefinition(tileId) ??
+    FALLBACK_TILE
+  );
 }
 
 /**

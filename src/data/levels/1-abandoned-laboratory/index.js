@@ -1,18 +1,9 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS } from '../../../world/tile-registry.js';
+import { buildTileLayersFromTokens, resolveTileToken } from '../map-utils.js';
 import { abandonedLaboratoryNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 20;
 const BASE_HEIGHT = 15;
-const {
-  FLOOR_PLAIN: F,
-  WALL_SOLID: W,
-  DOOR_CLOSED: D,
-  DOOR_OPEN: DO,
-  WALL_WINDOW: WW,
-  WALL_CRACKED: WC,
-  FLOOR_LIT: FL,
-} = TILE_IDS;
 
 const baseSwitches = [
   {
@@ -74,22 +65,33 @@ const baseSwitches = [
 ];
 
 /** @type {import('../../types.js').LevelConfig} */
-const baseLayout = [
-  W, WC, W, W, W, WW, W, W, W, W, W, W, W, W, WW, W, W, W, W, W,
-  W, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, W,
-  W, F, FL, FL, FL, W, W, W, W, F, F, F, F, W, F, F, F, F, F, W,
-  W, F, F, F, F, W, F, F, W, F, F, F, F, W, F, W, W, WC, F, W,
-  W, F, F, F, F, W, F, F, W, F, F, F, F, W, F, F, F, W, F, W,
-  W, F, F, F, F, W, F, F, W, FL, FL, F, F, W, W, W, F, W, F, W,
-  W, F, F, F, F, W, F, F, W, F, F, F, F, FL, F, F, F, W, F, W,
-  W, F, F, F, F, W, F, F, W, W, W, F, F, F, F, WC, F, W, F, W,
-  W, F, F, F, F, W, F, F, F, F, W, FL, FL, W, F, W, F, F, F, W,
-  W, F, F, F, F, W, FL, F, F, F, W, F, F, W, W, W, W, W, F, W,
-  W, F, F, F, F, W, F, F, F, F, F, F, F, W, D, W, W, W, F, W,
-  W, F, F, F, F, W, F, W, W, W, W, W, F, W, F, W, W, W, F, W,
-  W, F, F, F, F, F, F, F, F, F, F, W, F, F, F, W, W, WC, F, W,
-  W, F, F, F, F, W, W, W, W, W, F, W, F, F, F, W, F, F, F, W,
-  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
+const baseLayoutTokens = [
+  'W1', 'WC', 'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1', 'W1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F2', 'F2', 'F2', 'W1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1', 'W1', 'WC', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F2', 'F2', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'WC', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F2', 'F2', 'W1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F2', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'WC', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
+];
+const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
+const baseUnlockMask = [
+  { tx: 5, ty: 3, tile: resolveTileToken('WW') },
+  { tx: 17, ty: 8, tile: resolveTileToken('W1') },
+  { tx: 14, ty: 9, tile: resolveTileToken('F1') },
+  { tx: 16, ty: 9, tile: resolveTileToken('F1') },
+  { tx: 14, ty: 10, tile: resolveTileToken('DOOR_OPEN') },
+  { tx: 16, ty: 10, tile: resolveTileToken('F1') },
+  { tx: 16, ty: 11, tile: resolveTileToken('F1') },
+  { tx: 16, ty: 12, tile: resolveTileToken('F1') },
 ];
 
 export const abandonedLaboratoryLevel = {
@@ -103,18 +105,9 @@ export const abandonedLaboratoryLevel = {
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
-    collision: [...baseLayout],
-    decor: [...baseLayout],
-    unlockMask: [
-      { tx: 5, ty: 3, tile: WW },
-      { tx: 17, ty: 8, tile: W },
-      { tx: 14, ty: 9, tile: F },
-      { tx: 16, ty: 9, tile: F },
-      { tx: 14, ty: 10, tile: DO },
-      { tx: 16, ty: 10, tile: F },
-      { tx: 16, ty: 11, tile: F },
-      { tx: 16, ty: 12, tile: F },
-    ],
+    collision: [...baseLayout.collision],
+    decor: [...baseLayout.decor],
+    unlockMask: baseUnlockMask,
   },
   lighting: {
     litZones: [
@@ -134,7 +127,7 @@ export const abandonedLaboratoryLevel = {
       tx: 14,
       ty: 10,
       locked: true,
-      openTile: DO,
+      openTile: resolveTileToken('DOOR_OPEN'),
       nextLevelId: 'level-2',
       sealedTiles: [
         [14, 9],

@@ -1,22 +1,20 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS, getFloorVariantTileId } from '../../../world/tile-registry.js';
+import { buildTileLayersFromTokens } from '../map-utils.js';
 import { hospitalNpcPackage } from './npcs.js';
 
-const { WALL_SOLID: W, FLOOR_LIT: FL } = TILE_IDS;
-const F2 = getFloorVariantTileId(2);
-
 const BASE_WIDTH = 10;
-const baseLayout = [
-  W, W, W, W, W, W, W, W, W, W,
-  W, FL, F2, F2, FL, F2, F2, F2, FL, W,
-  W, F2, F2, F2, F2, F2, F2, F2, F2, W,
-  W, F2, F2, FL, F2, FL, F2, F2, F2, W,
-  W, F2, F2, F2, F2, F2, F2, F2, F2, W,
-  W, FL, F2, F2, FL, F2, F2, F2, FL, W,
-  W, F2, F2, F2, F2, F2, F2, F2, F2, W,
-  W, W, W, W, W, W, W, W, W, W,
+const baseLayoutTokens = [
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
+  'W1', 'F1', 'F2', 'F2', 'F1', 'F2', 'F2', 'F2', 'F1', 'W1',
+  'W1', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'W1',
+  'W1', 'F2', 'F2', 'F1', 'F2', 'F1', 'F2', 'F2', 'F2', 'W1',
+  'W1', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'W1',
+  'W1', 'F1', 'F2', 'F2', 'F1', 'F2', 'F2', 'F2', 'F1', 'W1',
+  'W1', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'F2', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
-const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
+const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
+const BASE_HEIGHT = baseLayout.collision.length / BASE_WIDTH;
 
 /** @type {import('../../types.js').LevelConfig} */
 export const hospitalLevel = {
@@ -30,8 +28,8 @@ export const hospitalLevel = {
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
-    collision: [...baseLayout],
-    decor: [...baseLayout],
+    collision: [...baseLayout.collision],
+    decor: [...baseLayout.decor],
   },
   lighting: {
     litZones: [{ x: 1, y: 1, w: BASE_WIDTH - 2, h: BASE_HEIGHT - 2 }],

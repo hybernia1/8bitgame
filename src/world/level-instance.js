@@ -756,12 +756,12 @@ export class LevelInstance {
     return { ...def.lighting };
   }
 
-  createLayerCanvas(tiles, spriteSheet) {
+  createLayerCanvas(tiles, spriteSheet, baseTiles) {
     const canvas = document.createElement('canvas');
     canvas.width = this.mapWidth * TILE;
     canvas.height = this.mapHeight * TILE;
     const context = canvas.getContext('2d');
-    renderTilesToContext(context, tiles, this.mapWidth, spriteSheet);
+    renderTilesToContext(context, tiles, this.mapWidth, spriteSheet, null, baseTiles);
     return { canvas, context };
   }
 
@@ -774,7 +774,7 @@ export class LevelInstance {
     this.layerSpriteSheet = spriteSheet;
 
     if (!this.layers.decor.canvas || !this.layers.collision.canvas || this.layerDirtyAll) {
-      this.layers.decor = this.createLayerCanvas(this.decorTiles, spriteSheet);
+      this.layers.decor = this.createLayerCanvas(this.decorTiles, spriteSheet, this.collisionTiles);
       this.layers.collision = this.createLayerCanvas(this.collisionTiles, spriteSheet);
       this.layerDirtyAll = false;
       this.dirtyTileIndices.clear();
@@ -783,7 +783,14 @@ export class LevelInstance {
 
     if (this.dirtyTileIndices.size) {
       const dirtyArray = Array.from(this.dirtyTileIndices);
-      renderTilesToContext(this.layers.decor.context, this.decorTiles, this.mapWidth, spriteSheet, dirtyArray);
+      renderTilesToContext(
+        this.layers.decor.context,
+        this.decorTiles,
+        this.mapWidth,
+        spriteSheet,
+        dirtyArray,
+        this.collisionTiles,
+      );
       renderTilesToContext(this.layers.collision.context, this.collisionTiles, this.mapWidth, spriteSheet, dirtyArray);
       this.dirtyTileIndices.clear();
     }
@@ -846,21 +853,31 @@ export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.heig
   }
 }
 
-function drawTile(context, tile, x, y, spriteSheet) {
-  const def = getTileDefinition(tile);
+function drawTileBase(context, def, x, y) {
   const category = def.category ?? 'floor';
-  const sprite = resolveSpriteForTile(def, spriteSheet);
-  const hasSprite = Boolean(sprite);
-
-  context.clearRect(x, y, TILE, TILE);
-
-  context.save();
   if (category === 'wall') {
     drawWallTile(context, def, x, y);
   } else if (category === 'door') {
     drawDoorTile(context, def, x, y);
   } else {
     drawFloorTile(context, def, x, y);
+  }
+}
+
+function drawTile(context, tile, x, y, spriteSheet, { overlayBase } = {}) {
+  const def = getTileDefinition(tile);
+  const sprite = resolveSpriteForTile(def, spriteSheet);
+  const hasSprite = Boolean(sprite);
+
+  context.clearRect(x, y, TILE, TILE);
+  context.save();
+
+  if (def.category === 'overlay') {
+    if (overlayBase != null) {
+      drawTileBase(context, getTileDefinition(overlayBase), x, y);
+    }
+  } else {
+    drawTileBase(context, def, x, y);
   }
 
   if (hasSprite) {
@@ -949,13 +966,14 @@ function drawFloorTile(context, def, x, y) {
   }
 }
 
-function renderTilesToContext(context, tiles, width, spriteSheet, indices) {
+function renderTilesToContext(context, tiles, width, spriteSheet, indices, baseTiles) {
   if (!context) return;
   if (!indices || !indices.length) {
     for (let y = 0; y < tiles.length / width; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const tile = tiles[y * width + x];
-        drawTile(context, tile, x * TILE, y * TILE, spriteSheet);
+        const overlayBase = baseTiles ? baseTiles[y * width + x] : undefined;
+        drawTile(context, tile, x * TILE, y * TILE, spriteSheet, { overlayBase });
       }
     }
     return;
@@ -965,7 +983,8 @@ function renderTilesToContext(context, tiles, width, spriteSheet, indices) {
     const x = index % width;
     const y = Math.floor(index / width);
     const tile = tiles[index];
-    drawTile(context, tile, x * TILE, y * TILE, spriteSheet);
+    const overlayBase = baseTiles ? baseTiles[index] : undefined;
+    drawTile(context, tile, x * TILE, y * TILE, spriteSheet, { overlayBase });
   });
 }
 

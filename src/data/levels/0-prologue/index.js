@@ -1,21 +1,21 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS } from '../../../world/tile-registry.js';
+import { buildTileLayersFromTokens } from '../map-utils.js';
 
-const { FLOOR_PLAIN: F, WALL_SOLID: W } = TILE_IDS;
 const WIDTH = 10;
 const HEIGHT = 8;
 
-/** @type {number[]} */
-const layout = [
-  W, W, W, W, W, W, W, W, W, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, F, F, F, F, F, F, F, F, W,
-  W, W, W, W, W, W, W, W, W, W,
+const layoutTokens = [
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
+
+const layout = buildTileLayersFromTokens(layoutTokens);
 
 export const prologueLevel = {
   meta: {
@@ -28,8 +28,8 @@ export const prologueLevel = {
   },
   dimensions: { width: WIDTH, height: HEIGHT },
   tileLayers: {
-    collision: [...layout],
-    decor: [...layout],
+    collision: [...layout.collision],
+    decor: [...layout.decor],
   },
   lighting: {
     litZones: [

@@ -1,37 +1,36 @@
 import { TILE } from '../../../core/constants.js';
-import { TILE_IDS } from '../../../world/tile-registry.js';
+import { buildTileLayersFromTokens, resolveTileToken } from '../map-utils.js';
 import { northernWingNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 16;
-const {
-  FLOOR_PLAIN: F,
-  WALL_SOLID: W,
-  DOOR_CLOSED: D,
-  DOOR_OPEN: DO,
-  WALL_WINDOW: WW,
-  WALL_CRACKED: WC,
-  FLOOR_LIT: FL,
-} = TILE_IDS;
 
-const baseLayout = [
-  W, W, W, WW, W, W, W, W, D, W, W, W, WW, W, W, W,
-  W, F, FL, FL, FL, F, F, F, F, F, F, F, F, F, F, W,
-  W, F, F, W, W, W, F, F, F, W, W, W, F, F, F, W,
-  W, F, F, W, F, F, F, F, F, WC, F, F, F, F, F, W,
-  W, F, F, W, F, F, W, F, F, W, F, F, W, F, F, W,
-  W, F, F, F, F, F, W, FL, FL, F, F, F, F, F, F, W,
-  W, F, F, W, W, W, F, F, F, W, W, W, F, F, F, W,
-  W, F, F, F, F, FL, F, F, F, F, F, F, W, F, F, W,
-  W, F, F, W, F, F, W, W, W, F, F, W, W, W, WC, W,
-  W, F, FL, WC, F, F, F, F, F, F, FL, D, F, F, WC, W,
-  W, F, F, F, F, F, FL, F, F, F, F, W, W, W, F, W,
-  W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W,
+const baseLayoutTokens = [
+  'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'WW', 'W1', 'W1', 'W1',
+  'W1', 'F1', 'F2', 'F2', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'WC', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F2', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'WC', 'W1',
+  'W1', 'F1', 'F2', 'WC', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'DOOR', 'F1', 'F1', 'WC', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
-const layoutWithVcrRoom = [...baseLayout];
+const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
+const layoutWithVcrRoom = {
+  collision: [...baseLayout.collision],
+  decor: [...baseLayout.decor],
+};
 const toIndex = (x, y) => y * BASE_WIDTH + x;
-layoutWithVcrRoom[toIndex(12, 10)] = F;
-layoutWithVcrRoom[toIndex(13, 10)] = F;
-const BASE_HEIGHT = baseLayout.length / BASE_WIDTH;
+layoutWithVcrRoom.collision[toIndex(12, 10)] = resolveTileToken('F1');
+layoutWithVcrRoom.collision[toIndex(13, 10)] = resolveTileToken('F1');
+layoutWithVcrRoom.decor[toIndex(12, 10)] = resolveTileToken('F1');
+layoutWithVcrRoom.decor[toIndex(13, 10)] = resolveTileToken('F1');
+const BASE_HEIGHT = baseLayout.collision.length / BASE_WIDTH;
+const DOOR_OPEN_TILE = resolveTileToken('DOOR_OPEN');
+const DOOR_CLOSED_TILE = resolveTileToken('DOOR');
 
 /** @type {import('../../types.js').LevelConfig} */
 export const northernWingLevel = {
@@ -45,8 +44,8 @@ export const northernWingLevel = {
   },
   dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   tileLayers: {
-    collision: [...layoutWithVcrRoom],
-    decor: [...layoutWithVcrRoom],
+    collision: [...layoutWithVcrRoom.collision],
+    decor: [...layoutWithVcrRoom.decor],
   },
   interactables: {
     pressureSwitches: [
@@ -56,8 +55,8 @@ export const northernWingLevel = {
         tx: 9,
         ty: 8,
         targets: [{ tx: 11, ty: 9 }],
-        openTile: DO,
-        closedTile: D,
+        openTile: DOOR_OPEN_TILE,
+        closedTile: DOOR_CLOSED_TILE,
       },
     ],
     gate: {
@@ -65,7 +64,7 @@ export const northernWingLevel = {
       tx: 8,
       ty: 0,
       locked: true,
-      openTile: DO,
+      openTile: DOOR_OPEN_TILE,
       nextLevelId: 'level-3',
       promptLocked: 'Dveře drží maličký klíček z obojku.',
       promptUnlocked: 'Dveře jsou odjistěné, projdi dál.',
