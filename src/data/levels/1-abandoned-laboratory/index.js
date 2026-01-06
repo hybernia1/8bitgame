@@ -13,10 +13,10 @@ const baseSwitches = [
     ty: 2,
     lights: [
       {
-        x: 1,
-        y: 1,
+        x: 0,
+        y: 0,
         w: 10,
-        h: 7,
+        h: 3,
       },
     ],
   },
@@ -28,7 +28,7 @@ const baseSwitches = [
     lights: [
       {
         x: 9,
-        y: 4,
+        y: 3,
         w: 7,
         h: 7,
       },
@@ -67,31 +67,26 @@ const baseSwitches = [
 /** @type {import('../../types.js').LevelConfig} */
 const baseLayoutTokens = [
   'W1', 'W1D1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F2', 'F2', 'F2', 'W1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1E1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1D1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F2', 'F2', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1D1', 'F1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F2', 'F2', 'W1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F2', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1E1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4E3', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1D1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1E2', 'DOOR_OPEN', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1D1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'DOOR_OPEN', 'F1', 'F1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1D1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
 const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
 const baseUnlockMask = [
-  { tx: 5, ty: 3, tile: resolveTileToken('W1') },
-  { tx: 17, ty: 8, tile: resolveTileToken('W1') },
-  { tx: 14, ty: 9, tile: resolveTileToken('F1') },
-  { tx: 16, ty: 9, tile: resolveTileToken('F1') },
+
   { tx: 14, ty: 10, tile: resolveTileToken('DOOR_OPEN') },
-  { tx: 16, ty: 10, tile: resolveTileToken('F1') },
-  { tx: 16, ty: 11, tile: resolveTileToken('F1') },
-  { tx: 16, ty: 12, tile: resolveTileToken('F1') },
+
 ];
 
 export const abandonedLaboratoryLevel = {
@@ -112,10 +107,10 @@ export const abandonedLaboratoryLevel = {
   lighting: {
     litZones: [
       {
-        x: 1,
-        y: 1,
-        w: 5,
-        h: 4,
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 6,
       },
     ],
     switches: baseSwitches,
