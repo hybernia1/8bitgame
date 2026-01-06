@@ -1,10 +1,17 @@
-import { TILE_DEFINITIONS, TILE_IDS } from '../world/tile-registry.js';
+import {
+  TILE_DEFINITIONS,
+  TILE_IDS,
+  getDestroyOverlayTileId,
+  getFloorVariantTileId,
+  getWallVariantTileId,
+} from '../world/tile-registry.js';
 
 const DEFAULT_VARIANT_ALIASES = {
-  wall: TILE_IDS.WALL_SOLID,
-  floor: TILE_IDS.FLOOR_PLAIN,
+  wall: getWallVariantTileId(1),
+  floor: getFloorVariantTileId(1),
   door: TILE_IDS.DOOR_CLOSED,
   door_closed: TILE_IDS.DOOR_CLOSED,
+  destroy: getDestroyOverlayTileId(1),
 };
 
 const BUILTIN_VARIANT_MAP = Object.values(TILE_DEFINITIONS).reduce((acc, def) => {
@@ -23,6 +30,7 @@ export const TILE_VARIANT_MAP = {
   wall_window: TILE_IDS.WALL_WINDOW,
   floor_broken: TILE_IDS.FLOOR_BROKEN,
   decor_console: TILE_IDS.DECOR_CONSOLE,
+  destroy: DEFAULT_VARIANT_ALIASES.destroy,
 };
 
 export const TILE_CATEGORY_DEFAULTS = {

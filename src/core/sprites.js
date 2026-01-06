@@ -6,6 +6,7 @@ const BASE_SPRITE_ORDER = [
   'wall',
   'door',
   'door.open',
+  'destroy',
   'player',
   'pickup',
   'npc',
@@ -17,7 +18,7 @@ const BASE_SPRITE_ORDER = [
   'spider',
   'prop',
 ];
-const VARIANT_SPRITE_ORDER = ['floor.window_light', 'floor.lit', 'wall.cracked', 'wall.window', 'decor.console'];
+const VARIANT_SPRITE_ORDER = ['floor.window_light', 'wall.cracked', 'wall.window', 'decor.console'];
 const SPRITE_ORDER = [...BASE_SPRITE_ORDER, ...VARIANT_SPRITE_ORDER];
 const TEXTURE_SEED = 1337;
 // Textures are loaded only from their canonical subfolders under assets/.
@@ -26,6 +27,7 @@ const TEXTURE_PATHS = {
   wall: 'assets/walls/wall.png',
   door: 'assets/doors/door.png',
   'door.open': 'assets/doors/door.open.png',
+  destroy: 'assets/tiles/destroy.png',
   player: 'assets/hero/hero.png',
   pickup: 'assets/items/pickup.png',
   npc: 'assets/npc/npc.png',
@@ -40,7 +42,6 @@ const TEXTURE_PATHS = {
 
 const VARIANT_TEXTURE_PATHS = {
   'floor.window_light': ['assets/tiles/floor.window_light.png', 'assets/floor.window_light.png'],
-  'floor.lit': ['assets/tiles/floor.lit.png', 'assets/floor.lit.png'],
   'wall.cracked': ['assets/walls/wall.cracked.png', 'assets/wall.cracked.png'],
   'wall.window': ['assets/walls/wall.window.png', 'assets/wall.window.png'],
   'decor.console': ['assets/props/console.png', 'assets/console.png'],
@@ -442,14 +443,6 @@ function drawFloorWindowLight(ctx, random) {
   ctx.fillRect(TILE / 3, 6, TILE / 3, TILE / 3);
 }
 
-function drawFloorLit(ctx, random) {
-  drawFloor(ctx, random);
-  ctx.fillStyle = 'rgba(110, 242, 164, 0.18)';
-  ctx.fillRect(2, 2, TILE - 4, TILE - 4);
-  ctx.strokeStyle = 'rgba(110, 242, 164, 0.3)';
-  ctx.strokeRect(1.5, 1.5, TILE - 3, TILE - 3);
-}
-
 function drawWallCracked(ctx, random) {
   drawWall(ctx, random);
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
@@ -479,6 +472,23 @@ function drawConsole(ctx, random) {
   ctx.fillRect(8, TILE - 12, TILE / 2 - 8, 6);
 }
 
+function drawDestroyOverlay(ctx, random) {
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.strokeRect(1.5, 1.5, TILE - 3, TILE - 3);
+  ctx.strokeStyle = 'rgba(255, 92, 92, 0.6)';
+  ctx.beginPath();
+  ctx.moveTo(4, TILE / 2 - 2);
+  ctx.lineTo(TILE / 2, TILE - 6);
+  ctx.lineTo(TILE - 5, TILE / 2 + 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+  ctx.fillRect(0, 0, TILE, TILE);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
+  ctx.fillRect(2, 2, TILE - 4, TILE - 4);
+  ctx.fillStyle = 'rgba(255, 92, 92, 0.08)';
+  ctx.fillRect(6, 6, TILE - 12, TILE - 12);
+}
+
 function getAnimationDefs(name, frameCount) {
   const definitions = SPRITE_ANIMATIONS[name];
   if (!definitions) return null;
@@ -488,12 +498,12 @@ function getAnimationDefs(name, frameCount) {
 const DRAWERS = {
   floor: drawFloor,
   'floor.window_light': drawFloorWindowLight,
-  'floor.lit': drawFloorLit,
   wall: drawWall,
   'wall.cracked': drawWallCracked,
   'wall.window': drawWallWindow,
   door: drawDoor,
   'door.open': drawDoorOpen,
+  destroy: drawDestroyOverlay,
   player: drawPlayer,
   pickup: drawPickup,
   npc: drawNpc,
@@ -547,9 +557,16 @@ export async function loadSpriteSheet() {
       animations[name] = { frames: [startIndex] };
     }
 
-    if (name === 'floor' && spriteFrames.length > 1) {
+    const dynamicVariantNames = {
+      floor: 'floor',
+      wall: 'wall',
+      destroy: 'destroy',
+    };
+
+    const dynamicBase = dynamicVariantNames[name];
+    if (dynamicBase && spriteFrames.length > 1) {
       for (let i = 1; i < spriteFrames.length; i += 1) {
-        animations[`floor.${i + 1}`] = { frames: [startIndex + i] };
+        animations[`${dynamicBase}.${i + 1}`] = { frames: [startIndex + i] };
       }
     }
   });
@@ -568,12 +585,12 @@ export async function loadSpriteSheet() {
 export const SPRITE_NAMES = {
   floor: 'floor',
   floorWindowLight: 'floor.window_light',
-  floorLit: 'floor.lit',
   wall: 'wall',
   wallCracked: 'wall.cracked',
   wallWindow: 'wall.window',
   door: 'door',
   doorOpen: 'door.open',
+  destroy: 'destroy',
   player: 'player',
   pickup: 'pickup',
   npc: 'npc',

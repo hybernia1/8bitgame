@@ -5,7 +5,13 @@
 
 import { TILE } from '../core/constants.js';
 import { DEFAULT_TILED_IMPORT_OPTIONS } from '../data/tiled-presets.js';
-import { TILE_DEFINITIONS, TILE_IDS, getFloorVariantTileId } from './tile-registry.js';
+import {
+  TILE_DEFINITIONS,
+  TILE_IDS,
+  getDestroyOverlayTileId,
+  getFloorVariantTileId,
+  getWallVariantTileId,
+} from './tile-registry.js';
 
 const DEFAULT_LAYER_NAMES = {
   collision: 'collision',
@@ -34,6 +40,16 @@ function normalizeVariantToken(token) {
   const floorMatch = stringValue.match(/^f(?:loor)?\.?(\d+)$/i);
   if (floorMatch) {
     return getFloorVariantTileId(Number.parseInt(floorMatch[1], 10));
+  }
+
+  const wallMatch = stringValue.match(/^w(?:all)?\.?(\d+)$/i);
+  if (wallMatch) {
+    return getWallVariantTileId(Number.parseInt(wallMatch[1], 10));
+  }
+
+  const destroyMatch = stringValue.match(/^d(?:estroy)?\.?(\d+)$/i);
+  if (destroyMatch) {
+    return getDestroyOverlayTileId(Number.parseInt(destroyMatch[1], 10));
   }
 
   return stringValue.toLowerCase();

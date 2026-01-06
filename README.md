@@ -31,3 +31,14 @@ Levels can be authored in [Tiled](https://www.mapeditor.org/) and converted stra
 4. Register the exported level in `src/world/level-data.js` via `registerLevelConfig` (for eager imports) or `registerLevelModule` (for lazy loading).
 
 To define tiles that change once a gate unlocks without duplicating whole layers, use `tileLayers.unlockMask` with `{ tx, ty, tile }` entries instead of maintaining separate unlocked maps.
+
+### Hand-written layouts
+
+Token-based layouts avoid hard-coded IDs. Examples:
+
+- Floors: `F1`, `F2`, …
+- Walls: `W1`, `W2`, …
+- Doors: `DOOR`, `DOOR_OPEN`
+- Destroy overlays: `D1`, `W1D1` (overlay + base in one token)
+
+Use `buildTileLayersFromTokens` and `resolveTileToken` from `src/data/levels/map-utils.js` to convert these tokens into numeric layers. See `docs/map-authoring.md` for the full cheatsheet.
