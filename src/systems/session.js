@@ -979,6 +979,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         tileAt: level.tileAt.bind(level),
         damageTile: level.damageTileAt.bind(level),
         showNote: hudSystem.showNote,
+        getTileLayersAt: level.getTileLayersAt.bind(level),
       });
 
       const interactionSystem = createInteractionSystem({

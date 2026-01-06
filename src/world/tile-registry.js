@@ -18,13 +18,17 @@ const DYNAMIC_DESTROY_BASE = 3000;
 
 function resolveFloorVariantIndex(tileId) {
   if (tileId === TILE_IDS.FLOOR_PLAIN) return 1;
-  if (tileId >= DYNAMIC_FLOOR_BASE) return tileId - DYNAMIC_FLOOR_BASE;
+  if (tileId >= DYNAMIC_FLOOR_BASE && tileId < DYNAMIC_WALL_BASE) {
+    return tileId - DYNAMIC_FLOOR_BASE;
+  }
   return null;
 }
 
 function resolveWallVariantIndex(tileId) {
   if (tileId === TILE_IDS.WALL_SOLID) return 1;
-  if (tileId >= DYNAMIC_WALL_BASE) return tileId - DYNAMIC_WALL_BASE;
+  if (tileId >= DYNAMIC_WALL_BASE && tileId < DYNAMIC_DESTROY_BASE) {
+    return tileId - DYNAMIC_WALL_BASE;
+  }
   return null;
 }
 
