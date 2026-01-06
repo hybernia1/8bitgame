@@ -367,12 +367,10 @@ export class LevelInstance {
   }
 
   damageTileAt(x, y, amount = 1) {
-    const tx = Math.floor(x / TILE);
-    const ty = Math.floor(y / TILE);
-    if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) {
+    const index = this.getTileIndexAt(x, y);
+    if (index === null) {
       return false;
     }
-    const index = ty * this.mapWidth + tx;
     if (!this.destructibleTiles.has(index)) return false;
 
     const destructible = resolveDestructibleTile(this.collisionTiles[index], this.decorTiles[index]);
@@ -395,13 +393,33 @@ export class LevelInstance {
     return true;
   }
 
-  tileAt(x, y) {
+  getTileIndexAt(x, y) {
     const tx = Math.floor(x / TILE);
     const ty = Math.floor(y / TILE);
     if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) {
+      return null;
+    }
+    return ty * this.mapWidth + tx;
+  }
+
+  getTileLayersAt(x, y) {
+    const index = this.getTileIndexAt(x, y);
+    if (index === null) return null;
+    return {
+      index,
+      tx: index % this.mapWidth,
+      ty: Math.floor(index / this.mapWidth),
+      collision: this.collisionTiles[index],
+      decor: this.decorTiles[index],
+    };
+  }
+
+  tileAt(x, y) {
+    const index = this.getTileIndexAt(x, y);
+    if (index === null) {
       return DEFAULT_COLLISION_TILE;
     }
-    return this.collisionTiles[ty * this.mapWidth + tx];
+    return this.collisionTiles[index];
   }
 
   canMove(size, nx, ny) {

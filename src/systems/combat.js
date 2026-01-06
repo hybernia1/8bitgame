@@ -1,7 +1,15 @@
 import { TILE } from '../core/constants.js';
 import { getTileDefinition, isBlockingTileId } from '../world/tile-registry.js';
 
-export function createCombatSystem({ ammo, projectiles, player, tileAt, damageTile, showNote }) {
+export function createCombatSystem({
+  ammo,
+  projectiles,
+  player,
+  tileAt,
+  damageTile,
+  showNote,
+  getTileLayersAt,
+}) {
   function attemptShoot() {
     const spent = ammo?.consume?.(1);
     if (!spent) {
@@ -31,8 +39,10 @@ export function createCombatSystem({ ammo, projectiles, player, tileAt, damageTi
 
       const tileId = tileAt(bullet.x, bullet.y);
       const tileDef = getTileDefinition(tileId);
+      const layerInfo = getTileLayersAt?.(bullet.x, bullet.y);
+      const decorDef = layerInfo?.decor != null ? getTileDefinition(layerInfo.decor) : null;
       const tileBlocks = tileId !== 0 && isBlockingTileId(tileId);
-      const destructibleTile = tileDef.hitPoints != null;
+      const destructibleTile = tileDef.hitPoints != null || decorDef?.hitPoints != null;
 
       if (tileBlocks || destructibleTile || bullet.lifetime <= 0) {
         if (destructibleTile && typeof damageTile === 'function') {
