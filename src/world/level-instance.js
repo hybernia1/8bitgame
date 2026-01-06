@@ -85,9 +85,18 @@ function getTileHitPoints(tileId) {
   return Math.max(1, Math.floor(baseHp));
 }
 
-function isDestructibleTile(tileId) {
-  const def = getTileDefinition(tileId);
-  return def.category === 'wall' && def.variant?.includes('cracked');
+function resolveDestructibleTile(collisionTileId, decorTileId) {
+  const decorDef = getTileDefinition(decorTileId);
+  if (decorDef.hitPoints != null) {
+    return { tileId: decorTileId, layer: 'decor' };
+  }
+
+  const collisionDef = getTileDefinition(collisionTileId);
+  if (collisionDef.hitPoints != null) {
+    return { tileId: collisionTileId, layer: 'collision' };
+  }
+
+  return null;
 }
 
 function isOccupyingTile(entity, tx, ty) {
@@ -339,7 +348,7 @@ export class LevelInstance {
   }
 
   initializeDestructibleTiles() {
-    this.collisionTiles.forEach((tile, index) => this.refreshDestructibleTile(index));
+    this.collisionTiles.forEach((_, index) => this.refreshDestructibleTile(index));
   }
 
   refreshDestructibleTiles(indices = []) {
@@ -348,10 +357,10 @@ export class LevelInstance {
 
   refreshDestructibleTile(index) {
     if (!Number.isInteger(index) || index < 0 || index >= this.collisionTiles.length) return;
-    const tileId = this.collisionTiles[index];
-    if (isDestructibleTile(tileId)) {
+    const destructible = resolveDestructibleTile(this.collisionTiles[index], this.decorTiles[index]);
+    if (destructible) {
       const currentHp = this.destructibleTiles.get(index);
-      this.destructibleTiles.set(index, currentHp ?? getTileHitPoints(tileId));
+      this.destructibleTiles.set(index, currentHp ?? getTileHitPoints(destructible.tileId));
     } else {
       this.destructibleTiles.delete(index);
     }
@@ -366,8 +375,14 @@ export class LevelInstance {
     const index = ty * this.mapWidth + tx;
     if (!this.destructibleTiles.has(index)) return false;
 
+    const destructible = resolveDestructibleTile(this.collisionTiles[index], this.decorTiles[index]);
+    if (!destructible) {
+      this.destructibleTiles.delete(index);
+      return false;
+    }
+
     const damage = Math.max(1, Math.floor(amount));
-    const nextHp = (this.destructibleTiles.get(index) ?? getTileHitPoints(this.collisionTiles[index])) - damage;
+    const nextHp = (this.destructibleTiles.get(index) ?? getTileHitPoints(destructible.tileId)) - damage;
     if (nextHp > 0) {
       this.destructibleTiles.set(index, nextHp);
       return true;
@@ -666,13 +681,16 @@ export class LevelInstance {
     destructibleState.forEach((entry) => {
       const safeIndex = Number.isInteger(entry?.index) ? entry.index : null;
       if (safeIndex == null || safeIndex < 0 || safeIndex >= this.collisionTiles.length) return;
-      const safeHp = Math.max(1, Math.floor(entry.hp ?? getTileHitPoints(this.collisionTiles[safeIndex])));
+      const destructible = resolveDestructibleTile(this.collisionTiles[safeIndex], this.decorTiles[safeIndex]);
+      if (!destructible) return;
+      const safeHp = Math.max(1, Math.floor(entry.hp ?? getTileHitPoints(destructible.tileId)));
       hpByIndex.set(safeIndex, safeHp);
     });
 
     const changed = [];
     this.collisionTiles.forEach((tile, index) => {
-      if (!isDestructibleTile(tile)) return;
+      const destructible = resolveDestructibleTile(this.collisionTiles[index], this.decorTiles[index]);
+      if (!destructible) return;
       if (!hpByIndex.has(index)) {
         this.collisionTiles[index] = FLOOR_TILE;
         this.decorTiles[index] = FLOOR_TILE;

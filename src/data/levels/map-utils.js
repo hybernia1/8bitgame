@@ -14,9 +14,6 @@ const NAMED_TOKEN_MAP = new Map(
     WINDOW: TILE_IDS.WALL_WINDOW,
     WALL_WINDOW: TILE_IDS.WALL_WINDOW,
     WW: TILE_IDS.WALL_WINDOW,
-    WALL_CRACKED: TILE_IDS.WALL_CRACKED,
-    CRACKED_WALL: TILE_IDS.WALL_CRACKED,
-    WC: TILE_IDS.WALL_CRACKED,
     CONSOLE: TILE_IDS.DECOR_CONSOLE,
     DECOR: TILE_IDS.DECOR_CONSOLE,
     FLOOR_BROKEN: TILE_IDS.FLOOR_BROKEN,
@@ -38,6 +35,14 @@ function normalizeTokenEntry(token, defaultBase = TILE_IDS.FLOOR_PLAIN) {
   const numeric = Number.parseInt(stringToken, 10);
   if (Number.isFinite(numeric)) {
     return { collision: numeric, decor: numeric };
+  }
+
+  const normalized = stringToken.toUpperCase();
+  if (normalized === 'WC' || normalized === 'WALL_CRACKED' || normalized === 'CRACKED_WALL') {
+    return {
+      collision: getWallVariantTileId(1),
+      decor: getDestroyOverlayTileId(1),
+    };
   }
 
   const named = NAMED_TOKEN_MAP.get(stringToken.toUpperCase());

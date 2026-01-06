@@ -1,6 +1,6 @@
 # Asset drop-in points
 
-This project will generate procedural sprites when no external textures are present. To override them, drop your own **32x32 PNG** textures into the folders below (leave files out if you want to keep the procedural look). For convenience on static hosts, the loader also checks for files placed directly under `assets/` (for example, `assets/hero.png` instead of `assets/hero/hero.png`). Preferred locations are:
+This project will generate procedural sprites when no external textures are present. To override them, drop your own **32x32 PNG** textures into the folders below (leave files out if you want to keep the procedural look). Create the folder if it is missing (props/items are trimmed by default to keep the repo light). For convenience on static hosts, the loader also checks for files placed directly under `assets/` (for example, `assets/hero.png` instead of `assets/hero/hero.png`). Preferred locations are:
 
 - `assets/tiles/floor.png` – base floor tile for the demo map.
 - `assets/walls/wall.png` – wall tile for level geometry.
