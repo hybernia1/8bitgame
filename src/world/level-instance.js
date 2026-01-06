@@ -923,7 +923,10 @@ function drawTileBase(context, def, x, y) {
 function drawTile(context, tile, x, y, spriteSheet, { overlayBase } = {}) {
   const def = getTileDefinition(tile);
   const sprite = resolveSpriteForTile(def, spriteSheet);
-  const baseDef = overlayBase != null && def.category === 'overlay' ? getTileDefinition(overlayBase) : null;
+  const baseDef =
+    overlayBase != null && (def.category === 'overlay' || def.transparent)
+      ? getTileDefinition(overlayBase)
+      : null;
   const baseSprite = baseDef ? resolveSpriteForTile(baseDef, spriteSheet) : null;
 
   context.clearRect(x, y, TILE, TILE);
