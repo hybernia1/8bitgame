@@ -21,7 +21,7 @@ const BASE_SPRITE_ORDER = [
   'spider',
   'prop',
 ];
-const VARIANT_SPRITE_ORDER = ['wall.window', 'decor.console'];
+const VARIANT_SPRITE_ORDER = ['decor.console'];
 const DECOR_SPRITE_ORDER = Array.from(
   { length: DECOR_VARIANT_LIMIT },
   (_, index) => `decor.${index + 1}`,
@@ -48,7 +48,6 @@ const TEXTURE_PATHS = {
 };
 
 const VARIANT_TEXTURE_PATHS = {
-  'wall.window': ['assets/walls/wall.window.png', 'assets/wall.window.png'],
   'decor.console': ['assets/props/console.png', 'assets/console.png'],
 };
 
@@ -506,14 +505,6 @@ function drawProp(ctx, random) {
   ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 7);
 }
 
-function drawWallWindow(ctx, random) {
-  drawWall(ctx, random);
-  ctx.fillStyle = 'rgba(110, 242, 164, 0.18)';
-  ctx.fillRect(4, 4, TILE - 8, TILE - 10);
-  ctx.strokeStyle = 'rgba(110, 242, 164, 0.35)';
-  ctx.strokeRect(3.5, 3.5, TILE - 7, TILE - 9);
-}
-
 function drawConsole(ctx, random) {
   drawProp(ctx, random);
   ctx.fillStyle = '#22283a';
@@ -570,7 +561,6 @@ function getAnimationDefs(name, frameCount) {
 const DRAWERS = {
   floor: drawFloor,
   wall: drawWall,
-  'wall.window': drawWallWindow,
   door: drawDoor,
   'door.open': drawDoorOpen,
   destroy: drawDestroyOverlay,
@@ -671,7 +661,6 @@ export async function loadSpriteSheet() {
 export const SPRITE_NAMES = {
   floor: 'floor',
   wall: 'wall',
-  wallWindow: 'wall.window',
   door: 'door',
   doorOpen: 'door.open',
   destroy: 'destroy',

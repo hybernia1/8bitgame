@@ -56,20 +56,12 @@ function resolveTextureForToken(token) {
   const upper = normalized.toUpperCase();
   const isDoorOpen = upper.includes('DOOR_OPEN') || upper.includes('OPEN_DOOR');
   const isDoor = upper.includes('DOOR');
-  const isWindowWall = upper === 'WW' || upper.includes('WINDOW');
 
   if (isDoorOpen) {
     return { url: resolveAssetUrl('doors/door.open.png'), label: 'Otevřené dveře', isPlaceholder: false };
   }
   if (isDoor) {
     return { url: resolveAssetUrl('doors/door.png'), label: 'Zavřené dveře', isPlaceholder: false };
-  }
-  if (isWindowWall) {
-    return {
-      url: resolveAssetUrl('walls/wall.window.png'),
-      label: 'Zeď s oknem',
-      isPlaceholder: false,
-    };
   }
 
   const destroyOverlayMatch = upper.match(/^D\d+/);
