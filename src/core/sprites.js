@@ -1,4 +1,6 @@
 import { SpriteSheet } from '../kontra.mjs';
+import { loadLevelConfig, loaderRegistry, registry } from '../world/level-data.js';
+import { getDecorVariantIndex } from '../world/tile-registry.js';
 import { TILE, TEXTURE_TILE, COLORS } from './constants.js';
 
 const DECOR_VARIANT_LIMIT = 32;
@@ -49,6 +51,42 @@ const VARIANT_TEXTURE_PATHS = {
   'wall.window': ['assets/walls/wall.window.png', 'assets/wall.window.png'],
   'decor.console': ['assets/props/console.png', 'assets/console.png'],
 };
+
+function collectDecorVariantsFromTiles(values = [], variants = new Set()) {
+  if (!Array.isArray(values)) return;
+  values.forEach((value) => {
+    const variant = getDecorVariantIndex(value);
+    if (variant != null) variants.add(variant);
+  });
+}
+
+function collectDecorVariantsFromConfig(config, variants = new Set()) {
+  if (!config) return variants;
+  const layers = config.tileLayers ?? {};
+  collectDecorVariantsFromTiles(layers.decor, variants);
+  collectDecorVariantsFromTiles(layers.decorUnlocked, variants);
+  const unlockMask = layers.unlockMask ?? config.unlockMask ?? [];
+  unlockMask.forEach((entry) => {
+    const candidate = entry?.decor ?? entry?.tile ?? entry?.tileId ?? entry?.collision;
+    const variant = getDecorVariantIndex(candidate);
+    if (variant != null) variants.add(variant);
+  });
+  return variants;
+}
+
+async function collectDecorVariantsFromLevels() {
+  try {
+    const variants = new Set();
+    registry.forEach((config) => collectDecorVariantsFromConfig(config, variants));
+    for (const [id] of loaderRegistry.entries()) {
+      const loaded = await loadLevelConfig(id);
+      collectDecorVariantsFromConfig(loaded, variants);
+    }
+    return [...variants];
+  } catch {
+    return [];
+  }
+}
 
 const SPRITE_ANIMATIONS = {
   player: (frameCount) => getDirectionalAnimationDefs('player', frameCount, { includeLegacyDefault: true }),
@@ -149,20 +187,27 @@ function loadTextureImage(path) {
 }
 
 async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
+  const variantList = Array.isArray(limit)
+    ? Array.from(new Set(limit)).filter((value) => Number.isInteger(value) && value > 0)
+    : Array.from({ length: limit }, (_, index) => index + 1);
+
   const entries = await Promise.all(
-    Array.from({ length: limit }, (_, index) => index + 1).map(async (variant) => {
+    variantList.map(async (variant) => {
       const image = await loadTextureImage(`assets/decor/${variant}.gif`);
       return [variant, image];
     }),
   );
 
-  return entries
-    .filter(([, image]) => Boolean(image))
-    .map(([variant, image]) => [`decor.${variant}`, image]);
+  const decorTextures = new Map(entries.filter(([, image]) => Boolean(image)));
+
+  return {
+    decorTextures,
+    entries: Array.from(decorTextures.entries()).map(([variant, image]) => [`decor.${variant}`, image]),
+  };
 }
 
-async function loadTextureMap() {
-  const [staticEntries, decorEntries] = await Promise.all([
+async function loadTextureMap(decorVariants) {
+  const [staticEntries, decorResult] = await Promise.all([
     Promise.all(
       [...Object.entries(TEXTURE_PATHS), ...Object.entries(VARIANT_TEXTURE_PATHS)].map(
         async ([name, paths]) => {
@@ -177,13 +222,15 @@ async function loadTextureMap() {
         },
       ),
     ),
-    loadDecorTextures(),
+    loadDecorTextures(decorVariants),
   ]);
 
-  return [...staticEntries, ...decorEntries].reduce((textures, [name, image]) => {
-    if (image) textures[name] = image;
-    return textures;
+  const textures = [...staticEntries, ...(decorResult?.entries ?? [])].reduce((acc, [name, image]) => {
+    if (image) acc[name] = image;
+    return acc;
   }, {});
+
+  return { textures, decorTextures: decorResult?.decorTextures ?? new Map() };
 }
 
 function jitterColor(hex, amount, random) {
@@ -554,7 +601,12 @@ function hasHighResolutionTextures(textures) {
 }
 
 export async function loadSpriteSheet() {
-  const textures = await loadTextureMap();
+  const discoveredVariants = await collectDecorVariantsFromLevels();
+  const decorVariantList =
+    discoveredVariants.length > 0
+      ? [...new Set(discoveredVariants)].sort((a, b) => a - b)
+      : [1];
+  const { textures, decorTextures } = await loadTextureMap(decorVariantList);
   const frames = [];
   const animations = {};
   setCanvasRenderingMode(hasHighResolutionTextures(textures) ? 'auto' : 'pixelated');
@@ -602,12 +654,17 @@ export async function loadSpriteSheet() {
 
   const image = await canvasToImage(makeCanvas(frames));
 
-  return SpriteSheet({
+  const spriteSheet = SpriteSheet({
     image,
     frameWidth: TILE,
     frameHeight: TILE,
     frameMargin: 0,
     animations,
+  });
+
+  return Object.assign(spriteSheet, {
+    decorTextures,
+    decorVariants: decorVariantList,
   });
 }
 
