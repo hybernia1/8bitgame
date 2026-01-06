@@ -19,6 +19,16 @@ const DEFAULT_PROPERTY_KEYS = DEFAULT_TILED_IMPORT_OPTIONS.propertyKeys ?? [];
 const DEFAULT_TILESET_PRESETS = DEFAULT_TILED_IMPORT_OPTIONS.tilesetDefaults ?? [];
 const DEFAULT_VARIANT_MAP = DEFAULT_TILED_IMPORT_OPTIONS.variantMap ?? {};
 const DEFAULT_CATEGORY_DEFAULTS = DEFAULT_TILED_IMPORT_OPTIONS.categoryDefaults ?? {};
+const CATEGORY_SHORTHANDS = new Map([
+  ['f', 'floor'],
+  ['floor', 'floor'],
+  ['w', 'wall'],
+  ['wall', 'wall'],
+  ['d', 'door'],
+  ['door', 'door'],
+  ['c', 'decor'],
+  ['decor', 'decor'],
+]);
 
 function isTiledMap(payload) {
   return Boolean(payload && payload.type === 'map' && Array.isArray(payload.layers));
@@ -44,6 +54,20 @@ function buildVariantLookup(custom = {}) {
   });
 
   return entries;
+}
+
+function buildCategoryIndexLookup() {
+  const categories = new Map();
+  Object.values(TILE_DEFINITIONS).forEach((def) => {
+    const list = categories.get(def.category) ?? [];
+    list.push(def.tileId);
+    categories.set(def.category, list);
+  });
+  categories.forEach((list, category) => {
+    const sorted = [...list].sort((a, b) => a - b);
+    categories.set(category, sorted);
+  });
+  return categories;
 }
 
 function buildCategoryDefaults(categoryDefaults, variantLookup) {
@@ -118,6 +142,19 @@ function readProperties(properties = []) {
     acc[prop.name] = prop.value;
     return acc;
   }, {});
+}
+
+function resolveCategoryShorthand(token, categoryIndexLookup, categoryDefaults) {
+  if (typeof token !== 'string') return null;
+  const match = /^([a-z]+)(\d+)?$/i.exec(token.trim());
+  if (!match) return null;
+  const [, shorthand, rawIndex] = match;
+  const category = CATEGORY_SHORTHANDS.get(shorthand.toLowerCase());
+  if (!category) return null;
+  const index = rawIndex ? Number.parseInt(rawIndex, 10) : 1;
+  if (!Number.isInteger(index) || index < 1) return categoryDefaults.get(category) ?? null;
+  const variants = categoryIndexLookup.get(category) ?? [];
+  return variants[index - 1] ?? categoryDefaults.get(category) ?? null;
 }
 
 function normalizeLayerData(layer, expectedSize) {
@@ -376,5 +413,51 @@ export function normalizeLevelConfig(payload, options = {}) {
   if (isTiledMap(source)) {
     return importTiledLevel(source, options.tiled);
   }
-  return source;
+
+  const presetOptions = { ...DEFAULT_TILED_IMPORT_OPTIONS, ...(options.tiled ?? {}) };
+  const variantLookup = buildVariantLookup(presetOptions.variantMap ?? DEFAULT_VARIANT_MAP);
+  const categoryDefaults = buildCategoryDefaults(presetOptions.categoryDefaults ?? DEFAULT_CATEGORY_DEFAULTS, variantLookup);
+  const categoryIndexLookup = buildCategoryIndexLookup();
+
+  function normalizeTileValue(value) {
+    if (typeof value === 'number') return value;
+    const normalized = normalizeVariantToken(value);
+    if (typeof normalized === 'number') return normalized;
+    const variantResolved = variantLookup.get(normalized);
+    if (variantResolved != null) return variantResolved;
+    const shorthandResolved = resolveCategoryShorthand(String(value), categoryIndexLookup, categoryDefaults);
+    if (shorthandResolved != null) return shorthandResolved;
+    return categoryDefaults.get('floor') ?? FLOOR_TILE;
+  }
+
+  function normalizeTileLayer(layer) {
+    if (!Array.isArray(layer)) return layer;
+    return layer.map((value) => normalizeTileValue(value));
+  }
+
+  function normalizeUnlockMask(entries = []) {
+    return entries.map((entry) => ({
+      ...entry,
+      tile: entry.tile != null ? normalizeTileValue(entry.tile) : entry.tile,
+      tileId: entry.tileId != null ? normalizeTileValue(entry.tileId) : entry.tileId,
+      collision: entry.collision != null ? normalizeTileValue(entry.collision) : entry.collision,
+      decor: entry.decor != null ? normalizeTileValue(entry.decor) : entry.decor,
+    }));
+  }
+
+  const normalizedTileLayers = source?.tileLayers
+    ? {
+        ...source.tileLayers,
+        collision: normalizeTileLayer(source.tileLayers.collision),
+        decor: normalizeTileLayer(source.tileLayers.decor),
+        unlockMask: Array.isArray(source.tileLayers.unlockMask)
+          ? normalizeUnlockMask(source.tileLayers.unlockMask)
+          : source.tileLayers.unlockMask,
+      }
+    : source?.tileLayers;
+
+  return {
+    ...source,
+    tileLayers: normalizedTileLayers,
+  };
 }

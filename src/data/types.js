@@ -135,9 +135,9 @@
 
 /**
  * @typedef {Object} TileLayers
- * @property {number[]} collision
- * @property {number[]} decor
- * @property {Array<{ index?: number, tx?: number, ty?: number, tile?: number, tileId?: number, collision?: number, decor?: number }>} [unlockMask]
+ * @property {Array<number|string>} collision
+ * @property {Array<number|string>} decor
+ * @property {Array<{ index?: number, tx?: number, ty?: number, tile?: number|string, tileId?: number|string, collision?: number|string, decor?: number|string }>} [unlockMask]
  */
 
 /**
