@@ -1,8 +1,7 @@
 import { TILE } from '../core/constants.js';
+import { resolveWorldPosition } from '../core/positioning.js';
 
 function toWorldPosition(prop = {}, fallbackIndex = 0) {
-  const tx = prop.tx ?? null;
-  const ty = prop.ty ?? null;
   return {
     id: prop.id ?? `prop-${fallbackIndex}`,
     name: prop.name ?? 'Krabice',
@@ -11,8 +10,7 @@ function toWorldPosition(prop = {}, fallbackIndex = 0) {
     sprite: prop.sprite ?? 'prop',
     color: prop.color ?? '#c49a6c',
     tint: prop.tint ?? 'rgba(114, 86, 52, 0.35)',
-    x: prop.x ?? (tx != null ? tx * TILE + TILE / 2 : 0),
-    y: prop.y ?? (ty != null ? ty * TILE + TILE / 2 : 0),
+    ...resolveWorldPosition(prop),
   };
 }
 

@@ -208,26 +208,14 @@ export function createGame({ inventory, hudSystem } = {}) {
     return upgraded;
   }
 
-  saveMigrations.set(0, (payload) => ({
+  const migrateToPersistentState = (payload) => ({
     ...payload,
     progress: addPersistentStateToProgress(payload?.progress ?? {}),
     version: SAVE_VERSION,
-  }));
-  saveMigrations.set(1, (payload) => ({
-    ...payload,
-    progress: addPersistentStateToProgress(payload?.progress ?? {}),
-    version: SAVE_VERSION,
-  }));
-  saveMigrations.set(2, (payload) => ({
-    ...payload,
-    progress: addPersistentStateToProgress(payload?.progress ?? {}),
-    version: SAVE_VERSION,
-  }));
-  saveMigrations.set(3, (payload) => ({
-    ...payload,
-    progress: addPersistentStateToProgress(payload?.progress ?? {}),
-    version: SAVE_VERSION,
-  }));
+  });
+  for (let version = 0; version < SAVE_VERSION; version += 1) {
+    saveMigrations.set(version, migrateToPersistentState);
+  }
   saveMigrations.set(SAVE_VERSION, (payload) => payload);
 
   function isValidSnapshot(snapshot) {

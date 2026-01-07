@@ -1,4 +1,5 @@
 import { TILE, TILE_SCALE } from '../core/constants.js';
+import { resolveWorldPosition } from '../core/positioning.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
 const TALK_RADIUS = 26 * TILE_SCALE;
@@ -9,10 +10,7 @@ const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
 const DEFAULT_LETHAL_WANDER_SPEED = 30 * TILE_SCALE;
 
 function toWorldPosition(point = {}) {
-  return {
-    x: point.x ?? point.tx * TILE + TILE / 2,
-    y: point.y ?? point.ty * TILE + TILE / 2,
-  };
+  return resolveWorldPosition(point);
 }
 
 function updatePatrol(npc, dt, player) {
