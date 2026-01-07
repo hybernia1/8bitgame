@@ -90,11 +90,35 @@ export function serializePickups(pickups = []) {
   }));
 }
 
-export function restorePickups(pickups = [], snapshot = []) {
+function normalizeBounds(bounds) {
+  if (!bounds || typeof bounds !== 'object') return null;
+  const minX = Number.isFinite(bounds.minX) ? bounds.minX : 0;
+  const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
+  const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : null;
+  const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : null;
+  if (maxX != null && maxX < minX) return null;
+  if (maxY != null && maxY < minY) return null;
+  return { minX, minY, maxX, maxY };
+}
+
+function clampToBounds(value, bounds, axis) {
+  if (!bounds) return value;
+  const min = axis === 'x' ? bounds.minX : bounds.minY;
+  const max = axis === 'x' ? bounds.maxX : bounds.maxY;
+  if (max == null) return Math.max(min, value);
+  return Math.min(Math.max(value, min), max);
+}
+
+export function restorePickups(pickups = [], snapshot = [], options = {}) {
   if (!Array.isArray(snapshot) || !snapshot.length) return;
-  const byIndex = new Map(snapshot.map((entry) => [entry.index, entry]));
+  const bounds = normalizeBounds(options?.bounds);
+  const entries = snapshot.filter((entry) => entry && typeof entry === 'object');
+  if (entries.length !== snapshot.length) {
+    console.warn('Neplatné položky v uložených pickupech byly ignorovány.');
+  }
+  const byIndex = new Map(entries.map((entry) => [entry.index, entry]));
   const byId = new Map();
-  snapshot
+  entries
     .filter((entry) => entry?.id)
     .forEach((entry) => {
       const entries = byId.get(entry.id) ?? [];
@@ -129,8 +153,24 @@ export function restorePickups(pickups = [], snapshot = []) {
       if (entries.length === 0) byId.delete(pickup.id);
     }
     if (!saved) return;
-    if (typeof saved.x === 'number') pickup.x = saved.x;
-    if (typeof saved.y === 'number') pickup.y = saved.y;
+    if (Number.isFinite(saved.x)) {
+      const clamped = clampToBounds(saved.x, bounds, 'x');
+      if (clamped !== saved.x) {
+        console.warn('Pickup pozice X mimo bounds, použita bezpečná hodnota.', saved);
+      }
+      pickup.x = clamped;
+    } else if (saved.x != null) {
+      console.warn('Pickup pozice X není číslo, ponechána výchozí hodnota.', saved);
+    }
+    if (Number.isFinite(saved.y)) {
+      const clamped = clampToBounds(saved.y, bounds, 'y');
+      if (clamped !== saved.y) {
+        console.warn('Pickup pozice Y mimo bounds, použita bezpečná hodnota.', saved);
+      }
+      pickup.y = clamped;
+    } else if (saved.y != null) {
+      console.warn('Pickup pozice Y není číslo, ponechána výchozí hodnota.', saved);
+    }
     pickup.collected = Boolean(saved.collected);
   });
 }

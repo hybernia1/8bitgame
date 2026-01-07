@@ -104,13 +104,55 @@ export function serializeSafes(safes = []) {
   }));
 }
 
-export function restoreSafes(safes = [], snapshot = []) {
+function normalizeBounds(bounds) {
+  if (!bounds || typeof bounds !== 'object') return null;
+  const minX = Number.isFinite(bounds.minX) ? bounds.minX : 0;
+  const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
+  const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : null;
+  const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : null;
+  if (maxX != null && maxX < minX) return null;
+  if (maxY != null && maxY < minY) return null;
+  return { minX, minY, maxX, maxY };
+}
+
+function clampToBounds(value, bounds, axis) {
+  if (!bounds) return value;
+  const min = axis === 'x' ? bounds.minX : bounds.minY;
+  const max = axis === 'x' ? bounds.maxX : bounds.maxY;
+  if (max == null) return Math.max(min, value);
+  return Math.min(Math.max(value, min), max);
+}
+
+export function restoreSafes(safes = [], snapshot = [], options = {}) {
   if (!Array.isArray(snapshot) || !snapshot.length) return;
-  const saved = new Map(snapshot.map((entry) => [entry?.id, entry]));
+  const bounds = normalizeBounds(options?.bounds);
+  const entries = snapshot.filter((entry) => entry && typeof entry === 'object');
+  if (entries.length !== snapshot.length) {
+    console.warn('Neplatné položky v uložených sefech byly ignorovány.');
+  }
+  const saved = new Map(entries.map((entry) => [entry?.id, entry]));
   safes.forEach((safe, index) => {
-    const entry = (safe?.id && saved.get(safe.id)) || snapshot[index];
+    const entry = (safe?.id && saved.get(safe.id)) || entries[index];
     if (!entry) return;
     safe.opened = Boolean(entry.opened);
     safe.rewardClaimed = Boolean(entry.rewardClaimed);
+    if (Number.isFinite(entry.x)) {
+      const clamped = clampToBounds(entry.x, bounds, 'x');
+      if (clamped !== entry.x) {
+        console.warn('Safe pozice X mimo bounds, použita bezpečná hodnota.', entry);
+      }
+      safe.x = clamped;
+    } else if (entry.x != null) {
+      console.warn('Safe pozice X není číslo, ponechána výchozí hodnota.', entry);
+    }
+    if (Number.isFinite(entry.y)) {
+      const clamped = clampToBounds(entry.y, bounds, 'y');
+      if (clamped !== entry.y) {
+        console.warn('Safe pozice Y mimo bounds, použita bezpečná hodnota.', entry);
+      }
+      safe.y = clamped;
+    } else if (entry.y != null) {
+      console.warn('Safe pozice Y není číslo, ponechána výchozí hodnota.', entry);
+    }
   });
 }

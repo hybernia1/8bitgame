@@ -23,13 +23,54 @@ export function serializePushables(pushables = []) {
   return pushables.map(({ id, x, y }) => ({ id, x, y }));
 }
 
-export function restorePushables(pushables = [], snapshot = []) {
-  const saved = new Map(snapshot.map((entry) => [entry.id, entry]));
+function normalizeBounds(bounds) {
+  if (!bounds || typeof bounds !== 'object') return null;
+  const minX = Number.isFinite(bounds.minX) ? bounds.minX : 0;
+  const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
+  const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : null;
+  const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : null;
+  if (maxX != null && maxX < minX) return null;
+  if (maxY != null && maxY < minY) return null;
+  return { minX, minY, maxX, maxY };
+}
+
+function clampToBounds(value, bounds, axis) {
+  if (!bounds) return value;
+  const min = axis === 'x' ? bounds.minX : bounds.minY;
+  const max = axis === 'x' ? bounds.maxX : bounds.maxY;
+  if (max == null) return Math.max(min, value);
+  return Math.min(Math.max(value, min), max);
+}
+
+export function restorePushables(pushables = [], snapshot = [], options = {}) {
+  if (!Array.isArray(snapshot) || !snapshot.length) return;
+  const bounds = normalizeBounds(options?.bounds);
+  const entries = snapshot.filter((entry) => entry && typeof entry === 'object');
+  if (entries.length !== snapshot.length) {
+    console.warn('Neplatné položky v uložených pushables byly ignorovány.');
+  }
+  const saved = new Map(entries.map((entry) => [entry.id, entry]));
   pushables.forEach((prop) => {
     const match = saved.get(prop.id);
     if (!match) return;
-    prop.x = match.x ?? prop.x;
-    prop.y = match.y ?? prop.y;
+    if (Number.isFinite(match.x)) {
+      const clamped = clampToBounds(match.x, bounds, 'x');
+      if (clamped !== match.x) {
+        console.warn('Pushable pozice X mimo bounds, použita bezpečná hodnota.', match);
+      }
+      prop.x = clamped;
+    } else if (match.x != null) {
+      console.warn('Pushable pozice X není číslo, ponechána výchozí hodnota.', match);
+    }
+    if (Number.isFinite(match.y)) {
+      const clamped = clampToBounds(match.y, bounds, 'y');
+      if (clamped !== match.y) {
+        console.warn('Pushable pozice Y mimo bounds, použita bezpečná hodnota.', match);
+      }
+      prop.y = clamped;
+    } else if (match.y != null) {
+      console.warn('Pushable pozice Y není číslo, ponechána výchozí hodnota.', match);
+    }
   });
 }
 
