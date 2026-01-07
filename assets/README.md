@@ -9,7 +9,6 @@ This project will generate procedural sprites when no external textures are pres
 - `assets/hero/hero.png` – main playable character. Use a 3x4 sheet (down, left, right, up) with three frames per row; drop in your own image to override the procedural fallback.
 - `assets/npc/npc.png` – friendly NPCs in the level.
 - `assets/npc/monster.png` – optional hostile NPC variant.
-- `assets/items/pickup.png` – collectibles/objectives in the level.
 
 If your host only lets you drop files next to `index.html`, you can also use the
 single-file names (`hero.png`, `floor.png`, etc.) in the project root; the

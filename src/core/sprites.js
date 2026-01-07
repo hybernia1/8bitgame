@@ -36,7 +36,6 @@ const TEXTURE_PATHS = {
   'door.open': 'assets/doors/door.open.png',
   destroy: 'assets/tiles/destroy.png',
   player: 'assets/hero/hero.png',
-  pickup: 'assets/items/pickup.png',
   npc: 'assets/npc/npc.png',
   hana: ['assets/npc/hana.png', 'assets/hana.png'],
   jara: ['assets/npc/jara.png', 'assets/jara.png'],
