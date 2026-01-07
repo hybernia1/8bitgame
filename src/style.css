@@ -512,6 +512,32 @@ canvas {
   margin: 0;
 }
 
+.menu-panel {
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.menu-screen {
+  width: min(360px, 100%);
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+
+.menu-list,
+.menu-level-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.menu-list .menu-button,
+.menu-level-list .menu-button,
+.menu-list input {
+  width: 100%;
+}
+
 .menu-actions {
   display: grid;
   gap: 12px;

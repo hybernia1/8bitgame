@@ -8,7 +8,14 @@ import { createInteractionSystem } from './interactions.js';
 import { registerScene, resume, setScene, showMenu } from '../core/scenes.js';
 import { format } from '../ui/messages.js';
 import { renderInventory, useInventorySlot } from '../ui/inventory.js';
-import { DEFAULT_LEVEL_ID, getLevelConfig, getLevelMeta, loadLevelConfig } from '../world/level-data.js';
+import {
+  DEFAULT_LEVEL_ID,
+  getLevelConfig,
+  getLevelMeta,
+  loadLevelConfig,
+  loaderRegistry,
+  registry,
+} from '../world/level-data.js';
 import { drawGrid } from '../world/level-instance.js';
 import { itemHandlers } from '../items.js';
 import {
@@ -121,12 +128,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   let handleSafeCancelClick = null;
   let questLogCollapsed = true;
 
-  const defaultMenuSubtitle =
-    'Zvol si novou misi, načti poslední save, nebo skoč na konkrétní level.';
-
   const {
     documentRoot,
     menuPanel,
+    menuScreens,
+    menuLevelList,
+    menuBackButtons,
+    menuNewGameButton,
+    menuContinueButton,
+    menuContinueLatestButton,
+    menuLevelsButton,
     pausePanel,
     loadingPanel,
     continuePanel,
@@ -142,13 +153,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     prologueAvatar,
     prologueSpeaker,
     prologueKicker,
-    levelSelectInput,
     slotInput,
-    menuSubtitle,
     saveSlotList,
     startButton,
-    continueButton,
-    selectButton,
     settingsButton,
     pauseResumeButton,
     pauseRestartButton,
@@ -161,9 +168,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   const isFullscreenSupported = Boolean(fullscreenSupported);
 
-  if (levelSelectInput) {
-    levelSelectInput.value = levelSelectInput.placeholder || DEFAULT_LEVEL_ID;
-  }
   if (slotInput) {
     slotInput.value = slotInput.placeholder || 'slot-1';
   }
@@ -176,6 +180,66 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   function setSlotInputValue(value) {
     if (!slotInput || !value) return;
     slotInput.value = value;
+  }
+
+  function showMenuScreen(screenName) {
+    if (!menuScreens) return;
+    menuScreens.forEach((screen) => {
+      const isActive = screen.dataset.menuScreen === screenName;
+      screen.classList.toggle('hidden', !isActive);
+    });
+  }
+
+  function getKnownLevelIds() {
+    return [
+      ...new Set([DEFAULT_LEVEL_ID, ...registry.keys(), ...loaderRegistry.keys()].filter(Boolean)),
+    ];
+  }
+
+  async function refreshLevelList() {
+    if (!menuLevelList) return;
+    menuLevelList.innerHTML = '';
+
+    const ids = getKnownLevelIds();
+    const configs = await Promise.all(ids.map((id) => loadLevelConfig(id)));
+    const entries = configs.map((config, index) => {
+      const meta = getLevelMeta(config);
+      return {
+        id: config.meta?.id ?? ids[index],
+        levelNumber: meta.levelNumber,
+        title: meta.title ?? meta.name ?? ids[index],
+      };
+    });
+
+    const uniqueEntries = new Map(entries.map((entry) => [entry.id, entry]));
+    const sortedEntries = [...uniqueEntries.values()].sort((a, b) => {
+      const aValue = Number.isFinite(a.levelNumber) ? a.levelNumber : Number.POSITIVE_INFINITY;
+      const bValue = Number.isFinite(b.levelNumber) ? b.levelNumber : Number.POSITIVE_INFINITY;
+      if (aValue !== bValue) return aValue - bValue;
+      return a.title.localeCompare(b.title, 'cs-CZ');
+    });
+
+    if (!sortedEntries.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Žádné levely nejsou k dispozici.';
+      menuLevelList.appendChild(empty);
+      return;
+    }
+
+    sortedEntries.forEach((entry) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'menu-button';
+      button.dataset.levelId = entry.id;
+      button.textContent = Number.isFinite(entry.levelNumber)
+        ? `Level ${entry.levelNumber}: ${entry.title}`
+        : entry.title;
+      button.addEventListener('click', () => {
+        setScene('loading', { levelId: entry.id, slotId: resolveSlotId(), freshStart: true });
+      });
+      menuLevelList.appendChild(button);
+    });
   }
 
   function refreshSaveSlotList() {
@@ -240,13 +304,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showMenuPanel() {
-    if (menuSubtitle) {
-      menuSubtitle.textContent = defaultMenuSubtitle;
-    }
     setFullscreenAvailability(isFullscreenSupported);
-    shell.showFullscreenPrompt?.();
     refreshSaveSlotList();
     hideContinuePanel();
+    showMenuScreen('main');
     toggleVisibility(menuPanel, true);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
@@ -1411,7 +1472,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   registerScene('menu', {
     async onEnter() {
       setFullscreenAvailability(isFullscreenSupported);
-      shell.showFullscreenPrompt?.();
       showMenuPanel();
     },
     onRender() {
@@ -1437,7 +1497,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         setActiveSlot(requestedSlot);
       }
 
-      const targetLevelId = params?.levelId || game.currentLevelId || levelSelectInput?.value || DEFAULT_LEVEL_ID;
+      const targetLevelId = params?.levelId || game.currentLevelId || DEFAULT_LEVEL_ID;
       const targetConfig = await loadLevelConfig(targetLevelId);
       const resolvedLevelId = targetConfig.meta?.id || targetLevelId;
       const targetMeta = getLevelMeta(targetConfig);
@@ -1518,10 +1578,17 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     },
   });
 
-  startButton?.addEventListener('click', () =>
-    setScene('loading', { levelId: PROLOGUE_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
-  );
-  continueButton?.addEventListener('click', () => {
+  menuNewGameButton?.addEventListener('click', () => showMenuScreen('new-game'));
+  menuContinueButton?.addEventListener('click', () => {
+    refreshSaveSlotList();
+    showMenuScreen('continue');
+  });
+  menuLevelsButton?.addEventListener('click', async () => {
+    await refreshLevelList();
+    showMenuScreen('levels');
+  });
+  settingsButton?.addEventListener('click', () => showMenuScreen('settings'));
+  menuContinueLatestButton?.addEventListener('click', () => {
     const saves = game.listSaves();
     const latest = saves[0];
     if (latest) {
@@ -1530,15 +1597,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     }
     setScene('loading', { levelId: game.currentLevelId ?? DEFAULT_LEVEL_ID, slotId: resolveSlotId() });
   });
-  selectButton?.addEventListener('click', () => {
-    const chosen = levelSelectInput?.value || DEFAULT_LEVEL_ID;
-    setScene('loading', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
+  menuBackButtons?.forEach((button) => {
+    button.addEventListener('click', () => showMenuScreen('main'));
   });
-  settingsButton?.addEventListener('click', () => {
-    if (menuSubtitle) {
-      menuSubtitle.textContent = 'Nastavení budou brzy dostupná.';
-    }
-  });
+  startButton?.addEventListener('click', () =>
+    setScene('loading', { levelId: PROLOGUE_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
+  );
   pauseResumeButton?.addEventListener('click', () => {
     if (pausePanel?.classList.contains('hidden')) {
       togglePauseScene();
