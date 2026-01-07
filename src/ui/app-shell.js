@@ -143,11 +143,22 @@ function bindFullscreenListeners() {
   );
 }
 
+function mergeRefs(target, source) {
+  if (!source) return target;
+  Object.entries(source).forEach(([key, value]) => {
+    if (value !== undefined) {
+      target[key] = value;
+    }
+  });
+  return target;
+}
+
 export function initShell({
   canvas,
   baseCanvas,
   scaleLimits = DEFAULT_SCALE_LIMITS,
   viewportBuffer = VIEWPORT_BUFFER,
+  overlayRefs = null,
 } = {}) {
   shellState = {
     ...shellState,
@@ -171,6 +182,7 @@ export function initShell({
 
   const domRefs = {
     documentRoot: root,
+    gameFrame: root?.querySelector('.game-frame') ?? null,
     menuPanel: root?.querySelector('.menu-panel') ?? null,
     menuScreens: root?.querySelectorAll('[data-menu-screen]') ?? [],
     menuLevelList: root?.querySelector('[data-level-list]') ?? null,
@@ -207,11 +219,17 @@ export function initShell({
     pauseMenuButton: root?.querySelector('[data-pause-menu]') ?? null,
   };
 
+  mergeRefs(domRefs, overlayRefs);
+  if (domRefs.fullscreenButton) {
+    shellState.fullscreenButton = domRefs.fullscreenButton;
+  }
+
   shellState.fullscreenSupported = Boolean(
     root?.fullscreenEnabled ?? root?.webkitFullscreenEnabled ?? getFullscreenElement(root),
   );
 
-  if (shellState.fullscreenButton) {
+  if (shellState.fullscreenButton && !shellState.fullscreenButton.dataset.fullscreenBound) {
+    shellState.fullscreenButton.dataset.fullscreenBound = 'true';
     shellState.fullscreenButton.addEventListener('click', toggleFullscreen);
   }
   if (shellState.fullscreenRequestButton) {
@@ -236,7 +254,7 @@ export function initShell({
     window.addEventListener('resize', updateScale, { passive: true });
   }
 
-  return {
+  const api = {
     ...domRefs,
     fullscreenSupported: shellState.fullscreenSupported,
     requestFullscreen: () => {
@@ -247,5 +265,21 @@ export function initShell({
     setFullscreenAvailability,
     setFullscreenUi,
     showFullscreenPrompt,
+    attachOverlays: (refs = {}) => {
+      mergeRefs(api, refs);
+      if (refs.gameShell && refs.gameShell !== shellState.gameShell) {
+        shellState.gameShell = refs.gameShell;
+      }
+      if (refs.fullscreenButton && refs.fullscreenButton !== shellState.fullscreenButton) {
+        shellState.fullscreenButton?.removeEventListener?.('click', toggleFullscreen);
+        shellState.fullscreenButton = refs.fullscreenButton;
+        shellState.fullscreenButton.dataset.fullscreenBound = 'true';
+        shellState.fullscreenButton.addEventListener('click', toggleFullscreen);
+        setFullscreenUi(Boolean(getFullscreenElement()));
+        setFullscreenAvailability(shellState.fullscreenSupported);
+      }
+      return api;
+    },
   };
+  return api;
 }
