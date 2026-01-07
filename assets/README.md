@@ -10,7 +10,6 @@ This project will generate procedural sprites when no external textures are pres
 - `assets/npc/npc.png` – friendly NPCs in the level.
 - `assets/npc/monster.png` – optional hostile NPC variant.
 - `assets/items/pickup.png` – collectibles/objectives in the level.
-- `assets/props/prop.png` – decorative props (unused by default but supported by the sprite sheet).
 
 If your host only lets you drop files next to `index.html`, you can also use the
 single-file names (`hero.png`, `floor.png`, etc.) in the project root; the
