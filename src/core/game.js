@@ -216,11 +216,25 @@ export function createGame({ inventory, hudSystem } = {}) {
     };
   }
 
+  function sanitizeInventory(value, issues) {
+    if (value == null) return null;
+    if (!Array.isArray(value)) {
+      issues.push('inventory nejsou pole');
+      return null;
+    }
+    const normalized = value.map((slot) => (isPlainObject(slot) ? slot : null));
+    const invalidSlots = value.filter((slot) => slot != null && !isPlainObject(slot)).length;
+    if (invalidSlots) {
+      issues.push('inventory obsahuje neplatné položky');
+    }
+    return normalized;
+  }
+
   function sanitizeSnapshot(snapshot, levelId) {
     const issues = [];
     const sanitized = {
       ...snapshot,
-      inventory: isPlainObject(snapshot.inventory) ? snapshot.inventory : null,
+      inventory: sanitizeInventory(snapshot.inventory, issues),
       levelState: isPlainObject(snapshot.levelState) ? snapshot.levelState : null,
       playerState: isPlainObject(snapshot.playerState) ? snapshot.playerState : null,
       playerVitals: isPlainObject(snapshot.playerVitals) ? snapshot.playerVitals : null,
@@ -234,8 +248,8 @@ export function createGame({ inventory, hudSystem } = {}) {
       safes: sanitizeArrayOfObjects(snapshot.safes, 'safes', issues),
     };
 
-    if (!isPlainObject(snapshot.inventory) && snapshot.inventory != null) {
-      issues.push('inventory není objekt');
+    if (!Array.isArray(snapshot.inventory) && snapshot.inventory != null) {
+      issues.push('inventory není pole');
     }
     if (!isPlainObject(snapshot.levelState) && snapshot.levelState != null) {
       issues.push('levelState není objekt');
