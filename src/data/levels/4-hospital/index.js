@@ -1,4 +1,5 @@
 import { TILE } from '../../../core/constants.js';
+import { getPickupPreset } from '../../pickups/index.js';
 import { buildTileLayersFromTokens } from '../map-utils.js';
 import { hospitalNpcPackage } from './npcs.js';
 
@@ -44,12 +45,7 @@ export const hospitalLevel = {
         ty: 2,
         code: '0000',
         codeLength: 4,
-        reward: {
-          id: 'apple',
-          name: 'Jablko',
-          icon: '🍎',
-          tint: '#f25c5c',
-        },
+        reward: getPickupPreset('apple'),
         rewardNote: 'note.safe.itemReceived',
         emptyNote: 'note.safe.empty',
       },

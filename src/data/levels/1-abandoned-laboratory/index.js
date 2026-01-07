@@ -1,5 +1,6 @@
 import { TILE } from '../../../core/constants.js';
 import { buildTileLayersFromTokens, resolveTileToken } from '../map-utils.js';
+import { placePickup } from '../../pickups/index.js';
 import { abandonedLaboratoryNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 20;
@@ -152,62 +153,44 @@ export const abandonedLaboratoryLevel = {
     npcs: [...abandonedLaboratoryNpcPackage.placements],
   },
   pickups: [
-    {
+    placePickup({
       id: 'battery-cell',
       name: 'Battery Cell',
       icon: '⚡',
-      x: TILE * 18 + TILE / 2,
-      y: TILE * 2 + TILE / 2,
+      tx: 18,
+      ty: 2,
       tint: '#f2d45c',
       description: 'A humming power source for the lab lights.',
       objective: true,
-    },
-    {
+    }),
+    placePickup({
       id: 'wrench',
       name: 'Service Wrench',
       icon: '🔧',
-      x: TILE * 12 + TILE / 2,
-      y: TILE * 9 + TILE / 2,
+      tx: 12,
+      ty: 9,
       tint: '#8ce0ff',
       description: 'Useful for tightening mech armor plating.',
       objective: true,
-    },
-    {
+    }),
+    placePickup({
       id: 'keycard',
       name: 'Keycard Fragment',
       icon: '🗝️',
-      x: TILE * 18 + TILE / 2,
-      y: TILE * 12 + TILE / 2,
+      tx: 18,
+      ty: 12,
       tint: '#c66bff',
       description: 'One part of an access card. Collect the rest later.',
       objective: true,
-    },
-    {
-      id: 'ammo',
-      name: 'Náboje',
-      icon: '•',
-      x: TILE * 4 + TILE / 2,
-      y: TILE * 4 + TILE / 2,
-      tint: '#f28f5c',
+    }),
+    placePickup('ammo', 4, 4, {
       description: 'Munice pro tvoji pistoli.',
-      objective: false,
-      stackable: true,
-      storeInInventory: false,
       quantity: 6,
-    },
-    {
-      id: 'ammo',
-      name: 'Náboje',
-      icon: '•',
-      x: TILE * 16 + TILE / 2,
-      y: TILE * 8 + TILE / 2,
-      tint: '#f28f5c',
+    }),
+    placePickup('ammo', 16, 8, {
       description: 'Munice pro tvoji pistoli.',
-      objective: false,
-      stackable: true,
-      storeInInventory: false,
       quantity: 6,
-    },
+    }),
   ],
   rewards: abandonedLaboratoryNpcPackage.rewards,
   quests: [

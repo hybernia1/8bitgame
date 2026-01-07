@@ -1,3 +1,4 @@
+import { getPickupPreset } from '../../pickups/index.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
 const presets = {
@@ -175,7 +176,7 @@ const npcPackage = buildNpcPackage([
         actions: [
           {
             type: 'giveItem',
-            item: { id: 'apple', name: 'Jablko', icon: '🍎', tint: '#f25c5c' },
+            item: getPickupPreset('apple'),
             blockedDialogue: 'Batoh je plný, odměnu teď neuneseš.',
             blockedNote: 'note.quiz.inventoryFull',
           },

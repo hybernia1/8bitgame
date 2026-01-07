@@ -1,5 +1,6 @@
 import { TILE } from '../../../core/constants.js';
 import { buildTileLayersFromTokens, resolveTileToken } from '../map-utils.js';
+import { placePickup } from '../../pickups/index.js';
 import { northernWingNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 16;
@@ -142,51 +143,10 @@ export const northernWingLevel = {
     npcs: [...northernWingNpcPackage.placements],
   },
   pickups: [
-    {
-      id: 'ammo',
-      name: 'Náboje',
-      icon: '•',
-      x: TILE * 6 + TILE / 2,
-      y: TILE * 3 + TILE / 2,
-      tint: '#f28f5c',
-      stackable: true,
-      storeInInventory: false,
-      quantity: 6,
-      objective: false,
-    },
-    {
-      id: 'ammo',
-      name: 'Náboje',
-      icon: '•',
-      x: TILE * 9 + TILE / 2,
-      y: TILE * 8 + TILE / 2,
-      tint: '#f28f5c',
-      stackable: true,
-      storeInInventory: false,
-      quantity: 6,
-      objective: false,
-    },
-    {
-      id: 'apple',
-      name: 'Jablko',
-      icon: '🍎',
-      x: TILE * 4 + TILE / 2,
-      y: TILE * 9 + TILE / 2,
-      tint: '#f25c5c',
-      objective: false,
-    },
-    {
-      id: 'ammo',
-      name: 'Náboje',
-      icon: '•',
-      x: TILE * 13 + TILE / 2,
-      y: TILE * 9 + TILE / 2,
-      tint: '#f28f5c',
-      stackable: true,
-      storeInInventory: false,
-      quantity: 8,
-      objective: false,
-    },
+    placePickup('ammo', 6, 3, { quantity: 6 }),
+    placePickup('ammo', 9, 8, { quantity: 6 }),
+    placePickup('apple', 4, 9),
+    placePickup('ammo', 13, 9, { quantity: 8 }),
   ],
   npcScripts: northernWingNpcPackage.scripts,
   rewards: northernWingNpcPackage.rewards,
