@@ -1,5 +1,6 @@
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
+import { getStorageSafely } from './storage.js';
 
 const SAVE_VERSION = 4;
 const saveMigrations = new Map();
@@ -18,15 +19,6 @@ export function createGame({ inventory, hudSystem } = {}) {
   let hud = hudSystem;
   let saveSlotId = null;
   let snapshotProvider = null;
-
-  function getStorage() {
-    if (typeof localStorage === 'undefined') return null;
-    try {
-      return localStorage;
-    } catch {
-      return null;
-    }
-  }
 
   function getStorageKey(slotId) {
     return `${storagePrefix}${slotId}`;
@@ -85,7 +77,7 @@ export function createGame({ inventory, hudSystem } = {}) {
     progress[currentLevelId] = snapshot;
 
     if (saveSlotId) {
-      const storage = getStorage();
+      const storage = getStorageSafely();
       const payload = {
         slotId: saveSlotId,
         currentLevelId,
@@ -145,7 +137,7 @@ export function createGame({ inventory, hudSystem } = {}) {
   }
 
   function listSaves() {
-    const storage = getStorage();
+    const storage = getStorageSafely();
     if (!storage) return [];
     const saves = [];
     for (let i = 0; i < storage.length; i += 1) {
@@ -260,7 +252,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   function loadFromSlot(slotId) {
     if (!slotId) return null;
-    const storage = getStorage();
+    const storage = getStorageSafely();
     if (!storage) return null;
     const raw = storage.getItem(getStorageKey(slotId));
     if (!raw) return null;
@@ -318,7 +310,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   function deleteSave(slotId) {
     if (!slotId) return;
-    const storage = getStorage();
+    const storage = getStorageSafely();
     if (!storage) return;
     try {
       storage.removeItem(getStorageKey(slotId));

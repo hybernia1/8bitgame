@@ -2,6 +2,8 @@
  * @preserve
  * Kontra.js v9.0.0
  */
+import { getStorageSafely } from './core/storage.js';
+
 let noop = () => {};
 
 // style used for DOM nodes needed for screen readers
@@ -1130,10 +1132,12 @@ function clamp(min, max, value) {
  * @param {*} value - The value to store.
  */
 function setStoreItem(key, value) {
+  let storage = getStorageSafely();
+  if (!storage) return;
   if (value == undefined) {
-    localStorage.removeItem(key);
+    storage.removeItem(key);
   } else {
-    localStorage.setItem(key, JSON.stringify(value));
+    storage.setItem(key, JSON.stringify(value));
   }
 }
 
@@ -1148,7 +1152,9 @@ function setStoreItem(key, value) {
  * @returns {*} The retrieved item.
  */
 function getStoreItem(key) {
-  let value = localStorage.getItem(key);
+  let storage = getStorageSafely();
+  if (!storage) return null;
+  let value = storage.getItem(key);
 
   try {
     value = JSON.parse(value);

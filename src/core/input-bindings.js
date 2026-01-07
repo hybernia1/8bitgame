@@ -1,4 +1,5 @@
 import defaultBindings from '../data/inputBindings.js';
+import { getStorageSafely } from './storage.js';
 
 const STORAGE_KEY = '8bitgame.inputBindings';
 
@@ -24,11 +25,6 @@ const gamepadLabels = {
   10: 'L3',
   11: 'R3',
 };
-
-function getStorage() {
-  if (typeof localStorage === 'undefined') return null;
-  return localStorage;
-}
 
 function uniq(values = []) {
   return Array.from(new Set(values));
@@ -76,7 +72,7 @@ function sanitizeBindings(bindings = {}) {
 }
 
 export function loadInputBindings() {
-  const storage = getStorage();
+  const storage = getStorageSafely();
   if (!storage) return sanitizeBindings(defaultBindings);
 
   try {
@@ -92,7 +88,7 @@ export function loadInputBindings() {
 }
 
 export function saveInputBindings(bindings) {
-  const storage = getStorage();
+  const storage = getStorageSafely();
   if (!storage) return;
   const sanitized = sanitizeBindings(bindings);
   try {
