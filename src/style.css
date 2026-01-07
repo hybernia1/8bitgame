@@ -18,7 +18,6 @@
   --page-padding: clamp(10px, 1.4vw, 20px);
   --canvas-rendering: pixelated;
   --font-family: 'Press Start 2P', 'VT323', 'Courier New', monospace;
-  --touch-size: 56px;
 }
 
 * {
@@ -902,103 +901,7 @@ canvas {
   border: 0;
 }
 
-.mobile-controls {
-  position: absolute;
-  inset: 12px;
-  display: none;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  pointer-events: none;
-  z-index: 4;
-}
-
-.mobile-actions {
-  display: grid;
-  gap: 10px;
-  align-items: center;
-  justify-items: end;
-  pointer-events: auto;
-}
-
-.mobile-touchpad {
-  width: min(46vw, 280px);
-  height: min(46vw, 280px);
-  border-radius: 20px;
-  background: rgba(18, 12, 8, 0.45);
-  border: 1px solid rgba(58, 39, 27, 0.7);
-  backdrop-filter: blur(3px);
-  pointer-events: auto;
-  position: relative;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding: 12px;
-}
-
-.mobile-touchpad-hint {
-  font-size: 10px;
-  opacity: 0.75;
-  line-height: 1.4;
-}
-
-.mobile-actions-row {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.mobile-button {
-  width: var(--touch-size);
-  height: var(--touch-size);
-  border-radius: 14px;
-  border: 1px solid #3a271b;
-  background: rgba(255, 245, 224, 0.08);
-  color: var(--text);
-  font-family: var(--font-family);
-  font-size: 14px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: transform 0.08s ease, border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
-  touch-action: none;
-  pointer-events: auto;
-  user-select: none;
-}
-
-.mobile-button--primary {
-  width: calc(var(--touch-size) * 1.3);
-  height: calc(var(--touch-size) * 1.3);
-  border-radius: 50%;
-  font-size: 18px;
-  background: radial-gradient(circle at 30% 30%, rgba(240, 194, 75, 0.35), rgba(24, 14, 10, 0.78));
-  border-color: rgba(240, 194, 75, 0.7);
-}
-
-.mobile-button--secondary {
-  font-size: 12px;
-  background: rgba(255, 245, 224, 0.06);
-}
-
-.mobile-button--dir {
-  font-size: 16px;
-}
-
-.mobile-button.is-pressed,
-.mobile-button:active {
-  transform: translateY(2px) scale(0.98);
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(240, 194, 75, 0.2);
-}
-
 @media (max-width: 900px) {
-  :root {
-    --touch-size: clamp(44px, 11vw, 64px);
-  }
-
   .hud-bar {
     flex-direction: column;
     align-items: flex-start;
@@ -1011,19 +914,5 @@ canvas {
   .hud-bottom {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .mobile-controls {
-    display: flex;
-  }
-}
-
-@media (pointer: coarse) {
-  :root {
-    --touch-size: clamp(44px, 10vw, 68px);
-  }
-
-  .mobile-controls {
-    display: flex;
   }
 }
