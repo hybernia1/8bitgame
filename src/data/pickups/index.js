@@ -15,6 +15,27 @@ const pickupPresets = {
     tint: '#f25c5c',
     objective: false,
   },
+  'battery-cell': {
+    id: 'battery-cell',
+    name: 'Battery Cell',
+    icon: '⚡',
+    tint: '#f2d45c',
+    objective: true,
+  },
+  wrench: {
+    id: 'wrench',
+    name: 'Service Wrench',
+    icon: '🔧',
+    tint: '#8ce0ff',
+    objective: true,
+  },
+  keycard: {
+    id: 'keycard',
+    name: 'Keycard Fragment',
+    icon: '🗝️',
+    tint: '#c66bff',
+    objective: true,
+  },
 };
 
 function clonePreset(id) {
