@@ -121,7 +121,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   let handleSafeCancelClick = null;
   let questLogCollapsed = true;
 
-  const defaultMenuSubtitle = 'Zvol si možnost a vyraz do mise.';
+  const defaultMenuSubtitle =
+    'Zvol si novou misi, načti poslední save, nebo skoč na konkrétní level.';
 
   const {
     documentRoot,
@@ -129,8 +130,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     pausePanel,
     loadingPanel,
     continuePanel,
-    savePanel,
-    saveBackButton,
     continueTitle,
     continueSubtitle,
     continueDetail,
@@ -172,19 +171,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   function resolveSlotId() {
     if (!slotInput) return 'slot-1';
     return slotInput.value.trim() || slotInput.placeholder || 'slot-1';
-  }
-
-  function resolveLevelId() {
-    const rawValue = levelSelectInput?.value?.trim();
-    if (!rawValue) return DEFAULT_LEVEL_ID;
-    if (/^\\d{1,4}$/.test(rawValue)) {
-      const numeric = Number.parseInt(rawValue, 10);
-      if (!Number.isNaN(numeric)) {
-        if (numeric === 0) return 'level-0-prologue';
-        return `level-${numeric}`;
-      }
-    }
-    return rawValue;
   }
 
   function setSlotInputValue(value) {
@@ -261,16 +247,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     shell.showFullscreenPrompt?.();
     refreshSaveSlotList();
     hideContinuePanel();
-    toggleVisibility(savePanel, false);
     toggleVisibility(menuPanel, true);
-    toggleVisibility(pausePanel, false);
-    toggleVisibility(loadingPanel, false);
-  }
-
-  function showSavePanel() {
-    refreshSaveSlotList();
-    toggleVisibility(menuPanel, false);
-    toggleVisibility(savePanel, true);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
   }
@@ -285,7 +262,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function showLoadingPanel(message = 'Načítání...') {
     toggleVisibility(menuPanel, false);
-    toggleVisibility(savePanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, true);
     const loadingText = loadingPanel?.querySelector?.('[data-loading-text]');
@@ -303,7 +279,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function showContinuePanel({ title, subtitle, detail } = {}) {
     toggleVisibility(menuPanel, false);
-    toggleVisibility(savePanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
     toggleVisibility(continuePanel, true);
@@ -452,7 +427,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function hideAllPanels() {
     toggleVisibility(menuPanel, false);
-    toggleVisibility(savePanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
     hideContinuePanel();
@@ -1548,10 +1522,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     setScene('loading', { levelId: PROLOGUE_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
   );
   continueButton?.addEventListener('click', () => {
-    showSavePanel();
+    const saves = game.listSaves();
+    const latest = saves[0];
+    if (latest) {
+      setScene('loading', { levelId: latest.currentLevelId, slotId: latest.slotId, loadSlot: true });
+      return;
+    }
+    setScene('loading', { levelId: game.currentLevelId ?? DEFAULT_LEVEL_ID, slotId: resolveSlotId() });
   });
   selectButton?.addEventListener('click', () => {
-    const chosen = resolveLevelId();
+    const chosen = levelSelectInput?.value || DEFAULT_LEVEL_ID;
     setScene('loading', { levelId: chosen, slotId: resolveSlotId(), freshStart: true });
   });
   settingsButton?.addEventListener('click', () => {
@@ -1559,7 +1539,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       menuSubtitle.textContent = 'Nastavení budou brzy dostupná.';
     }
   });
-  saveBackButton?.addEventListener('click', () => showMenuPanel());
   pauseResumeButton?.addEventListener('click', () => {
     if (pausePanel?.classList.contains('hidden')) {
       togglePauseScene();

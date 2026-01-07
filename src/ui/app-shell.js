@@ -178,8 +178,6 @@ export function initShell({
     pausePanel: root?.querySelector('.pause-panel') ?? null,
     loadingPanel: root?.querySelector('.loading-panel') ?? null,
     continuePanel: root?.querySelector('.continue-panel') ?? null,
-    savePanel: root?.querySelector('[data-save-panel]') ?? null,
-    saveBackButton: root?.querySelector('[data-save-back]') ?? null,
     continueTitle: root?.querySelector('[data-continue-title]') ?? null,
     continueSubtitle: root?.querySelector('[data-continue-subtitle]') ?? null,
     continueDetail: root?.querySelector('[data-continue-detail]') ?? null,
