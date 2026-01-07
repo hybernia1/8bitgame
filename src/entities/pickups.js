@@ -1,19 +1,14 @@
 import { TILE } from '../core/constants.js';
-
-function centerOffset() {
-  return TILE / 2;
-}
+import { resolveWorldPosition } from '../core/positioning.js';
 
 export function createPickups(templates = []) {
-  const offset = centerOffset();
   return templates.map((pickup) => ({
     ...pickup,
     objective: pickup.objective ?? true,
     stackable: pickup.stackable ?? false,
     storeInInventory: pickup.storeInInventory ?? true,
     quantity: pickup.quantity ?? (pickup.stackable ? 1 : undefined),
-    x: pickup.x ?? pickup.tx * TILE + offset,
-    y: pickup.y ?? pickup.ty * TILE + offset,
+    ...resolveWorldPosition(pickup),
     collected: false,
   }));
 }

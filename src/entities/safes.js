@@ -1,10 +1,9 @@
 import { TILE } from '../core/constants.js';
+import { resolveWorldPosition } from '../core/positioning.js';
 
 export const SAFE_INTERACT_DISTANCE = TILE;
 
 function toWorldPosition(entry = {}, fallbackIndex = 0) {
-  const tx = Number.isFinite(entry.tx) ? entry.tx : null;
-  const ty = Number.isFinite(entry.ty) ? entry.ty : null;
   const codeLength = Math.max(1, Math.floor(entry.codeLength ?? 4));
   const resolvedCode =
     typeof entry.code === 'string'
@@ -27,8 +26,7 @@ function toWorldPosition(entry = {}, fallbackIndex = 0) {
     sprite: entry.sprite ?? 'prop',
     color: entry.color ?? '#d4b484',
     tint: entry.tint ?? 'rgba(114, 86, 52, 0.35)',
-    x: entry.x ?? (tx != null ? tx * TILE + TILE / 2 : 0),
-    y: entry.y ?? (ty != null ? ty * TILE + TILE / 2 : 0),
+    ...resolveWorldPosition(entry),
     nearby: false,
   };
 }
