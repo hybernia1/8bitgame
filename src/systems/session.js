@@ -1,5 +1,6 @@
 import { COLORS, TILE, WORLD } from '../core/constants.js';
 import { formatBinding, formatControlsHint } from '../core/input-bindings.js';
+import { runActions } from '../core/actions.js';
 import { createCombatSystem } from './combat.js';
 import { createHudSystem } from './hud.js';
 import { createInputSystem } from './input.js';
@@ -82,6 +83,18 @@ function getSafeDomRefs(root) {
   };
 }
 
+function getQuizDomRefs(root) {
+  if (!root) return {};
+  return {
+    quizPanel: root.querySelector('[data-quiz-panel]'),
+    quizTitle: root.querySelector('[data-quiz-title]'),
+    quizQuestion: root.querySelector('[data-quiz-question]'),
+    quizOptions: root.querySelector('[data-quiz-options]'),
+    quizFeedback: root.querySelector('[data-quiz-feedback]'),
+    quizCancel: root.querySelector('[data-quiz-cancel]'),
+  };
+}
+
 function toggleVisibility(element, visible) {
   if (!element) return;
   element.classList.toggle('hidden', !visible);
@@ -99,6 +112,7 @@ function formatSaveDate(timestamp) {
 export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetPromise, shell }) {
   const hudDomRefs = getHudDomRefs(shell.documentRoot);
   const safeDomRefs = getSafeDomRefs(shell.documentRoot);
+  const quizDomRefs = getQuizDomRefs(shell.documentRoot);
 
   let inventoryToggleButton = null;
   let handleInventoryToggleClick = null;
@@ -474,6 +488,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       activeSpeaker: '',
       activeLine: '',
       dialogueMeta: null,
+      activeQuiz: null,
       levelAdvanceQueued: false,
     };
 
@@ -482,6 +497,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       sessionState.activeSpeaker = '';
       sessionState.activeLine = '';
       sessionState.dialogueMeta = null;
+      sessionState.activeQuiz = null;
       sessionState.levelAdvanceQueued = false;
     }
 
@@ -578,8 +594,17 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let safeSubmit = null;
     let safeCancel = null;
     let safeFeedback = null;
+    let quizPanel = null;
+    let quizTitle = null;
+    let quizQuestion = null;
+    let quizOptions = null;
+    let quizFeedback = null;
+    let quizCancel = null;
     let hideSafePanel = () => {};
+    let hideQuizPanel = () => {};
     let handleSafeSubmit = null;
+    let handleQuizOptionClick = null;
+    let handleQuizCancelClick = null;
     let interactQueued = false;
     let shootQueued = false;
     let prologuePlayed = false;
@@ -765,6 +790,15 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         safeFeedback,
       } = safeDomRefs || {});
       let activeSafe = null;
+      let activeQuiz = null;
+      ({
+        quizPanel,
+        quizTitle,
+        quizQuestion,
+        quizOptions,
+        quizFeedback,
+        quizCancel,
+      } = quizDomRefs || {});
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
           const amount = Number.isFinite(pickup.quantity) ? pickup.quantity : 1;
@@ -885,6 +919,131 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         showSafePanel(targetSafe);
       }
 
+      const setQuizFeedback = (messageId, params) => {
+        if (!quizFeedback) return;
+        if (!messageId) {
+          quizFeedback.textContent = '';
+          return;
+        }
+        quizFeedback.textContent = format(messageId, params);
+      };
+
+      function clearQuizOptions() {
+        if (!quizOptions) return;
+        quizOptions.innerHTML = '';
+      }
+
+      hideQuizPanel = () => {
+        if (quizPanel) {
+          quizPanel.classList.add('hidden');
+          quizPanel.setAttribute('aria-hidden', 'true');
+        }
+        sessionState.activeQuiz = null;
+        activeQuiz = null;
+        setQuizFeedback();
+        clearQuizOptions();
+      };
+
+      function applyQuizStateChanges(nextState = {}) {
+        Object.entries(nextState).forEach(([key, value]) => {
+          persistentState.flags[key] = value;
+        });
+      }
+
+      function applyQuizActions(step) {
+        if (!step?.actions && !step?.rewardId) return { success: true, note: step?.note };
+        const rewards = level.getRewards();
+        const reward = step.rewardId ? rewards?.[step.rewardId] : undefined;
+        const baseActions = Array.isArray(step.actions) ? step.actions : step.actions ? [step.actions] : [];
+        const rewardActions = reward?.actions ?? [];
+        const actions = [...baseActions, ...rewardActions];
+        if (!actions.length) {
+          return { success: true, note: reward?.note ?? step?.note };
+        }
+        const result = runActions(
+          actions,
+          { inventory, renderInventory, level, game, hud: hudSystem, flags: persistentState.flags, persistentState, sessionState, state },
+          reward,
+        );
+        if (result.success !== false && reward?.note && !result.note) {
+          result.note = reward.note;
+        }
+        return result;
+      }
+
+      function showQuizPanel(payload = {}) {
+        const quiz = payload.quiz ?? payload.line?.quiz;
+        if (!quizPanel || !quiz || !quizQuestion || !quizOptions) return;
+        activeQuiz = {
+          ...payload,
+          quiz,
+        };
+        sessionState.activeQuiz = { id: payload.line?.id ?? payload.npc?.id ?? 'quiz' };
+        quizPanel.classList.remove('hidden');
+        quizPanel.setAttribute('aria-hidden', 'false');
+        if (quizTitle) {
+          quizTitle.textContent = payload.npc?.name ?? 'Kvíz';
+        }
+        quizQuestion.textContent = quiz.question ?? '';
+        clearQuizOptions();
+        quiz.options?.forEach((option, index) => {
+          const button = documentRoot?.createElement?.('button');
+          if (!button) return;
+          button.type = 'button';
+          button.className = 'menu-button';
+          button.dataset.quizOption = String(index);
+          button.textContent = option.label ?? '';
+          quizOptions.appendChild(button);
+        });
+        setQuizFeedback();
+      }
+
+      function handleQuizAnswer(index) {
+        if (!activeQuiz) return;
+        const quiz = activeQuiz.quiz ?? {};
+        const option = quiz.options?.[index];
+        if (!option) return;
+        if (!option.correct) {
+          setQuizFeedback(quiz.failureNote ?? 'note.quiz.wrong');
+          return;
+        }
+        const actionResult = applyQuizActions(activeQuiz.line);
+        if (actionResult.success === false) {
+          setQuizFeedback(actionResult.blockedNote ?? quiz.failureNote ?? 'note.quiz.inventoryFull');
+          return;
+        }
+        if (activeQuiz.line?.setState) {
+          applyQuizStateChanges(activeQuiz.line.setState);
+        }
+        const note = actionResult.note ?? quiz.successNote ?? activeQuiz.line?.note;
+        if (note) {
+          hudSystem.showNote(note);
+        }
+        hideQuizPanel();
+        clearDialogueState();
+        hudSystem.hideInteraction();
+      }
+
+      handleQuizOptionClick = (event) => {
+        const target = event?.target?.closest?.('[data-quiz-option]');
+        if (!target) return;
+        const index = Number.parseInt(target.dataset.quizOption ?? '-1', 10);
+        if (!Number.isFinite(index)) return;
+        handleQuizAnswer(index);
+      };
+
+      handleQuizCancelClick = (event) => {
+        event?.preventDefault?.();
+        hideQuizPanel();
+        clearDialogueState();
+        hudSystem.hideInteraction();
+      };
+
+      const handleQuizStart = (payload) => {
+        if (sessionState.activeQuiz) return;
+        showQuizPanel(payload);
+      };
+
       const handleInventoryUse = (slotIndex) =>
         useInventorySlot({
           inventory,
@@ -979,6 +1138,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         hideSafePanel();
       };
       safeCancel?.addEventListener?.('click', handleSafeCancelClick);
+      quizOptions?.addEventListener?.('click', handleQuizOptionClick);
+      quizCancel?.addEventListener?.('click', handleQuizCancelClick);
 
       setQuestLogCollapsed(true);
 
@@ -1008,6 +1169,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         onPickupCollected: handlePickupCollected,
         safes,
         onSafeInteract: handleSafeInteract,
+        onQuizStart: handleQuizStart,
       });
 
       levelScript =
@@ -1200,6 +1362,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     function pauseSession() {
       resetActionQueue();
       hideSafePanel();
+      hideQuizPanel();
       inputSystem?.stop?.();
     }
 
@@ -1224,7 +1387,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       safeForm?.removeEventListener?.('submit', handleSafeSubmit);
       safeSubmit?.removeEventListener?.('click', handleSafeSubmit);
       safeCancel?.removeEventListener?.('click', handleSafeCancelClick);
+      quizOptions?.removeEventListener?.('click', handleQuizOptionClick);
+      quizCancel?.removeEventListener?.('click', handleQuizCancelClick);
       hideSafePanel();
+      hideQuizPanel();
     }
 
     return {
