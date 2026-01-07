@@ -112,56 +112,45 @@
           </div>
         </section>
         <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
-          <div class="panel-title">Hlavní menu</div>
-          <p class="menu-subtitle">Zvol si novou misi, pokračuj z posledního savu, nebo skoč na konkrétní level.</p>
-          <div class="fullscreen-callout hidden" data-fullscreen-prompt>
-            <div class="fullscreen-callout-body">
-              <div class="fullscreen-callout-title">Celá obrazovka</div>
-              <p class="menu-subtitle">
-                Pro nejlepší zážitek otevři hru na celou obrazovku. Prohlížeč vyžaduje potvrzení tlačítkem.
-              </p>
-            </div>
-            <div class="fullscreen-callout-actions">
-              <button type="button" class="menu-button" data-fullscreen-request>Otevřít na celou obrazovku</button>
-              <button type="button" class="menu-button ghost" data-fullscreen-dismiss>Pokračovat bez fullscreenu</button>
+          <div class="menu-screen" data-menu-screen="main">
+            <div class="panel-title">Hlavní menu</div>
+            <div class="menu-list">
+              <button type="button" class="menu-button" data-menu-newgame>Nová hra</button>
+              <button type="button" class="menu-button" data-menu-continue>Pokračovat</button>
+              <button type="button" class="menu-button" data-menu-levels>Výběr levelu</button>
+              <button type="button" class="menu-button" data-menu-settings>Nastavení</button>
             </div>
           </div>
-          <div class="menu-actions">
-            <div class="menu-card">
-              <div class="menu-card-header">
-                <div class="menu-card-title">Nová hra</div>
-                <p class="menu-card-hint">Začni od prologu v čistém slotu.</p>
-              </div>
-              <div class="menu-row">
-                <label for="slot-input" class="menu-label">Slot</label>
-                <input id="slot-input" type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
-                <button type="button" class="menu-button" data-menu-start>Spustit</button>
-              </div>
+          <div class="menu-screen hidden" data-menu-screen="new-game">
+            <div class="panel-title">Nová hra</div>
+            <div class="menu-list">
+              <label for="slot-input" class="menu-label">Slot</label>
+              <input id="slot-input" type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
+              <button type="button" class="menu-button" data-menu-start>Spustit</button>
+              <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
             </div>
-            <div class="menu-card">
-              <div class="menu-card-header">
-                <div class="menu-card-title">Pokračovat</div>
-                <p class="menu-card-hint">Načti poslední automatický nebo ruční save.</p>
-              </div>
-              <button type="button" class="menu-button" data-menu-continue>Pokračovat z posledního savu</button>
+          </div>
+          <div class="menu-screen hidden" data-menu-screen="continue">
+            <div class="panel-title">Pokračovat</div>
+            <div class="menu-list">
+              <button type="button" class="menu-button" data-menu-continue-latest>Pokračovat z posledního savu</button>
               <div class="save-panel">
                 <div class="panel-title">Uložené pozice</div>
-                <p class="menu-subtitle">Vyber uložený slot nebo ho smaž.</p>
                 <div class="save-slot-list" data-save-slot-list></div>
               </div>
+              <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
             </div>
-            <div class="menu-card">
-              <div class="menu-card-header">
-                <div class="menu-card-title">Výběr levelu</div>
-                <p class="menu-card-hint">Rychlý skok na konkrétní úroveň pro testování.</p>
-              </div>
-              <div class="menu-row">
-                <label for="level-input" class="menu-label">Level</label>
-                <input id="level-input" type="text" aria-label="ID levelu" data-level-input placeholder="level-1" />
-                <button type="button" class="menu-button ghost" data-menu-select>Vstoupit</button>
-              </div>
-              <button type="button" class="menu-button ghost subtle" data-menu-settings>Ostatní nastavení</button>
-            </div>
+          </div>
+          <div class="menu-screen hidden" data-menu-screen="levels">
+            <div class="panel-title">Výběr levelu</div>
+            <p class="menu-subtitle">Vyber úroveň a spusť novou hru.</p>
+            <div class="menu-level-list" data-level-list></div>
+            <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
+          </div>
+          <div class="menu-screen hidden" data-menu-screen="settings">
+            <div class="panel-title">Nastavení</div>
+            <p class="menu-subtitle">Nastavení budou brzy dostupná.</p>
+            <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
           </div>
         </section>
         <section class="overlay loading-panel hidden" aria-live="polite">
