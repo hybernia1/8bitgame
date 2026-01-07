@@ -113,7 +113,7 @@
         </section>
         <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
           <div class="panel-title">Hlavní menu</div>
-          <p class="menu-subtitle">Zvol si novou misi, pokračuj z posledního savu, nebo skoč na konkrétní level.</p>
+          <p class="menu-subtitle">Zvol si možnost a vyraz do mise.</p>
           <div class="fullscreen-callout hidden" data-fullscreen-prompt>
             <div class="fullscreen-callout-body">
               <div class="fullscreen-callout-title">Celá obrazovka</div>
@@ -126,43 +126,33 @@
               <button type="button" class="menu-button ghost" data-fullscreen-dismiss>Pokračovat bez fullscreenu</button>
             </div>
           </div>
-          <div class="menu-actions">
-            <div class="menu-card">
-              <div class="menu-card-header">
-                <div class="menu-card-title">Nová hra</div>
-                <p class="menu-card-hint">Začni od prologu v čistém slotu.</p>
-              </div>
+          <div class="menu-stack">
+            <button type="button" class="menu-button" data-menu-start>Nová hra</button>
+            <button type="button" class="menu-button" data-menu-continue>Pokračovat</button>
+            <div class="menu-level">
+              <label for="level-input" class="menu-label">Vybrat level</label>
               <div class="menu-row">
-                <label for="slot-input" class="menu-label">Slot</label>
-                <input id="slot-input" type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
-                <button type="button" class="menu-button" data-menu-start>Spustit</button>
+                <input
+                  id="level-input"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]{1,4}"
+                  maxlength="4"
+                  aria-label="Číslo levelu"
+                  data-level-input
+                  placeholder="0001"
+                />
+                <button type="button" class="menu-button ghost" data-menu-select>Spustit</button>
               </div>
             </div>
-            <div class="menu-card">
-              <div class="menu-card-header">
-                <div class="menu-card-title">Pokračovat</div>
-                <p class="menu-card-hint">Načti poslední automatický nebo ruční save.</p>
-              </div>
-              <button type="button" class="menu-button" data-menu-continue>Pokračovat z posledního savu</button>
-              <div class="save-panel">
-                <div class="panel-title">Uložené pozice</div>
-                <p class="menu-subtitle">Vyber uložený slot nebo ho smaž.</p>
-                <div class="save-slot-list" data-save-slot-list></div>
-              </div>
-            </div>
-            <div class="menu-card">
-              <div class="menu-card-header">
-                <div class="menu-card-title">Výběr levelu</div>
-                <p class="menu-card-hint">Rychlý skok na konkrétní úroveň pro testování.</p>
-              </div>
-              <div class="menu-row">
-                <label for="level-input" class="menu-label">Level</label>
-                <input id="level-input" type="text" aria-label="ID levelu" data-level-input placeholder="level-1" />
-                <button type="button" class="menu-button ghost" data-menu-select>Vstoupit</button>
-              </div>
-              <button type="button" class="menu-button ghost subtle" data-menu-settings>Ostatní nastavení</button>
-            </div>
+            <button type="button" class="menu-button ghost" data-menu-settings>Nastavení</button>
           </div>
+        </section>
+        <section class="overlay save-panel hidden" aria-label="Uložené pozice" data-save-panel>
+          <div class="panel-title">Pokračovat</div>
+          <p class="menu-subtitle">Vyber uložený slot nebo ho smaž.</p>
+          <div class="save-slot-list" data-save-slot-list></div>
+          <button type="button" class="menu-button ghost" data-save-back>← Zpět do menu</button>
         </section>
         <section class="overlay loading-panel hidden" aria-live="polite">
           <div class="panel-title">Načítání</div>
