@@ -98,12 +98,41 @@ export function serializePickups(pickups = []) {
 export function restorePickups(pickups = [], snapshot = []) {
   if (!Array.isArray(snapshot) || !snapshot.length) return;
   const byIndex = new Map(snapshot.map((entry) => [entry.index, entry]));
-  const byId = new Map(
-    snapshot.filter((entry) => entry?.id).map((entry) => [entry.id, entry]),
-  );
+  const byId = new Map();
+  snapshot
+    .filter((entry) => entry?.id)
+    .forEach((entry) => {
+      const entries = byId.get(entry.id) ?? [];
+      entries.push(entry);
+      byId.set(entry.id, entries);
+    });
 
   pickups.forEach((pickup, index) => {
-    const saved = byIndex.get(index) ?? byId.get(pickup.id);
+    let saved = byIndex.get(index);
+    if (!saved && pickup.id && byId.has(pickup.id)) {
+      const entries = byId.get(pickup.id);
+      if (entries.length === 1) {
+        saved = entries.shift();
+      } else if (entries.length > 1) {
+        const px = pickup.x;
+        const py = pickup.y;
+        let bestIndex = 0;
+        let bestDistance = Number.POSITIVE_INFINITY;
+        entries.forEach((entry, entryIndex) => {
+          if (typeof entry.x !== 'number' || typeof entry.y !== 'number') return;
+          if (typeof px !== 'number' || typeof py !== 'number') return;
+          const dx = entry.x - px;
+          const dy = entry.y - py;
+          const distance = Math.hypot(dx, dy);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = entryIndex;
+          }
+        });
+        saved = entries.splice(bestIndex, 1)[0];
+      }
+      if (entries.length === 0) byId.delete(pickup.id);
+    }
     if (!saved) return;
     if (typeof saved.x === 'number') pickup.x = saved.x;
     if (typeof saved.y === 'number') pickup.y = saved.y;
