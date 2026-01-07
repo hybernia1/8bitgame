@@ -44,7 +44,6 @@ const TEXTURE_PATHS = {
   cat: ['assets/npc/cat.png', 'assets/npc/npc.png'],
   monster: 'assets/npc/monster.png',
   spider: 'assets/npc/spider.png',
-  prop: 'assets/props/prop.png',
 };
 
 const VARIANT_TEXTURE_PATHS = {
