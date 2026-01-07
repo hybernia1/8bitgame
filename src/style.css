@@ -430,15 +430,15 @@ canvas {
 }
 
 .prologue-avatar[data-avatar='player'] {
-  background-image: url('assets/hero/hero.png');
+  background-image: url('../assets/hero/hero.png');
 }
 
 .prologue-avatar[data-avatar='hana'] {
-  background-image: url('assets/npc/hana.png');
+  background-image: url('../assets/npc/hana.png');
 }
 
 .prologue-avatar[data-avatar='npc'] {
-  background-image: url('assets/npc/npc.png');
+  background-image: url('../assets/npc/npc.png');
 }
 
 .prologue-content {
