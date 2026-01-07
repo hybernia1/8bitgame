@@ -38,11 +38,24 @@ function updateScale() {
     shellState.documentRoot.documentElement.clientHeight || window.innerHeight || shellState.baseCanvas.height;
   const availableWidth = Math.max(0, viewportWidth - shellState.viewportBuffer);
   const availableHeight = Math.max(0, viewportHeight - shellState.viewportBuffer);
+  const activeFullscreen = isFullscreenActive();
+  if (shellState.canvas && !activeFullscreen) {
+    if (
+      shellState.canvas.width !== shellState.baseCanvas.width ||
+      shellState.canvas.height !== shellState.baseCanvas.height
+    ) {
+      shellState.canvas.width = shellState.baseCanvas.width;
+      shellState.canvas.height = shellState.baseCanvas.height;
+      syncCanvasCssDimensions();
+    }
+  }
+
   const widthScale = availableWidth / shellState.baseCanvas.width;
   const heightScale = availableHeight / shellState.baseCanvas.height;
+  const fitScale = activeFullscreen ? Math.max(widthScale, heightScale) : Math.min(widthScale, heightScale);
   const nextScale = Math.min(
     shellState.scaleLimits.max,
-    Math.max(shellState.scaleLimits.min, Math.min(widthScale, heightScale)),
+    Math.max(shellState.scaleLimits.min, fitScale),
   );
   setScale(Number.isFinite(nextScale) ? Number(nextScale.toFixed(3)) : shellState.scaleLimits.min);
 }
@@ -138,6 +151,7 @@ function bindFullscreenListeners() {
       if (!active) {
         shellState.fullscreenPromptDismissed = false;
       }
+      updateScale();
       showFullscreenPrompt();
     }),
   );
