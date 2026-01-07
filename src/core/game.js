@@ -170,6 +170,30 @@ export function createGame({ inventory, hudSystem } = {}) {
     'safes',
   ];
 
+  function isPlainObject(value) {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  function sanitizeArrayOfObjects(value, label, issues) {
+    if (!Array.isArray(value)) {
+      issues.push(`${label} nejsou pole`);
+      return [];
+    }
+    const filtered = value.filter((entry) => isPlainObject(entry));
+    if (filtered.length !== value.length) {
+      issues.push(`${label} obsahují neplatné položky`);
+    }
+    return filtered;
+  }
+
+  function sanitizeNumber(value, fallback, label, issues) {
+    if (!Number.isFinite(value)) {
+      issues.push(`${label} nejsou číslo`);
+      return fallback;
+    }
+    return value;
+  }
+
   function addSnapshotDefaults(snapshot = {}) {
     const sessionState = snapshot?.sessionState ?? {};
     const persistentState =
@@ -192,12 +216,71 @@ export function createGame({ inventory, hudSystem } = {}) {
     };
   }
 
+  function sanitizeSnapshot(snapshot, levelId) {
+    const issues = [];
+    const sanitized = {
+      ...snapshot,
+      inventory: isPlainObject(snapshot.inventory) ? snapshot.inventory : null,
+      levelState: isPlainObject(snapshot.levelState) ? snapshot.levelState : null,
+      playerState: isPlainObject(snapshot.playerState) ? snapshot.playerState : null,
+      playerVitals: isPlainObject(snapshot.playerVitals) ? snapshot.playerVitals : null,
+      sessionState: isPlainObject(snapshot.sessionState) ? snapshot.sessionState : {},
+      persistentState: isPlainObject(snapshot.persistentState) ? snapshot.persistentState : {},
+      objectivesCollected: sanitizeNumber(snapshot.objectivesCollected, 0, 'objectivesCollected', issues),
+      savedAt: sanitizeNumber(snapshot.savedAt, 0, 'savedAt', issues),
+      projectiles: sanitizeArrayOfObjects(snapshot.projectiles, 'projectiles', issues),
+      pickups: sanitizeArrayOfObjects(snapshot.pickups, 'pickups', issues),
+      npcs: sanitizeArrayOfObjects(snapshot.npcs, 'npcs', issues),
+      safes: sanitizeArrayOfObjects(snapshot.safes, 'safes', issues),
+    };
+
+    if (!isPlainObject(snapshot.inventory) && snapshot.inventory != null) {
+      issues.push('inventory není objekt');
+    }
+    if (!isPlainObject(snapshot.levelState) && snapshot.levelState != null) {
+      issues.push('levelState není objekt');
+    }
+    if (!isPlainObject(snapshot.playerState) && snapshot.playerState != null) {
+      issues.push('playerState není objekt');
+    }
+    if (!isPlainObject(snapshot.playerVitals) && snapshot.playerVitals != null) {
+      issues.push('playerVitals není objekt');
+    }
+    if (!isPlainObject(snapshot.sessionState) && snapshot.sessionState != null) {
+      issues.push('sessionState není objekt');
+    }
+    if (!isPlainObject(snapshot.persistentState) && snapshot.persistentState != null) {
+      issues.push('persistentState není objekt');
+    }
+
+    const withDefaults = addSnapshotDefaults(sanitized);
+
+    if (issues.length) {
+      console.warn(`Save snapshot ${levelId ?? 'unknown'} obsahuje neplatná data:`, issues);
+    }
+
+    return { snapshot: withDefaults, repaired: issues.length > 0 };
+  }
+
   function addPersistentStateToProgress(progress = {}) {
     const upgraded = {};
     Object.entries(progress).forEach(([levelId, snapshot]) => {
       upgraded[levelId] = addSnapshotDefaults(snapshot);
     });
     return upgraded;
+  }
+
+  function sanitizeProgress(progressPayload = {}) {
+    const sanitized = {};
+    let repaired = false;
+    Object.entries(progressPayload).forEach(([levelId, snapshot]) => {
+      const cleaned = sanitizeSnapshot(snapshot, levelId);
+      sanitized[levelId] = cleaned.snapshot;
+      if (cleaned.repaired) {
+        repaired = true;
+      }
+    });
+    return { sanitized, repaired };
   }
 
   const migrateToPersistentState = (payload) => ({
@@ -292,12 +375,15 @@ export function createGame({ inventory, hudSystem } = {}) {
       snapshot.sessionState.levelAdvanceQueued = false;
     });
 
+    const { sanitized, repaired } = sanitizeProgress(migrated.progress);
+    migrated.progress = sanitized;
+
     Object.keys(progress).forEach((key) => delete progress[key]);
     Object.assign(progress, migrated.progress);
     currentLevelId = migrated.currentLevelId ?? null;
     saveSlotId = migrated.slotId ?? slotId;
 
-    if (migrated.version !== parsed.version) {
+    if (migrated.version !== parsed.version || repaired) {
       try {
         storage.setItem(getStorageKey(saveSlotId), JSON.stringify(migrated));
       } catch (err) {

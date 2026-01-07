@@ -691,18 +691,28 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       spriteSheet = await spriteSheetPromise;
       level = await game.loadLevel(levelId);
       savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
+      const mapDimensions = level?.getDimensions?.() ?? {};
+      const mapBounds =
+        Number.isFinite(mapDimensions.width) && Number.isFinite(mapDimensions.height)
+          ? {
+              minX: 0,
+              minY: 0,
+              maxX: mapDimensions.width * TILE,
+              maxY: mapDimensions.height * TILE,
+            }
+          : null;
       placements = level.getActorPlacements();
       player = createPlayer(spriteSheet, placements);
       restorePlayer(player, savedSnapshot?.playerState, placements.playerStart ?? player);
       playerStart = { x: player.x, y: player.y };
       pickups = createPickups(level.getPickupTemplates());
-      restorePickups(pickups, savedSnapshot?.pickups);
+      restorePickups(pickups, savedSnapshot?.pickups, { bounds: mapBounds });
       npcs = createNpcs(spriteSheet, placements);
       restoreNpcs(npcs, savedSnapshot?.npcs);
       pushables = createPushables(placements);
-      restorePushables(pushables, savedSnapshot?.sessionState?.pushables);
+      restorePushables(pushables, savedSnapshot?.sessionState?.pushables, { bounds: mapBounds });
       safes = createSafes(level.config?.interactables ?? {});
-      restoreSafes(safes, savedSnapshot?.safes);
+      restoreSafes(safes, savedSnapshot?.safes, { bounds: mapBounds });
 
       if (savedSnapshot?.playerVitals) {
         Object.assign(playerVitals, savedSnapshot.playerVitals);
