@@ -38,32 +38,6 @@ function updateScale() {
     shellState.documentRoot.documentElement.clientHeight || window.innerHeight || shellState.baseCanvas.height;
   const availableWidth = Math.max(0, viewportWidth - shellState.viewportBuffer);
   const availableHeight = Math.max(0, viewportHeight - shellState.viewportBuffer);
-  const activeFullscreen = isFullscreenActive();
-
-  if (shellState.canvas) {
-    if (activeFullscreen) {
-      const nextWidth = Math.max(1, Math.floor(availableWidth));
-      const nextHeight = Math.max(1, Math.floor(availableHeight));
-      if (shellState.canvas.width !== nextWidth || shellState.canvas.height !== nextHeight) {
-        shellState.canvas.width = nextWidth;
-        shellState.canvas.height = nextHeight;
-        shellState.documentRoot.documentElement.style.setProperty('--canvas-width', `${nextWidth}px`);
-        shellState.documentRoot.documentElement.style.setProperty('--canvas-height', `${nextHeight}px`);
-      }
-      setScale(1);
-      return;
-    }
-
-    if (
-      shellState.canvas.width !== shellState.baseCanvas.width ||
-      shellState.canvas.height !== shellState.baseCanvas.height
-    ) {
-      shellState.canvas.width = shellState.baseCanvas.width;
-      shellState.canvas.height = shellState.baseCanvas.height;
-      syncCanvasCssDimensions();
-    }
-  }
-
   const widthScale = availableWidth / shellState.baseCanvas.width;
   const heightScale = availableHeight / shellState.baseCanvas.height;
   const nextScale = Math.min(
@@ -164,7 +138,6 @@ function bindFullscreenListeners() {
       if (!active) {
         shellState.fullscreenPromptDismissed = false;
       }
-      updateScale();
       showFullscreenPrompt();
     }),
   );
