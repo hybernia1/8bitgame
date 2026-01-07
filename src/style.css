@@ -518,6 +518,22 @@ canvas {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.menu-stack {
+  display: grid;
+  gap: 12px;
+  width: min(320px, 100%);
+}
+
+.menu-stack .menu-button {
+  width: 100%;
+  text-align: center;
+}
+
+.menu-level {
+  display: grid;
+  gap: 6px;
+}
+
 .fullscreen-callout {
   display: grid;
   gap: 10px;
@@ -569,12 +585,8 @@ canvas {
 }
 
 .save-panel {
-  padding: 12px;
-  border: 1px solid #3a271b;
-  border-radius: 12px;
-  background: rgba(255, 245, 224, 0.03);
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .menu-row {
