@@ -266,6 +266,7 @@ export class LevelInstance {
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
     this.pressureSwitches = [];
     this.tileEffects = new Array(this.mapWidth * this.mapHeight).fill(null);
+    this.tileEffectsCount = 0;
 
     this.applyLightingZones(this.lightingConfig.litZones ?? []);
     this.invalidateAllLayers();
@@ -803,17 +804,28 @@ export class LevelInstance {
   }
 
   rebuildTileEffects(indices) {
-    const targets = indices && indices.length ? indices : this.tileEffects.map((_, index) => index);
+    const fullRebuild = !indices || !indices.length;
+    const targets = fullRebuild ? this.tileEffects.map((_, index) => index) : indices;
     let changed = false;
+    let effectCount = fullRebuild ? 0 : this.tileEffectsCount;
     targets.forEach((index) => {
       if (!Number.isInteger(index)) return;
       if (index < 0 || index >= this.tileEffects.length) return;
       const updated = this.computeTileEffect(index);
-      if (updated !== this.tileEffects[index]) {
+      const previous = this.tileEffects[index];
+      if (fullRebuild) {
         this.tileEffects[index] = updated;
-        changed = true;
+        if (updated) effectCount += 1;
+        if (updated !== previous) changed = true;
+        return;
       }
+      if (updated === previous) return;
+      this.tileEffects[index] = updated;
+      changed = true;
+      if (previous && !updated) effectCount -= 1;
+      if (!previous && updated) effectCount += 1;
     });
+    this.tileEffectsCount = effectCount;
     if (changed) {
       this.lightingDirtyAll = true;
     }
@@ -822,8 +834,11 @@ export class LevelInstance {
   updateTileEffect(index) {
     if (!Number.isInteger(index) || index < 0 || index >= this.tileEffects.length) return false;
     const updated = this.computeTileEffect(index);
-    if (updated === this.tileEffects[index]) return false;
+    const previous = this.tileEffects[index];
+    if (updated === previous) return false;
     this.tileEffects[index] = updated;
+    if (previous && !updated) this.tileEffectsCount -= 1;
+    if (!previous && updated) this.tileEffectsCount += 1;
     return true;
   }
 
@@ -914,7 +929,15 @@ export class LevelInstance {
       canvas.width = this.mapWidth * TILE;
       canvas.height = this.mapHeight * TILE;
       const context = canvas.getContext('2d');
-      renderLightingToContext(context, this.lightTiles, this.mapWidth, this.mapHeight, this.tileEffects);
+      renderLightingToContext(
+        context,
+        this.lightTiles,
+        this.mapWidth,
+        this.mapHeight,
+        this.tileEffects,
+        undefined,
+        this.tileEffectsCount > 0,
+      );
       this.lightingLayer = { canvas, context };
       this.lightingDirtyAll = false;
       this.dirtyLightingIndices.clear();
@@ -930,6 +953,7 @@ export class LevelInstance {
         this.mapHeight,
         this.tileEffects,
         dirtyArray,
+        this.tileEffectsCount > 0,
       );
       this.dirtyLightingIndices.clear();
     }
@@ -1091,9 +1115,9 @@ function renderTilesToContext(context, tiles, width, spriteSheet, indices, baseT
   });
 }
 
-function renderLightingToContext(context, lightTiles, width, height, tileEffects = null, indices) {
+function renderLightingToContext(context, lightTiles, width, height, tileEffects = null, indices, hasTileEffects = false) {
   if (!context) return;
-  const fullRedraw = !indices || !indices.length || Boolean(tileEffects);
+  const fullRedraw = !indices || !indices.length || hasTileEffects;
 
   if (fullRedraw) {
     context.clearRect(0, 0, width * TILE, height * TILE);
@@ -1116,6 +1140,7 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
     }
   } else {
     indices.forEach((index) => {
+      if (!Number.isInteger(index) || index < 0 || index >= lightTiles.length) return;
       const x = index % width;
       const y = Math.floor(index / width);
       context.clearRect(x * TILE, y * TILE, TILE, TILE);
