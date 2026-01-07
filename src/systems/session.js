@@ -1469,19 +1469,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   let currentInGameSession = null;
 
-  registerScene('boot', {
-    async onEnter() {
-      setFullscreenAvailability(true);
-      showLoadingPanel('Načítání...');
-      await spriteSheetPromise;
-      await setScene('menu');
-    },
-    onRender() {
-      ctx.fillStyle = COLORS.gridBackground;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    },
-  });
-
   registerScene('menu', {
     async onEnter() {
       setFullscreenAvailability(isFullscreenSupported);
@@ -1641,6 +1628,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   });
 
   return {
-    start: () => setScene('boot'),
+    start: () => setScene('menu'),
   };
 }

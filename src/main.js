@@ -7,7 +7,6 @@ import { createSessionSystem } from './systems/session.js';
 import { loadSpriteSheet } from './core/sprites.js';
 import { Inventory } from './ui/inventory.js';
 import { initShell } from './ui/app-shell.js';
-import { createOverlays } from './ui/overlays.js';
 
 const { canvas, context: ctx } = init('game');
 initKeys();
@@ -16,11 +15,6 @@ const shell = initShell({
   canvas,
   baseCanvas: { width: VIEWPORT.width * TILE, height: VIEWPORT.height * TILE },
 });
-
-const { refs: overlayRefs } = createOverlays({
-  container: shell.gameFrame ?? document.querySelector('.game-frame'),
-});
-shell.attachOverlays?.(overlayRefs);
 
 const inventory = new Inventory(12);
 const game = createGame({ inventory });
