@@ -40,11 +40,26 @@
  */
 
 /**
+ * @typedef {Object} NpcQuizOption
+ * @property {string} label
+ * @property {boolean} [correct]
+ */
+
+/**
+ * @typedef {Object} NpcQuiz
+ * @property {string} question
+ * @property {NpcQuizOption[]} options
+ * @property {string} [successNote]
+ * @property {string} [failureNote]
+ */
+
+/**
  * @typedef {Object} NpcScriptStep
  * @property {string} [id]
  * @property {string} dialogue
  * @property {LineCondition[]} [when]
  * @property {string} [note]
+ * @property {NpcQuiz} [quiz]
  * @property {string} [rewardId]
  * @property {Record<string, any>} [setState]
  * @property {ActionDefinition[]} [actions]

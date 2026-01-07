@@ -341,6 +341,31 @@ canvas {
   opacity: 0.85;
 }
 
+.quiz-panel {
+  align-content: start;
+  gap: 10px;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.quiz-options .menu-button {
+  justify-content: center;
+}
+
+.quiz-feedback {
+  min-height: 18px;
+  opacity: 0.85;
+}
+
+.quiz-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .hud-layer {
   position: absolute;
   inset: 8px;

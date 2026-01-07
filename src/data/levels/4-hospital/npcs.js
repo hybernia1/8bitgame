@@ -13,6 +13,12 @@ const presets = {
     sprite: 'npc',
     dialogue: 'Doktor Viktor si zapisuje tvůj puls a prohlíží nástroje.',
   },
+  quizmaster: {
+    id: 'quizmaster',
+    name: 'Archivářka Nora',
+    sprite: 'npc',
+    dialogue: 'Archivářka Nora drží tablet a čeká, až odpovíš na kontrolní otázky.',
+  },
 };
 
 const npcPackage = buildNpcPackage([
@@ -104,6 +110,78 @@ const npcPackage = buildNpcPackage([
           note: '[Úkol splněn] Doktor tě zkontroloval a pustil zpět do hry.',
         },
       ],
+    },
+  }),
+  placeNpc({
+    preset: presets.quizmaster,
+    tx: 2,
+    ty: 5,
+    script: {
+      defaultDialogue: 'Archivářka Nora přepíná mezi záznamy: „Když chceš odměnu, zkus kvíz.“',
+      lines: [
+        {
+          id: 'hospital-quiz-1',
+          when: [{ flag: 'hospitalQuizStep1', equals: false }],
+          dialogue: '„Začneme zlehka,“ usměje se Nora a podá ti tablet.',
+          quiz: {
+            question: 'Kolik je 1 + 1?',
+            options: [{ label: '1' }, { label: '2', correct: true }, { label: '3' }],
+            successNote: 'note.quiz.correct',
+            failureNote: 'note.quiz.wrong',
+          },
+          setState: { hospitalQuizStep1: true },
+        },
+        {
+          id: 'hospital-quiz-2',
+          when: [
+            { flag: 'hospitalQuizStep1', equals: true },
+            { flag: 'hospitalQuizStep2', equals: false },
+          ],
+          dialogue: '„Dobře, druhá otázka,“ Nora poklepe na displej.',
+          quiz: {
+            question: 'Kolik je 3 - 1?',
+            options: [{ label: '1' }, { label: '2', correct: true }, { label: '3' }],
+            successNote: 'note.quiz.correct',
+            failureNote: 'note.quiz.wrong',
+          },
+          setState: { hospitalQuizStep2: true },
+        },
+        {
+          id: 'hospital-quiz-3',
+          when: [
+            { flag: 'hospitalQuizStep2', equals: true },
+            { flag: 'hospitalQuizComplete', equals: false },
+          ],
+          dialogue: '„Poslední otázka a odměna je tvoje,“ zvedne Nora obočí.',
+          quiz: {
+            question: 'Kolik je 2 + 2?',
+            options: [{ label: '3' }, { label: '4', correct: true }, { label: '5' }],
+            successNote: 'note.quiz.reward',
+            failureNote: 'note.quiz.wrong',
+          },
+          rewardId: 'hospital-quiz-apple',
+          setState: { hospitalQuizComplete: true },
+        },
+        {
+          id: 'hospital-quiz-repeat',
+          when: [{ flag: 'hospitalQuizComplete', equals: true }],
+          dialogue: '„Výborně! Kdykoliv si můžeš přijít zopakovat otázky,“ usměje se Nora.',
+        },
+      ],
+    },
+    rewards: {
+      'hospital-quiz-apple': {
+        id: 'hospital-quiz-apple',
+        actions: [
+          {
+            type: 'giveItem',
+            item: { id: 'apple', name: 'Jablko', icon: '🍎', tint: '#f25c5c' },
+            blockedDialogue: 'Batoh je plný, odměnu teď neuneseš.',
+            blockedNote: 'note.quiz.inventoryFull',
+          },
+        ],
+        note: 'note.quiz.reward',
+      },
     },
   }),
 ]);

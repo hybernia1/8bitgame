@@ -17,6 +17,7 @@ export function createInteractionSystem({
   onPickupCollected,
   safes = [],
   onSafeInteract,
+  onQuizStart,
 }) {
   const SWITCH_INTERACT_DISTANCE = TILE;
   const npcScripts = level.getNpcScripts();
@@ -165,8 +166,15 @@ export function createInteractionSystem({
     const { nearestSafe, safeDistance } = findNearestSafe(safes, player.x, player.y);
     const nearSafe = nearestSafe ? safeDistance <= SAFE_INTERACT_DISTANCE : false;
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
+    const quizActive = Boolean(sessionState.activeQuiz);
 
-    if (context.interactRequested && activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
+    if (
+      !quizActive &&
+      context.interactRequested &&
+      activeSwitch &&
+      !activeSwitch.activated &&
+      switchDistance <= SWITCH_INTERACT_DISTANCE
+    ) {
       const toggled = level.activateLightSwitch(activeSwitch.id);
       if (toggled) {
         if (activeSwitch.id === 'technician-switch') {
@@ -177,9 +185,9 @@ export function createInteractionSystem({
       } else {
         showNote('note.switch.alreadyOn');
       }
-    } else if (context.interactRequested && nearSafe) {
+    } else if (!quizActive && context.interactRequested && nearSafe) {
       onSafeInteract?.(nearestSafe);
-    } else if (context.interactRequested && nearestNpc?.nearby) {
+    } else if (!quizActive && context.interactRequested && nearestNpc?.nearby) {
       state.activeSpeaker = nearestNpc.name;
       const script = npcScripts[nearestNpc.id];
       const pickedLine = pickNpcLine(script);
@@ -187,45 +195,64 @@ export function createInteractionSystem({
       let note = pickedLine?.note;
       let rewardBlocked = false;
 
-      if (pickedLine?.actions || pickedLine?.rewardId) {
-        const rewardResult = applyActions(pickedLine);
-        rewardBlocked = rewardResult.success === false;
-        if (rewardBlocked) {
-          dialogue = rewardResult.blockedDialogue || script?.defaultDialogue || dialogue;
-          note = rewardResult.blockedNote ?? note;
-        } else if (rewardResult.note) {
-          note = rewardResult.note;
+      if (pickedLine?.quiz) {
+        onQuizStart?.({ npc: nearestNpc, script, line: pickedLine });
+        nearestNpc.hasSpoken = true;
+        unlockNpcMovement();
+        activeNpc = nearestNpc;
+        nearestNpc.busyTimer = Number.POSITIVE_INFINITY;
+        nearestNpc.wanderTarget = null;
+        nearestNpc.wanderCooldown = nearestNpc.wanderInterval ?? 0;
+        if (script?.infoNote && !nearestNpc.infoShared) {
+          showNote(script.infoNote);
+          nearestNpc.infoShared = true;
         }
-      }
 
-      if (pickedLine?.setState && !rewardBlocked) {
-        applyStateChanges(pickedLine.setState);
-      }
+        state.activeLine = dialogue;
+        state.dialogueMeta = { speakerType: 'npc', spriteName: nearestNpc.sprite };
+        state.dialogueTime = Number.POSITIVE_INFINITY;
+        hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
+      } else {
+        if (pickedLine?.actions || pickedLine?.rewardId) {
+          const rewardResult = applyActions(pickedLine);
+          rewardBlocked = rewardResult.success === false;
+          if (rewardBlocked) {
+            dialogue = rewardResult.blockedDialogue || script?.defaultDialogue || dialogue;
+            note = rewardResult.blockedNote ?? note;
+          } else if (rewardResult.note) {
+            note = rewardResult.note;
+          }
+        }
 
-      if (!rewardBlocked && (pickedLine?.actions || pickedLine?.rewardId)) {
-        evaluateQuestCompletion({ reason: 'interaction' });
-      }
+        if (pickedLine?.setState && !rewardBlocked) {
+          applyStateChanges(pickedLine.setState);
+        }
 
-      if (note) {
-        showNote(note);
-      }
+        if (!rewardBlocked && (pickedLine?.actions || pickedLine?.rewardId)) {
+          evaluateQuestCompletion({ reason: 'interaction' });
+        }
 
-      nearestNpc.hasSpoken = true;
-      unlockNpcMovement();
-      activeNpc = nearestNpc;
-      nearestNpc.busyTimer = Number.POSITIVE_INFINITY;
-      nearestNpc.wanderTarget = null;
-      nearestNpc.wanderCooldown = nearestNpc.wanderInterval ?? 0;
-      if (script?.infoNote && !nearestNpc.infoShared) {
-        showNote(script.infoNote);
-        nearestNpc.infoShared = true;
-      }
+        if (note) {
+          showNote(note);
+        }
 
-      state.activeLine = dialogue;
-      state.dialogueMeta = { speakerType: 'npc', spriteName: nearestNpc.sprite };
-      state.dialogueTime = Number.POSITIVE_INFINITY;
-      hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
-    } else if (context.interactRequested && nearGate && gateState && !gateState.locked) {
+        nearestNpc.hasSpoken = true;
+        unlockNpcMovement();
+        activeNpc = nearestNpc;
+        nearestNpc.busyTimer = Number.POSITIVE_INFINITY;
+        nearestNpc.wanderTarget = null;
+        nearestNpc.wanderCooldown = nearestNpc.wanderInterval ?? 0;
+        if (script?.infoNote && !nearestNpc.infoShared) {
+          showNote(script.infoNote);
+          nearestNpc.infoShared = true;
+        }
+
+        state.activeLine = dialogue;
+        state.dialogueMeta = { speakerType: 'npc', spriteName: nearestNpc.sprite };
+        state.dialogueTime = Number.POSITIVE_INFINITY;
+        hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
+      }
+    } else if (!quizActive && context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
       state.activeLine = gateState.unlockLine || 'dialogue.gateUnlocked';
       const requiredItemId = gateState.requiredItemId || 'gate-key';
@@ -289,6 +316,11 @@ export function createInteractionSystem({
     const { nearestNpc, nearestSafe, nearSafe, activeSwitch, switchDistance, nearGate } = context;
     let hasActiveDialogue = Boolean(state.activeLine);
     const npcDialogueActive = hasActiveDialogue && state.dialogueMeta?.speakerType === 'npc';
+
+    if (sessionState.activeQuiz) {
+      hud.hideInteraction();
+      return;
+    }
 
     if (npcDialogueActive && !nearestNpc?.nearby) {
       clearDialogue();
