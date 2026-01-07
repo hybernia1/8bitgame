@@ -7,7 +7,6 @@ import { createSessionSystem } from './systems/session.js';
 import { loadSpriteSheet } from './core/sprites.js';
 import { Inventory } from './ui/inventory.js';
 import { initShell } from './ui/app-shell.js';
-import { initMobileControls } from './ui/mobile-controls.js';
 
 const { canvas, context: ctx } = init('game');
 initKeys();
@@ -16,8 +15,6 @@ const shell = initShell({
   canvas,
   baseCanvas: { width: VIEWPORT.width * TILE, height: VIEWPORT.height * TILE },
 });
-
-initMobileControls({ root: shell.documentRoot });
 
 const inventory = new Inventory(12);
 const game = createGame({ inventory });
