@@ -67,7 +67,19 @@ export class Inventory {
   }
 
   restore(slotState = []) {
-    this.slots = slotState.map((slot) => (slot ? { ...slot } : null));
+    const targetSize = this.slots.length;
+    const restored = Array.isArray(slotState)
+      ? slotState.map((slot) => (slot ? { ...slot } : null))
+      : [];
+
+    // Legacy save data may not include all slots; pad or trim for compatibility.
+    if (restored.length < targetSize) {
+      restored.push(...Array(targetSize - restored.length).fill(null));
+    } else if (restored.length > targetSize) {
+      restored.length = targetSize;
+    }
+
+    this.slots = restored;
   }
 }
 
