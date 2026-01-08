@@ -8,6 +8,7 @@ const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
 
 export const prologueCutscene = {
   id: 'prologue',
+  renderMode: 'map',
   nextLevelId: 'level-1',
   imageFolder: new URL('./img', import.meta.url).href,
   imageExtension: 'svg',
