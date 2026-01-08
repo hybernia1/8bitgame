@@ -37,16 +37,16 @@ const TEXTURE_PATHS = {
   destroy: 'assets/tiles/destroy.png',
   player: 'assets/hero/hero.png',
   npc: 'assets/npc/npc.png',
-  hana: ['assets/npc/hana.png', 'assets/hana.png'],
-  jara: ['assets/npc/jara.png', 'assets/jara.png'],
-  caretaker: ['assets/npc/caretaker.png', 'assets/caretaker.png'],
+  hana: 'assets/npc/hana.png',
+  jara: 'assets/npc/jara.png',
+  caretaker: 'assets/npc/caretaker.png',
   cat: ['assets/npc/cat.png', 'assets/npc/npc.png'],
   monster: 'assets/npc/monster.png',
   spider: 'assets/npc/spider.png',
 };
 
 const VARIANT_TEXTURE_PATHS = {
-  'decor.console': ['assets/props/console.png', 'assets/console.png'],
+  'decor.console': 'assets/props/console.png',
 };
 
 function collectDecorVariantsFromTiles(values = [], variants = new Set()) {
