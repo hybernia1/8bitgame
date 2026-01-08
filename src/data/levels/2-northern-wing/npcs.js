@@ -86,8 +86,6 @@ const npcPackage = buildNpcPackage([
           {
             type: 'giveItem',
             item: { id: 'collar-key', name: 'Klíček z obojku', icon: '🗝️', tint: '#f2d45c' },
-            blockedDialogue: 'Bez volného slotu si klíček z obojku nevezmeš.',
-            blockedNote: 'Uvolni slot, ať můžeš vzít klíček z kočičího obojku.',
           },
           { type: 'unlock', targetId: 'north-gate' },
           { type: 'setFlag', flag: 'northGateUnlocked', value: true },
@@ -127,8 +125,6 @@ const npcPackage = buildNpcPackage([
           {
             type: 'giveItem',
             item: { id: 'videotape', name: 'Videokazeta', icon: '📼', tint: '#f2d45c' },
-            blockedDialogue: 'Nemáš místo v inventáři, uvolni si slot pro kazetu.',
-            blockedNote: 'Kazetu nemáš kam uložit. Uvolni slot a otevři skříň znovu.',
           },
         ],
         note: 'note.videotape.found',

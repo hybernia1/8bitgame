@@ -39,9 +39,11 @@ function registerDefaults() {
     if (!action?.item) return { success: true };
     const stored = inventory?.addItem?.({ ...action.item });
     if (!stored) {
+      const itemName = action.item?.name ?? 'předmět';
+      const defaultBlockedDialogue = `Nemáš místo v inventáři, uvolni slot pro ${itemName}.`;
       return {
         success: false,
-        blockedDialogue: action.blockedDialogue,
+        blockedDialogue: action.blockedDialogue ?? defaultBlockedDialogue,
         blockedNote: action.blockedNote,
       };
     }
