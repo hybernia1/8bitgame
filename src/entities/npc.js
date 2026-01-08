@@ -40,6 +40,33 @@ function snapToGridPosition(point = {}, { tileSize = TILE, offset = tileSize / 2
   };
 }
 
+function buildWanderCandidates(
+  anchor,
+  radius,
+  canMove,
+  collisionSize,
+  { tileSize = TILE, offset = tileSize / 2 } = {},
+) {
+  if (!anchor || !canMove || radius <= 0) return [];
+  const minTx = Math.floor((anchor.x - radius - offset) / tileSize);
+  const maxTx = Math.floor((anchor.x + radius - offset) / tileSize);
+  const minTy = Math.floor((anchor.y - radius - offset) / tileSize);
+  const maxTy = Math.floor((anchor.y + radius - offset) / tileSize);
+  const candidates = [];
+
+  for (let tx = minTx; tx <= maxTx; tx += 1) {
+    for (let ty = minTy; ty <= maxTy; ty += 1) {
+      const x = tx * tileSize + offset;
+      const y = ty * tileSize + offset;
+      if (Math.hypot(x - anchor.x, y - anchor.y) > radius) continue;
+      if (!canMove(collisionSize, x, y)) continue;
+      candidates.push({ x, y });
+    }
+  }
+
+  return candidates;
+}
+
 function updatePatrol(npc, dt, player, collision = {}) {
   const canMove = typeof collision?.canMove === 'function' ? collision.canMove : null;
   const size = npc.size ?? TILE;
@@ -161,14 +188,24 @@ function updatePatrol(npc, dt, player, collision = {}) {
   if (npc.wanderRadius > 0) {
     npc.wanderCooldown = Math.max(0, npc.wanderCooldown - dt);
     const anchor = npc.wanderAnchor ?? { x: npc.x, y: npc.y };
+    const wanderAreaKey = `${anchor.x.toFixed(2)}:${anchor.y.toFixed(2)}:${npc.wanderRadius.toFixed(2)}`;
+    if (canMove && npc.wanderAreaKey !== wanderAreaKey) {
+      npc.wanderAreaKey = wanderAreaKey;
+      npc.wanderCandidates = buildWanderCandidates(anchor, npc.wanderRadius, canMove, collisionSize);
+    }
+
     if (!npc.wanderTarget && npc.wanderCooldown <= 0) {
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * npc.wanderRadius;
-      const wanderTarget = {
-        x: anchor.x + Math.cos(angle) * distance,
-        y: anchor.y + Math.sin(angle) * distance,
-      };
-      npc.wanderTarget = npc.gridSteering ? snapToGridPosition(wanderTarget) : wanderTarget;
+      if (npc.wanderCandidates?.length) {
+        npc.wanderTarget = npc.wanderCandidates[Math.floor(Math.random() * npc.wanderCandidates.length)];
+      } else {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * npc.wanderRadius;
+        const wanderTarget = {
+          x: anchor.x + Math.cos(angle) * distance,
+          y: anchor.y + Math.sin(angle) * distance,
+        };
+        npc.wanderTarget = npc.gridSteering ? snapToGridPosition(wanderTarget) : wanderTarget;
+      }
     }
 
     if (npc.wanderTarget) {
