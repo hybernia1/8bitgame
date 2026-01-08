@@ -567,18 +567,6 @@ const DRAWERS = {
   decor: drawDecorOverlay,
 };
 
-function setCanvasRenderingMode(mode) {
-  if (typeof document === 'undefined') return;
-  document.documentElement?.style?.setProperty('--canvas-rendering', mode);
-}
-
-function hasHighResolutionTextures(textures) {
-  return Object.values(textures).some((texture) => {
-    if (!texture) return false;
-    return resolveTextureTileSize(texture) > TEXTURE_TILE;
-  });
-}
-
 export async function loadSpriteSheet() {
   const discoveredVariants = await collectDecorVariantsFromLevels();
   const decorVariantList =
@@ -588,8 +576,6 @@ export async function loadSpriteSheet() {
   const { textures, decorTextures } = await loadTextureMap(decorVariantList);
   const frames = [];
   const animations = {};
-  setCanvasRenderingMode(hasHighResolutionTextures(textures) ? 'auto' : 'pixelated');
-
   const spriteNames = [
     ...SPRITE_ORDER,
     ...Object.keys(textures).filter((name) => !SPRITE_ORDER.includes(name)),
