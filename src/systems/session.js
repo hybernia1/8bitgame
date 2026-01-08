@@ -45,6 +45,7 @@ import {
 import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor/script.js';
 
 const itemHandlers = getItemHandlers();
+const INTRO_LEVEL_ID = 'level-0-prologue';
 
 function getHudDomRefs(root) {
   if (!root) return {};
@@ -1631,7 +1632,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     button.addEventListener('click', () => showMenuScreen('main'));
   });
   startButton?.addEventListener('click', () =>
-    setScene('loading', { levelId: PROLOGUE_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
+    setScene('loading', { levelId: INTRO_LEVEL_ID, slotId: resolveSlotId(), freshStart: true }),
   );
   pauseResumeButton?.addEventListener('click', () => {
     if (pausePanel?.classList.contains('hidden')) {
