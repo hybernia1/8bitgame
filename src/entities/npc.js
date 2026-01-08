@@ -338,6 +338,10 @@ function updatePatrol(npc, dt, player, collision = {}) {
         npc.wanderAnchor = anchor;
         npc.wanderAreaKey = null;
         npc.wanderCandidates = null;
+        npc.wanderTarget = null;
+        npc.wanderPath = null;
+        npc.wanderPathIndex = 0;
+        npc.wanderPathTarget = null;
       }
     }
     const wanderAreaKey = `${anchor.x.toFixed(2)}:${anchor.y.toFixed(2)}:${npc.wanderRadius.toFixed(2)}`;
@@ -354,8 +358,28 @@ function updatePatrol(npc, dt, player, collision = {}) {
         npc.wanderCandidates = null;
       }
       if (npc.wanderCandidates?.length) {
-        npc.wanderTarget = npc.wanderCandidates[Math.floor(Math.random() * npc.wanderCandidates.length)];
-      } else {
+        const attempts = Math.min(6, npc.wanderCandidates.length);
+        const currentTile = toTile(npc);
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
+          const candidate = npc.wanderCandidates[Math.floor(Math.random() * npc.wanderCandidates.length)];
+          if (canMove && npc.gridSteering) {
+            const targetTile = toTile(candidate);
+            const candidatePath = buildPath(currentTile, targetTile, canMove, collisionSize);
+            if (candidatePath) {
+              npc.wanderTarget = candidate;
+              npc.wanderPath = candidatePath;
+              npc.wanderPathIndex = 0;
+              npc.wanderPathTarget = targetTile;
+              break;
+            }
+          } else {
+            npc.wanderTarget = candidate;
+            break;
+          }
+        }
+      }
+
+      if (!npc.wanderTarget) {
         const angle = Math.random() * Math.PI * 2;
         const distance = Math.random() * npc.wanderRadius;
         const wanderTarget = {
@@ -366,13 +390,48 @@ function updatePatrol(npc, dt, player, collision = {}) {
       }
     }
 
+    if (npc.wanderTarget && canMove && npc.gridSteering) {
+      const targetTile = toTile(npc.wanderTarget);
+      const currentTile = toTile(npc);
+      const shouldRefreshPath =
+        !npc.wanderPath?.length ||
+        npc.wanderPathTarget?.tx !== targetTile.tx ||
+        npc.wanderPathTarget?.ty !== targetTile.ty;
+      if (shouldRefreshPath) {
+        const candidatePath = buildPath(currentTile, targetTile, canMove, collisionSize);
+        if (candidatePath) {
+          npc.wanderPath = candidatePath;
+          npc.wanderPathIndex = 0;
+          npc.wanderPathTarget = targetTile;
+        } else {
+          npc.wanderTarget = null;
+          npc.wanderPath = null;
+          npc.wanderPathIndex = 0;
+          npc.wanderPathTarget = null;
+          npc.wanderCooldown = Math.max(0.2, npc.wanderInterval);
+        }
+      }
+    }
+
     if (npc.wanderTarget) {
-      const dx = npc.wanderTarget.x - npc.x;
-      const dy = npc.wanderTarget.y - npc.y;
+      let target = npc.wanderTarget;
+      if (npc.wanderPath?.length) {
+        const pathPoint = npc.wanderPath[npc.wanderPathIndex] ?? npc.wanderPath[0];
+        const pathDistance = Math.hypot(pathPoint.x - npc.x, pathPoint.y - npc.y);
+        if (pathDistance < MIN_TARGET_DISTANCE) {
+          npc.wanderPathIndex = Math.min(npc.wanderPathIndex + 1, npc.wanderPath.length - 1);
+        }
+        target = npc.wanderPath[npc.wanderPathIndex] ?? target;
+      }
+      const dx = target.x - npc.x;
+      const dy = target.y - npc.y;
       const distance = Math.hypot(dx, dy);
 
       if (distance < MIN_TARGET_DISTANCE) {
         npc.wanderTarget = null;
+        npc.wanderPath = null;
+        npc.wanderPathIndex = 0;
+        npc.wanderPathTarget = null;
         npc.wanderCooldown = npc.wanderInterval;
         return { dx: 0, dy: 0, moving: false };
       }
@@ -384,6 +443,9 @@ function updatePatrol(npc, dt, player, collision = {}) {
       updateFacingFromMovement(movement, npc.facing);
       if (!movement.moving) {
         npc.wanderTarget = null;
+        npc.wanderPath = null;
+        npc.wanderPathIndex = 0;
+        npc.wanderPathTarget = null;
         npc.wanderCooldown = npc.wanderInterval;
         return { dx: 0, dy: 0, moving: false };
       }
@@ -489,6 +551,9 @@ export function createNpcs(spriteSheet, placements) {
       wanderAnchor: toWorldPosition(npc),
       wanderCooldown: 0,
       wanderTarget: null,
+      wanderPath: null,
+      wanderPathIndex: 0,
+      wanderPathTarget: null,
       busyTimer: 0,
       stuckTimer: 0,
       health,
