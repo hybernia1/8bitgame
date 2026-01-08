@@ -72,6 +72,11 @@ main {
   max-height: none;
 }
 
+.game-shell.is-cutscene-only .play-column,
+.game-shell.is-cutscene-only .game-frame {
+  height: 100%;
+}
+
 .game-shell.is-fullscreen {
   width: 100vw;
   height: 100vh;
