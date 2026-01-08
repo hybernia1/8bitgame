@@ -85,16 +85,13 @@ async function collectDecorVariantsFromLevels() {
   }
 }
 
-const SPRITE_ANIMATIONS = {
-  player: (frameCount) => getDirectionalAnimationDefs('player', frameCount, { includeLegacyDefault: true }),
-  npc: (frameCount) => getDirectionalAnimationDefs('npc', frameCount, { includeLegacyDefault: true }),
-  hana: (frameCount) => getDirectionalAnimationDefs('hana', frameCount, { includeLegacyDefault: true }),
-  jara: (frameCount) => getDirectionalAnimationDefs('jara', frameCount, { includeLegacyDefault: true }),
-  caretaker: (frameCount) => getDirectionalAnimationDefs('caretaker', frameCount, { includeLegacyDefault: true }),
-  cat: (frameCount) => getDirectionalAnimationDefs('cat', frameCount, { includeLegacyDefault: true }),
-  monster: (frameCount) => getDirectionalAnimationDefs('monster', frameCount, { includeLegacyDefault: true }),
-  spider: (frameCount) => getDirectionalAnimationDefs('spider', frameCount, { includeLegacyDefault: true }),
-};
+const CHARACTER_SPRITES = ['player', 'npc', 'hana', 'jara', 'caretaker', 'cat', 'monster', 'spider'];
+const SPRITE_ANIMATIONS = Object.fromEntries(
+  CHARACTER_SPRITES.map((name) => [
+    name,
+    (frameCount) => getDirectionalAnimationDefs(name, frameCount, { includeLegacyDefault: true }),
+  ]),
+);
 
 function getDirectionalAnimationDefs(baseName, frameCount, { includeLegacyDefault = false } = {}) {
   const addLegacy = (frame) => includeLegacyDefault && { name: baseName, frames: [frame] };
