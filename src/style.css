@@ -399,15 +399,11 @@ input[type='text']:focus {
   text-align: left;
   position: relative;
   overflow: hidden;
-  grid-template-rows: 1fr auto;
-  background: none;
 }
 
 .cutscene-step {
   display: grid;
   gap: 12px;
-  grid-template-rows: auto 1fr;
-  min-height: 0;
   position: relative;
   z-index: 1;
 }
@@ -440,7 +436,6 @@ input[type='text']:focus {
   border: 1px solid #3a271b;
   background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  height: 100%;
 }
 
 .cutscene-media {
