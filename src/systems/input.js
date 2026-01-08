@@ -5,6 +5,7 @@ import {
   resolveActionForKey,
   saveInputBindings,
 } from '../core/input-bindings.js';
+import { INPUT_ACTIONS } from '../core/input-actions.js';
 
 function isTextInput(target) {
   const hasInput = typeof HTMLInputElement !== 'undefined' && target instanceof HTMLInputElement;
@@ -38,7 +39,7 @@ export function createInputSystem({ inventorySlots = 12, onAction } = {}) {
 
   function handleAction(action, detail) {
     if (!action) return;
-    if (action === 'use-slot') {
+    if (action === INPUT_ACTIONS.USE_SLOT) {
       const slotIndex = detail?.slotIndex;
       if (slotIndex == null || slotIndex < 0 || slotIndex >= inventorySlots) return;
       emit(action, { slotIndex });
@@ -52,9 +53,9 @@ export function createInputSystem({ inventorySlots = 12, onAction } = {}) {
     const action = resolveActionForKey(bindings, event.code);
     if (!action) return;
 
-    if (isTextInput(event.target) && action !== 'toggle-pause') return;
+    if (isTextInput(event.target) && action !== INPUT_ACTIONS.TOGGLE_PAUSE) return;
 
-    if (action === 'use-slot') {
+    if (action === INPUT_ACTIONS.USE_SLOT) {
       const slotIndex = getSlotIndexFromBinding(bindings, event.code, 'keyboard');
       if (slotIndex >= 0) {
         handleAction(action, { slotIndex });
@@ -73,7 +74,7 @@ export function createInputSystem({ inventorySlots = 12, onAction } = {}) {
     if (!slot) return;
     const index = Number.parseInt(slot.dataset.index, 10) - 1;
     if (Number.isInteger(index)) {
-      handleAction('use-slot', { slotIndex: index });
+      handleAction(INPUT_ACTIONS.USE_SLOT, { slotIndex: index });
     }
   }
 
@@ -86,10 +87,10 @@ export function createInputSystem({ inventorySlots = 12, onAction } = {}) {
         const wasPressed = buttonState.get(index) === true;
         if (button.pressed && !wasPressed) {
           const action = resolveActionForButton(bindings, index);
-          if (action === 'use-slot') {
+          if (action === INPUT_ACTIONS.USE_SLOT) {
             const slotIndex = getSlotIndexFromBinding(bindings, index, 'gamepad');
             if (slotIndex >= 0) {
-              handleAction('use-slot', { slotIndex });
+              handleAction(INPUT_ACTIONS.USE_SLOT, { slotIndex });
             }
           } else if (action) {
             handleAction(action);

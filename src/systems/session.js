@@ -1,4 +1,5 @@
 import { COLORS, TILE, WORLD } from '../core/constants.js';
+import { INPUT_ACTIONS } from '../core/input-actions.js';
 import { formatBinding, formatControlsHint } from '../core/input-bindings.js';
 import { runActions } from '../core/actions.js';
 import { createCombatSystem } from './combat.js';
@@ -1138,22 +1139,22 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       function handleAction(action, detail = {}) {
         switch (action) {
-          case 'interact':
+          case INPUT_ACTIONS.INTERACT:
             interactQueued = true;
             break;
-          case 'shoot':
+          case INPUT_ACTIONS.SHOOT:
             shootQueued = true;
             break;
-          case 'use-slot':
+          case INPUT_ACTIONS.USE_SLOT:
             handleInventoryUse(detail.slotIndex);
             break;
-          case 'toggle-pause':
+          case INPUT_ACTIONS.TOGGLE_PAUSE:
             togglePauseScene();
             break;
-          case 'toggle-inventory':
+          case INPUT_ACTIONS.TOGGLE_INVENTORY:
             toggleInventory();
             break;
-          case 'toggle-quest-log':
+          case INPUT_ACTIONS.TOGGLE_QUEST_LOG:
             toggleQuestLog();
             break;
           default:
@@ -1172,7 +1173,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       });
 
       const bindingConfig = formatControlsHint(inputSystem.getBindings());
-      const questBindingLabel = formatBinding(inputSystem.getBindings(), 'toggle-quest-log');
+      const questBindingLabel = formatBinding(inputSystem.getBindings(), INPUT_ACTIONS.TOGGLE_QUEST_LOG);
       inventoryBindingLabel = bindingConfig.inventory;
       const controlsHint = {
         ...bindingConfig,
