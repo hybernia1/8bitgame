@@ -85,6 +85,14 @@ main {
   height: 100%;
 }
 
+.game-shell.is-cutscene-only .cutscene-panel {
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
 .game-shell.is-fullscreen {
   width: 100vw;
   height: 100vh;
@@ -458,7 +466,7 @@ input[type='text']:focus {
   grid-column: 1 / -1;
   border: 1px solid #3a271b;
   background: #120a05;
-  padding: 6px;
+  padding: 0;
 }
 
 .cutscene-image {
