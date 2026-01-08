@@ -8,6 +8,7 @@ const MIN_TARGET_DISTANCE = 4 * TILE_SCALE;
 const DEFAULT_WANDER_SPEED = 36 * TILE_SCALE;
 const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
 const DEFAULT_LETHAL_WANDER_SPEED = 30 * TILE_SCALE;
+const NPC_COLLISION_PADDING = 2 * TILE_SCALE;
 const STEER_DIRECTIONS = [
   { x: 1, y: 0 },
   { x: -1, y: 0 },
@@ -32,6 +33,7 @@ function normalizeVector(x = 0, y = 0) {
 function updatePatrol(npc, dt, player, collision = {}) {
   const canMove = typeof collision?.canMove === 'function' ? collision.canMove : null;
   const size = npc.size ?? TILE;
+  const collisionSize = Math.max(TILE_SCALE, size - NPC_COLLISION_PADDING);
   const wanderSpeed = npc.wanderSpeed ?? npc.speed ?? DEFAULT_WANDER_SPEED;
   const patrolSpeed = npc.speed ?? DEFAULT_PATROL_SPEED;
 
@@ -46,7 +48,7 @@ function updatePatrol(npc, dt, player, collision = {}) {
       if (!delta) return 0;
       const nx = axis === 'x' ? npc.x + delta : npc.x;
       const ny = axis === 'y' ? npc.y + delta : npc.y;
-      if (!canMove(size, nx, ny)) return 0;
+      if (!canMove(collisionSize, nx, ny)) return 0;
       if (axis === 'x') {
         npc.x = nx;
       } else {
