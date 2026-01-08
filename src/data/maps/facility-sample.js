@@ -95,7 +95,6 @@ export const facilitySample = {
     "switches": []
   },
   "actors": {
-    "monsters": [],
     "props": [],
     "npcs": [
       {
