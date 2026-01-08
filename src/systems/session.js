@@ -123,6 +123,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     cutsceneContinueButton,
     cutsceneBackButton,
     cutsceneSkipButton,
+    cutsceneMedia,
+    cutsceneImage,
     cutsceneStepTitle,
     cutsceneStepBody,
     cutsceneProgress,
@@ -346,7 +348,22 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     });
   }
 
-  function renderCutsceneStep(index = 0, steps = []) {
+  function resolveCutsceneImageSource(stepIndex, step, cutsceneConfig) {
+    if (!step) return null;
+    const imageFolder = cutsceneConfig?.imageFolder ?? '';
+    const normalizedFolder = imageFolder.endsWith('/') ? imageFolder.slice(0, -1) : imageFolder;
+    if (step?.image) {
+      if (normalizedFolder && !step.image.includes('://') && !step.image.startsWith('/')) {
+        return `${normalizedFolder}/${step.image}`;
+      }
+      return step.image;
+    }
+    if (!normalizedFolder) return null;
+    const extension = cutsceneConfig?.imageExtension ?? 'png';
+    return `${normalizedFolder}/step-${stepIndex + 1}.${extension}`;
+  }
+
+  function renderCutsceneStep(index = 0, steps = [], cutsceneConfig = {}) {
     const step = steps[index] ?? steps[0];
     const total = steps.length;
     if (cutsceneStepTitle) {
@@ -382,6 +399,18 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         cutsceneStepBody.appendChild(p);
       });
     }
+    if (cutsceneImage && cutsceneMedia) {
+      const imageSrc = resolveCutsceneImageSource(index, step, cutsceneConfig);
+      if (imageSrc) {
+        cutsceneImage.src = imageSrc;
+        cutsceneImage.alt = step?.title ?? 'Ilustrace';
+        cutsceneMedia.classList.remove('hidden');
+      } else {
+        cutsceneImage.removeAttribute('src');
+        cutsceneImage.alt = '';
+        cutsceneMedia.classList.add('hidden');
+      }
+    }
   }
 
   function showCutscenePanel() {
@@ -395,10 +424,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     toggleVisibility(cutscenePanel, false);
   }
 
-  function waitForCutsceneContinue({ steps = [] } = {}) {
+  function waitForCutsceneContinue({ steps = [], ...cutsceneConfig } = {}) {
     if (!cutscenePanel || !steps.length) return Promise.resolve({ skipped: false });
     let stepIndex = 0;
-    renderCutsceneStep(stepIndex, steps);
+    renderCutsceneStep(stepIndex, steps, cutsceneConfig);
     showCutscenePanel();
 
     const updateNav = () => {
@@ -432,7 +461,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           return;
         }
         stepIndex = nextIndex;
-        renderCutsceneStep(stepIndex, steps);
+        renderCutsceneStep(stepIndex, steps, cutsceneConfig);
         updateNav();
       };
       const keyHandler = (event) => {

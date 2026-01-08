@@ -192,6 +192,8 @@ export function initShell({
     cutsceneContinueButton: root?.querySelector('[data-cutscene-continue]') ?? null,
     cutsceneBackButton: root?.querySelector('[data-cutscene-back]') ?? null,
     cutsceneSkipButton: root?.querySelector('[data-cutscene-skip]') ?? null,
+    cutsceneMedia: root?.querySelector('[data-cutscene-media]') ?? null,
+    cutsceneImage: root?.querySelector('[data-cutscene-image]') ?? null,
     cutsceneStepTitle: root?.querySelector('[data-cutscene-step-title]') ?? null,
     cutsceneStepBody: root?.querySelector('[data-cutscene-body]') ?? null,
     cutsceneProgress: root?.querySelector('[data-cutscene-progress]') ?? null,
