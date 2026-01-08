@@ -18,6 +18,8 @@ const layoutTokens = [
 export const prologueCutscene = {
   id: 'prologue',
   nextLevelId: 'level-1',
+  imageFolder: new URL('./img', import.meta.url).href,
+  imageExtension: 'svg',
   steps: [
     {
       title: 'Návrat snu',

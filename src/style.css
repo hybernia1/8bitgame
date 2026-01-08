@@ -430,6 +430,21 @@ input[type='text']:focus {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
+.cutscene-media {
+  grid-column: 1 / -1;
+  border: 1px solid #3a271b;
+  background: #120a05;
+  padding: 6px;
+}
+
+.cutscene-image {
+  width: 100%;
+  height: 220px;
+  display: block;
+  object-fit: cover;
+  image-rendering: auto;
+}
+
 .cutscene-avatar {
   width: 96px;
   height: 96px;

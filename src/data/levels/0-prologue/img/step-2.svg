@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1f1410" />
+      <stop offset="100%" stop-color="#100905" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)" />
+  <rect x="40" y="40" width="720" height="370" rx="20" fill="#2f1b12" opacity="0.75" />
+  <text x="80" y="140" fill="#f3e2c2" font-family="'Trebuchet MS', sans-serif" font-size="40">Telefonát ve tmě</text>
+  <text x="80" y="200" fill="#c7a77f" font-family="'Trebuchet MS', sans-serif" font-size="22">Zvonění uprostřed noci • Krok 2</text>
+  <path d="M120 280h360" stroke="#b67f3f" stroke-width="6" stroke-linecap="round" />
+  <rect x="540" y="230" width="140" height="140" rx="18" fill="#1d120b" stroke="#b67f3f" stroke-width="6" />
+</svg>
