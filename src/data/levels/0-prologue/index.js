@@ -11,7 +11,7 @@ export const prologueCutscene = {
   renderMode: 'map',
   nextLevelId: 'level-1',
   imageFolder: new URL('./img', import.meta.url).href,
-  imageExtension: 'svg',
+  imageExtension: 'png',
   steps: [
     {
       title: 'Návrat snu',
@@ -19,6 +19,7 @@ export const prologueCutscene = {
       speaker: 'Ty',
       speakerType: 'player',
       avatar: 'player',
+      image: 'step-1.png',
       actionLabel: 'Probudit se',
       body: [
         'Zase se mi vrací sen o rodině – dětský smích, ruce, které už nedržím, a pak jen ticho prořezané sirénou.',
@@ -31,6 +32,7 @@ export const prologueCutscene = {
       speaker: 'Hana',
       speakerType: 'npc',
       avatar: 'hana',
+      image: 'step-2.png',
       actionLabel: 'Vyrazím',
       body: [
         '„Potřebuju tě,“ šeptá Hana. „Během měsíce zmizely tři děti a policie tápe.“',
@@ -43,6 +45,7 @@ export const prologueCutscene = {
       speaker: 'Ty',
       speakerType: 'player',
       avatar: 'player',
+      image: 'step-3.png',
       actionLabel: 'Vyrazit do vesnice',
       body: ['Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.'],
     },

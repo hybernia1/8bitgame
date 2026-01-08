@@ -821,7 +821,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     const panelX = panelPadding;
     const panelWidth = canvas.width - panelPadding * 2;
     const panelHeightSafe = Math.max(panelHeight, panelPadding * 3);
-    const imageAreaHeight = Math.max(panelY, 0);
     const headingFontSize = Math.max(16, Math.round(TILE * 0.32));
     const bodyFontSize = Math.max(14, Math.round(TILE * 0.26));
     const buttonFontSize = Math.max(12, Math.round(TILE * 0.22));
@@ -844,9 +843,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.fillStyle = COLORS.gridBackground;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (image && imageAreaHeight > 0) {
+    if (image) {
       const maxWidth = canvas.width;
-      const maxHeight = imageAreaHeight;
+      const maxHeight = canvas.height;
       const scale = Math.max(maxWidth / image.width, maxHeight / image.height);
       const drawWidth = image.width * scale;
       const drawHeight = image.height * scale;
