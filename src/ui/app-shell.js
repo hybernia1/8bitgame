@@ -11,6 +11,7 @@ let shellState = {
   viewportBuffer: VIEWPORT_BUFFER,
   gameShell: null,
   fullscreenButton: null,
+  fullscreenButtons: [],
   fullscreenEnabled: false,
   fullscreenSupported: false,
   fullscreenPrompt: null,
@@ -61,27 +62,28 @@ function setFullscreenUi(active) {
   if (active) {
     hideFullscreenPrompt();
   }
-  if (shellState.fullscreenButton) {
-    shellState.fullscreenButton.setAttribute('aria-pressed', active ? 'true' : 'false');
-    shellState.fullscreenButton.textContent = active ? '⤢' : '⛶';
-    shellState.fullscreenButton.setAttribute(
-      'aria-label',
-      active ? 'Zavřít celou obrazovku' : 'Celá obrazovka',
-    );
-  }
+  shellState.fullscreenButtons.forEach((button) => {
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    button.textContent = active ? '⤢' : '⛶';
+    button.setAttribute('aria-label', active ? 'Zavřít celou obrazovku' : 'Celá obrazovka');
+  });
 }
 
 function setFullscreenAvailability(enabled) {
   shellState.fullscreenEnabled = Boolean(enabled);
-  if (!shellState.fullscreenButton) return;
-  shellState.fullscreenButton.disabled = !shellState.fullscreenEnabled;
-  shellState.fullscreenButton.setAttribute('aria-disabled', shellState.fullscreenEnabled ? 'false' : 'true');
-  shellState.fullscreenButton.classList.toggle('is-disabled', !shellState.fullscreenEnabled);
+  if (!shellState.fullscreenButtons.length) return;
+  shellState.fullscreenButtons.forEach((button) => {
+    button.disabled = !shellState.fullscreenEnabled;
+    button.setAttribute('aria-disabled', shellState.fullscreenEnabled ? 'false' : 'true');
+    button.classList.toggle('is-disabled', !shellState.fullscreenEnabled);
+  });
   const label = shellState.fullscreenEnabled
     ? 'Celá obrazovka'
     : 'Celá obrazovka není v prohlížeči dostupná';
-  shellState.fullscreenButton.setAttribute('aria-label', label);
-  shellState.fullscreenButton.title = label;
+  shellState.fullscreenButtons.forEach((button) => {
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  });
 }
 
 function requestFullscreen() {
@@ -164,7 +166,9 @@ export function initShell({
 
   const root = shellState.documentRoot;
   shellState.gameShell = root?.querySelector('.game-shell') ?? null;
-  shellState.fullscreenButton = root?.querySelector('[data-fullscreen-toggle]') ?? null;
+  const fullscreenButtons = Array.from(root?.querySelectorAll('[data-fullscreen-toggle]') ?? []);
+  shellState.fullscreenButton = fullscreenButtons[0] ?? null;
+  shellState.fullscreenButtons = fullscreenButtons;
   shellState.fullscreenPrompt = root?.querySelector('[data-fullscreen-prompt]') ?? null;
   shellState.fullscreenRequestButton = root?.querySelector('[data-fullscreen-request]') ?? null;
   shellState.fullscreenDismissButton = root?.querySelector('[data-fullscreen-dismiss]') ?? null;
@@ -217,9 +221,9 @@ export function initShell({
     root?.fullscreenEnabled ?? root?.webkitFullscreenEnabled ?? getFullscreenElement(root),
   );
 
-  if (shellState.fullscreenButton) {
-    shellState.fullscreenButton.addEventListener('click', toggleFullscreen);
-  }
+  shellState.fullscreenButtons.forEach((button) => {
+    button.addEventListener('click', toggleFullscreen);
+  });
   if (shellState.fullscreenRequestButton) {
     shellState.fullscreenRequestButton.addEventListener('click', () => {
       requestFullscreen();
