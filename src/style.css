@@ -55,7 +55,6 @@ main {
 .game-shell {
   background: none;
   border: none;
-  border-radius: 0;
   box-shadow: none;
   padding: 0;
   display: grid;
@@ -71,7 +70,6 @@ main {
   width: 100vw;
   height: 100vh;
   max-width: none;
-  border-radius: 0;
 }
 
 canvas {
@@ -85,7 +83,6 @@ canvas {
   background: repeating-linear-gradient(0deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     repeating-linear-gradient(90deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     #130c08;
-  border-radius: 14px;
   image-rendering: var(--canvas-rendering, pixelated);
 }
 
@@ -102,7 +99,6 @@ canvas {
   gap: 14px;
   background: none;
   border: none;
-  border-radius: 0;
   padding: 4px 6px;
   box-shadow: none;
 }
@@ -134,7 +130,6 @@ canvas {
 
 .hud-button {
   padding: 8px 10px;
-  border-radius: 50%;
   border: 1px solid #3a271b;
   background: rgba(255, 245, 224, 0.06);
   color: var(--text);
@@ -170,7 +165,6 @@ canvas {
 
 .hud-pill {
   padding: 8px 10px;
-  border-radius: 10px;
   border: 1px solid #3a271b;
   background: radial-gradient(circle at 20% 20%, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.72));
   font-size: 10px;
@@ -213,7 +207,6 @@ canvas {
   gap: 6px;
   padding: 6px 8px;
   margin-left: 4px;
-  border-radius: 10px;
   border: 1px solid #302722;
   background: radial-gradient(circle at 20% 20%, rgba(240, 194, 75, 0.2), rgba(26, 18, 12, 0.68));
   color: #f6e2b8;
@@ -241,7 +234,6 @@ canvas {
 
 .game-frame {
   position: relative;
-  border-radius: 14px;
   padding: 8px;
   background: none;
   border: none;
@@ -256,7 +248,6 @@ canvas {
 .alert-layer {
   position: absolute;
   inset: 8px;
-  border-radius: 12px;
   background: radial-gradient(circle at 30% 30%, rgba(255, 56, 56, 0.06), rgba(255, 56, 56, 0.22)),
     radial-gradient(circle at 70% 70%, rgba(255, 120, 120, 0.08), rgba(255, 56, 56, 0.2));
   mix-blend-mode: screen;
@@ -293,7 +284,6 @@ canvas {
   inset: 8px;
   background: rgba(26, 16, 10, 0.92);
   border: 1px solid #3a271b;
-  border-radius: 12px;
   padding: 16px;
   display: grid;
   gap: 12px;
@@ -319,21 +309,23 @@ canvas {
   flex-wrap: wrap;
 }
 
-.safe-row input[type='text'] {
-  flex: 1;
-  min-width: 140px;
+input[type='text'] {
   padding: 10px 12px;
-  border-radius: 10px;
   border: 1px solid #3a271b;
   background: rgba(255, 245, 224, 0.06);
   color: var(--text);
   font-family: inherit;
 }
 
-.safe-row input[type='text']:focus {
+input[type='text']:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 1px rgba(240, 194, 75, 0.3);
+}
+
+.safe-row input[type='text'] {
+  flex: 1;
+  min-width: 140px;
 }
 
 .safe-feedback {
@@ -425,7 +417,6 @@ canvas {
 .cutscene-progress {
   font-size: 10px;
   padding: 4px 8px;
-  border-radius: 16px;
   border: 1px solid #3a271b;
 }
 
@@ -435,7 +426,6 @@ canvas {
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
-  border-radius: 12px;
   border: 1px solid #3a271b;
   background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -444,7 +434,6 @@ canvas {
 .cutscene-avatar {
   width: 96px;
   height: 96px;
-  border-radius: 12px;
   border: 1px solid #3a271b;
   background: #1d110a;
   background-repeat: no-repeat;
@@ -549,7 +538,6 @@ canvas {
   gap: 10px;
   padding: 12px;
   border: 1px dashed rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -574,7 +562,6 @@ canvas {
   display: grid;
   gap: 10px;
   padding: 12px;
-  border-radius: 12px;
   border: 1px solid #3a271b;
   background: linear-gradient(130deg, rgba(240, 194, 75, 0.06), rgba(26, 16, 10, 0.86));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
@@ -597,7 +584,6 @@ canvas {
 .save-panel {
   padding: 12px;
   border: 1px solid #3a271b;
-  border-radius: 12px;
   background: rgba(255, 245, 224, 0.03);
   display: grid;
   gap: 10px;
@@ -612,7 +598,6 @@ canvas {
 .menu-button {
   background: linear-gradient(120deg, rgba(240, 194, 75, 0.18), rgba(240, 194, 75, 0.1));
   border: 1px solid #3a271b;
-  border-radius: 10px;
   color: var(--text);
   font-family: inherit;
   padding: 12px 14px;
@@ -641,11 +626,6 @@ canvas {
 }
 
 .menu-row input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #3a271b;
-  border-radius: 10px;
-  color: var(--text);
-  padding: 10px 12px;
   flex: 1;
 }
 
@@ -662,7 +642,6 @@ canvas {
 .save-slot {
   padding: 10px;
   border: 1px solid #3a271b;
-  border-radius: 10px;
   display: grid;
   gap: 6px;
   background: linear-gradient(130deg, rgba(240, 194, 75, 0.07), rgba(26, 16, 10, 0.82));
@@ -699,7 +678,6 @@ canvas {
 .interaction-banner {
   background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
   border: 1px solid #3a271b;
-  border-radius: 12px;
   padding: 10px 12px;
   display: grid;
   grid-template-columns: 1fr;
@@ -723,7 +701,6 @@ canvas {
 .interaction-avatar {
   width: 80px;
   height: 80px;
-  border-radius: 12px;
   border: 1px solid #3a271b;
   background: #1d110a;
   background-repeat: no-repeat;
@@ -758,7 +735,6 @@ canvas {
 .quest-log {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid #3a271b;
-  border-radius: 12px;
   padding: 10px 12px;
   display: grid;
   gap: 6px;
@@ -814,7 +790,6 @@ canvas {
 
 .inventory-slot {
   border: 1px solid #3a271b;
-  border-radius: 10px;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -860,7 +835,6 @@ canvas {
 .inventory {
   background: rgba(0, 0, 0, 0.58);
   border: 1px solid #3a271b;
-  border-radius: 14px;
   padding: 12px 14px;
   display: grid;
   gap: 12px;
@@ -893,7 +867,6 @@ canvas {
 
 .inventory-status {
   padding: 8px 10px;
-  border-radius: 10px;
   border: 1px solid #3a271b;
   background: rgba(26, 16, 10, 0.78);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
@@ -904,7 +877,6 @@ canvas {
 
 .hud-toast {
   padding: 10px 12px;
-  border-radius: 10px;
   border: 1px solid #3a271b;
   background: linear-gradient(160deg, rgba(240, 194, 75, 0.16), rgba(26, 16, 10, 0.82));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
