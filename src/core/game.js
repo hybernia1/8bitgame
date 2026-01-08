@@ -21,6 +21,23 @@ export function createGame({ inventory, hudSystem } = {}) {
   let snapshotProvider = null;
   let carryOverVitals = null;
 
+  function createCutsceneLevel(config) {
+    const meta = config?.meta ?? { name: 'Unknown Sector' };
+    const dimensions = config?.dimensions ?? meta?.dimensions ?? {};
+    return {
+      config,
+      meta,
+      getObjectiveTotal: () => 0,
+      getDimensions: () => ({
+        width: Number.isFinite(dimensions.width) ? dimensions.width : 0,
+        height: Number.isFinite(dimensions.height) ? dimensions.height : 0,
+      }),
+      getActorPlacements: () => ({}),
+      getPickupTemplates: () => [],
+      createSnapshot: () => ({}),
+    };
+  }
+
   function getStorageKey(slotId) {
     return `${storagePrefix}${slotId}`;
   }
@@ -40,7 +57,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   async function loadLevel(id) {
     const config = await loadLevelConfig(id);
-    currentLevel = new LevelInstance(config);
+    currentLevel = config?.meta?.cutsceneOnly ? createCutsceneLevel(config) : new LevelInstance(config);
     currentLevelId = config.meta?.id ?? id ?? 'level';
     objectivesCollected = 0;
     syncHud();

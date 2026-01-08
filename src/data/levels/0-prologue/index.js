@@ -1,20 +1,3 @@
-import { TILE } from '../../../core/constants.js';
-import { buildTileLayersFromTokens } from '../map-utils.js';
-
-const WIDTH = 10;
-const HEIGHT = 8;
-
-const layoutTokens = [
-  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
-];
-
 export const prologueCutscene = {
   id: 'prologue',
   nextLevelId: 'level-1',
@@ -57,8 +40,6 @@ export const prologueCutscene = {
   ],
 };
 
-const layout = buildTileLayersFromTokens(layoutTokens);
-
 export const prologueLevel = {
   meta: {
     id: 'level-0-prologue',
@@ -66,34 +47,9 @@ export const prologueLevel = {
     title: 'Prolog: telefonát',
     subtitle: 'Úvod do pátrání',
     levelNumber: 0,
-    dimensions: { width: WIDTH, height: HEIGHT },
     cutscene: prologueCutscene,
     cutsceneOnly: true,
   },
-  dimensions: { width: WIDTH, height: HEIGHT },
-  tileLayers: {
-    collision: [...layout.collision],
-    decor: [...layout.decor],
-    destroyedFloors: [...layout.destroyedFloors],
-  },
-  lighting: {
-    litZones: [
-      {
-        x: 0,
-        y: 0,
-        w: WIDTH,
-        h: HEIGHT,
-      },
-    ],
-  },
-  actors: {
-    playerStart: { x: TILE * 5, y: TILE * 4 },
-    props: [],
-    npcs: [],
-  },
-  pickups: [],
-  npcScripts: {},
-  quests: [],
 };
 
 export default {
