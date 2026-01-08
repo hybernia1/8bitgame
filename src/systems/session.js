@@ -112,7 +112,195 @@ function formatSaveDate(timestamp) {
   }
 }
 
+function getOverlayRoot(root) {
+  if (!root) return null;
+  return root.querySelector('.game-frame') ?? root.body ?? root;
+}
+
+function createMenuButton(root, label, dataAttr, variant) {
+  const button = root.createElement('button');
+  button.type = 'button';
+  button.className = variant ? `menu-button ${variant}` : 'menu-button';
+  if (dataAttr) {
+    button.setAttribute(dataAttr, '');
+  }
+  button.textContent = label;
+  return button;
+}
+
+function buildMenuPanel(root) {
+  const menuPanel = root.createElement('section');
+  menuPanel.className = 'overlay menu-panel hidden';
+  menuPanel.setAttribute('aria-label', 'Hlavní menu');
+
+  const mainScreen = root.createElement('div');
+  mainScreen.className = 'menu-screen';
+  mainScreen.dataset.menuScreen = 'main';
+  const mainTitle = root.createElement('div');
+  mainTitle.className = 'panel-title';
+  mainTitle.textContent = 'Hlavní menu';
+  const mainList = root.createElement('div');
+  mainList.className = 'menu-list';
+  mainList.append(
+    createMenuButton(root, 'Nová hra', 'data-menu-newgame'),
+    createMenuButton(root, 'Pokračovat', 'data-menu-continue'),
+    createMenuButton(root, 'Výběr levelu', 'data-menu-levels'),
+    createMenuButton(root, 'Nastavení', 'data-menu-settings'),
+  );
+  mainScreen.append(mainTitle, mainList);
+
+  const newGameScreen = root.createElement('div');
+  newGameScreen.className = 'menu-screen hidden';
+  newGameScreen.dataset.menuScreen = 'new-game';
+  const newGameTitle = root.createElement('div');
+  newGameTitle.className = 'panel-title';
+  newGameTitle.textContent = 'Nová hra';
+  const newGameList = root.createElement('div');
+  newGameList.className = 'menu-list';
+  const slotLabel = root.createElement('label');
+  slotLabel.className = 'menu-label';
+  slotLabel.setAttribute('for', 'slot-input');
+  slotLabel.textContent = 'Slot';
+  const slotInput = root.createElement('input');
+  slotInput.id = 'slot-input';
+  slotInput.type = 'text';
+  slotInput.setAttribute('aria-label', 'ID slotu pro uložení');
+  slotInput.setAttribute('data-slot-input', '');
+  slotInput.placeholder = 'slot-1';
+  newGameList.append(
+    slotLabel,
+    slotInput,
+    createMenuButton(root, 'Spustit', 'data-menu-start'),
+    createMenuButton(root, '← Zpět', 'data-menu-back', 'ghost'),
+  );
+  newGameScreen.append(newGameTitle, newGameList);
+
+  const continueScreen = root.createElement('div');
+  continueScreen.className = 'menu-screen hidden';
+  continueScreen.dataset.menuScreen = 'continue';
+  const continueTitle = root.createElement('div');
+  continueTitle.className = 'panel-title';
+  continueTitle.textContent = 'Pokračovat';
+  const continueList = root.createElement('div');
+  continueList.className = 'menu-list';
+  continueList.appendChild(
+    createMenuButton(root, 'Pokračovat z posledního savu', 'data-menu-continue-latest'),
+  );
+  const savePanel = root.createElement('div');
+  savePanel.className = 'save-panel';
+  const saveTitle = root.createElement('div');
+  saveTitle.className = 'panel-title';
+  saveTitle.textContent = 'Uložené pozice';
+  const saveSlotList = root.createElement('div');
+  saveSlotList.className = 'save-slot-list';
+  saveSlotList.setAttribute('data-save-slot-list', '');
+  savePanel.append(saveTitle, saveSlotList);
+  continueList.append(
+    savePanel,
+    createMenuButton(root, '← Zpět', 'data-menu-back', 'ghost'),
+  );
+  continueScreen.append(continueTitle, continueList);
+
+  const levelsScreen = root.createElement('div');
+  levelsScreen.className = 'menu-screen hidden';
+  levelsScreen.dataset.menuScreen = 'levels';
+  const levelsTitle = root.createElement('div');
+  levelsTitle.className = 'panel-title';
+  levelsTitle.textContent = 'Výběr levelu';
+  const levelsSubtitle = root.createElement('p');
+  levelsSubtitle.className = 'menu-subtitle';
+  levelsSubtitle.textContent = 'Vyber úroveň a spusť novou hru.';
+  const levelsList = root.createElement('div');
+  levelsList.className = 'menu-level-list';
+  levelsList.setAttribute('data-level-list', '');
+  levelsScreen.append(
+    levelsTitle,
+    levelsSubtitle,
+    levelsList,
+    createMenuButton(root, '← Zpět', 'data-menu-back', 'ghost'),
+  );
+
+  const settingsScreen = root.createElement('div');
+  settingsScreen.className = 'menu-screen hidden';
+  settingsScreen.dataset.menuScreen = 'settings';
+  const settingsTitle = root.createElement('div');
+  settingsTitle.className = 'panel-title';
+  settingsTitle.textContent = 'Nastavení';
+  const settingsSubtitle = root.createElement('p');
+  settingsSubtitle.className = 'menu-subtitle';
+  settingsSubtitle.textContent = 'Nastavení budou brzy dostupná.';
+  settingsScreen.append(
+    settingsTitle,
+    settingsSubtitle,
+    createMenuButton(root, '← Zpět', 'data-menu-back', 'ghost'),
+  );
+
+  menuPanel.append(mainScreen, newGameScreen, continueScreen, levelsScreen, settingsScreen);
+  return menuPanel;
+}
+
+function buildPausePanel(root) {
+  const pausePanel = root.createElement('section');
+  pausePanel.className = 'overlay pause-panel hidden';
+  pausePanel.setAttribute('aria-label', 'Pauza');
+  const pauseTitle = root.createElement('div');
+  pauseTitle.className = 'panel-title';
+  pauseTitle.textContent = 'Pauza';
+  const pauseSubtitle = root.createElement('p');
+  pauseSubtitle.className = 'menu-subtitle';
+  pauseSubtitle.textContent = 'Stiskni P nebo vyber možnost.';
+  const pauseBindings = root.createElement('p');
+  pauseBindings.className = 'menu-subtitle binding-hint';
+  pauseBindings.setAttribute('data-pause-bindings', '');
+  const pauseList = root.createElement('div');
+  pauseList.className = 'menu-list';
+  pauseList.append(
+    createMenuButton(root, 'Pokračovat', 'data-pause-resume'),
+    createMenuButton(root, 'Restartovat úroveň', 'data-pause-restart'),
+    createMenuButton(root, 'Uložit ručně', 'data-pause-save'),
+    createMenuButton(root, 'Hlavní menu', 'data-pause-menu', 'ghost'),
+  );
+  pausePanel.append(pauseTitle, pauseSubtitle, pauseBindings, pauseList);
+  return pausePanel;
+}
+
+function getMenuDomRefs(root) {
+  if (!root) return {};
+  return {
+    menuPanel: root.querySelector('.menu-panel') ?? null,
+    menuScreens: root.querySelectorAll('[data-menu-screen]') ?? [],
+    menuLevelList: root.querySelector('[data-level-list]') ?? null,
+    menuBackButtons: root.querySelectorAll('[data-menu-back]') ?? [],
+    menuNewGameButton: root.querySelector('[data-menu-newgame]') ?? null,
+    menuContinueButton: root.querySelector('[data-menu-continue]') ?? null,
+    menuContinueLatestButton: root.querySelector('[data-menu-continue-latest]') ?? null,
+    menuLevelsButton: root.querySelector('[data-menu-levels]') ?? null,
+    slotInput: root.querySelector('[data-slot-input]') ?? null,
+    saveSlotList: root.querySelector('[data-save-slot-list]') ?? null,
+    startButton: root.querySelector('[data-menu-start]') ?? null,
+    settingsButton: root.querySelector('[data-menu-settings]') ?? null,
+    pausePanel: root.querySelector('.pause-panel') ?? null,
+    pauseResumeButton: root.querySelector('[data-pause-resume]') ?? null,
+    pauseRestartButton: root.querySelector('[data-pause-restart]') ?? null,
+    pauseSaveButton: root.querySelector('[data-pause-save]') ?? null,
+    pauseMenuButton: root.querySelector('[data-pause-menu]') ?? null,
+  };
+}
+
+function ensureMenuPanels(root) {
+  if (!root) return {};
+  const overlayRoot = getOverlayRoot(root);
+  if (!root.querySelector('.menu-panel')) {
+    overlayRoot?.appendChild(buildMenuPanel(root));
+  }
+  if (!root.querySelector('.pause-panel')) {
+    overlayRoot?.appendChild(buildPausePanel(root));
+  }
+  return getMenuDomRefs(root);
+}
+
 export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetPromise, shell }) {
+  const menuDomRefs = ensureMenuPanels(shell.documentRoot);
   const hudDomRefs = getHudDomRefs(shell.documentRoot);
   const safePanelController = createSafePanel({ documentRoot: shell.documentRoot });
   const quizPanelController = createQuizPanel({ documentRoot: shell.documentRoot });
@@ -127,15 +315,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   const {
     documentRoot,
-    menuPanel,
-    menuScreens,
-    menuLevelList,
-    menuBackButtons,
-    menuNewGameButton,
-    menuContinueButton,
-    menuContinueLatestButton,
-    menuLevelsButton,
-    pausePanel,
     loadingPanel,
     continuePanel,
     continueTitle,
@@ -153,6 +332,22 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     cutsceneAvatar,
     cutsceneSpeaker,
     cutsceneKicker,
+    gameShell,
+    alertLayer,
+    setFullscreenAvailability,
+    fullscreenSupported,
+  } = shell;
+
+  const {
+    menuPanel,
+    menuScreens,
+    menuLevelList,
+    menuBackButtons,
+    menuNewGameButton,
+    menuContinueButton,
+    menuContinueLatestButton,
+    menuLevelsButton,
+    pausePanel,
     slotInput,
     saveSlotList,
     startButton,
@@ -161,11 +356,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     pauseRestartButton,
     pauseSaveButton,
     pauseMenuButton,
-    gameShell,
-    alertLayer,
-    setFullscreenAvailability,
-    fullscreenSupported,
-  } = shell;
+  } = menuDomRefs;
 
   const isFullscreenSupported = Boolean(fullscreenSupported);
 

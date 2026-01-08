@@ -111,48 +111,6 @@
             <button type="button" class="menu-button ghost" data-quiz-cancel>Zavřít</button>
           </div>
         </section>
-        <section class="overlay menu-panel hidden" aria-label="Hlavní menu">
-          <div class="menu-screen" data-menu-screen="main">
-            <div class="panel-title">Hlavní menu</div>
-            <div class="menu-list">
-              <button type="button" class="menu-button" data-menu-newgame>Nová hra</button>
-              <button type="button" class="menu-button" data-menu-continue>Pokračovat</button>
-              <button type="button" class="menu-button" data-menu-levels>Výběr levelu</button>
-              <button type="button" class="menu-button" data-menu-settings>Nastavení</button>
-            </div>
-          </div>
-          <div class="menu-screen hidden" data-menu-screen="new-game">
-            <div class="panel-title">Nová hra</div>
-            <div class="menu-list">
-              <label for="slot-input" class="menu-label">Slot</label>
-              <input id="slot-input" type="text" aria-label="ID slotu pro uložení" data-slot-input placeholder="slot-1" />
-              <button type="button" class="menu-button" data-menu-start>Spustit</button>
-              <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
-            </div>
-          </div>
-          <div class="menu-screen hidden" data-menu-screen="continue">
-            <div class="panel-title">Pokračovat</div>
-            <div class="menu-list">
-              <button type="button" class="menu-button" data-menu-continue-latest>Pokračovat z posledního savu</button>
-              <div class="save-panel">
-                <div class="panel-title">Uložené pozice</div>
-                <div class="save-slot-list" data-save-slot-list></div>
-              </div>
-              <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
-            </div>
-          </div>
-          <div class="menu-screen hidden" data-menu-screen="levels">
-            <div class="panel-title">Výběr levelu</div>
-            <p class="menu-subtitle">Vyber úroveň a spusť novou hru.</p>
-            <div class="menu-level-list" data-level-list></div>
-            <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
-          </div>
-          <div class="menu-screen hidden" data-menu-screen="settings">
-            <div class="panel-title">Nastavení</div>
-            <p class="menu-subtitle">Nastavení budou brzy dostupná.</p>
-            <button type="button" class="menu-button ghost" data-menu-back>← Zpět</button>
-          </div>
-        </section>
         <section class="overlay loading-panel hidden" aria-live="polite">
           <div class="panel-title">Načítání</div>
           <p data-loading-text>Načítání...</p>
@@ -184,17 +142,6 @@
             <button type="button" class="menu-button ghost" data-cutscene-back>← Zpět</button>
             <button type="button" class="menu-button ghost" data-cutscene-skip>Přeskočit</button>
             <button type="button" class="menu-button" data-cutscene-continue>Pokračovat</button>
-          </div>
-        </section>
-        <section class="overlay pause-panel hidden" aria-label="Pauza">
-          <div class="panel-title">Pauza</div>
-          <p class="menu-subtitle">Stiskni P nebo vyber možnost.</p>
-          <p class="menu-subtitle binding-hint" data-pause-bindings></p>
-          <div class="menu-list">
-            <button type="button" class="menu-button" data-pause-resume>Pokračovat</button>
-            <button type="button" class="menu-button" data-pause-restart>Restartovat úroveň</button>
-            <button type="button" class="menu-button" data-pause-save>Uložit ručně</button>
-            <button type="button" class="menu-button ghost" data-pause-menu>Hlavní menu</button>
           </div>
         </section>
         <section
