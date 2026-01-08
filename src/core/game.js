@@ -19,7 +19,6 @@ export function createGame({ inventory, hudSystem } = {}) {
   let hud = hudSystem;
   let saveSlotId = null;
   let snapshotProvider = null;
-  let carryOverVitals = null;
 
   function getStorageKey(slotId) {
     return `${storagePrefix}${slotId}`;
@@ -129,7 +128,6 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   function setSaveSlot(slotId, { resetProgress = false } = {}) {
     saveSlotId = slotId || null;
-    carryOverVitals = null;
     if (resetProgress) {
       currentLevel = null;
       currentLevelId = null;
@@ -430,21 +428,6 @@ export function createGame({ inventory, hudSystem } = {}) {
     snapshotProvider = provider;
   }
 
-  function setCarryOverVitals(vitals) {
-    if (!vitals || typeof vitals !== 'object') {
-      carryOverVitals = null;
-      return;
-    }
-    carryOverVitals = { ...vitals };
-  }
-
-  function consumeCarryOverVitals() {
-    if (!carryOverVitals) return null;
-    const payload = { ...carryOverVitals };
-    carryOverVitals = null;
-    return payload;
-  }
-
   return {
     loadLevel,
     saveProgress,
@@ -463,8 +446,6 @@ export function createGame({ inventory, hudSystem } = {}) {
     deleteSave,
     getSavedSnapshot,
     setSnapshotProvider,
-    setCarryOverVitals,
-    consumeCarryOverVitals,
     get currentLevelId() {
       return currentLevelId;
     },
