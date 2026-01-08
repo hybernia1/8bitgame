@@ -91,6 +91,18 @@ function updatePatrol(npc, dt, player, collision = {}) {
       };
     }).sort((a, b) => b.score - a.score);
 
+    const primaryAxis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+    const axisOrder = primaryAxis === 'x' ? ['x', 'y'] : ['y', 'x'];
+    for (const axis of axisOrder) {
+      const axisDelta = axis === 'x' ? dx : dy;
+      if (!axisDelta) continue;
+      const axisMovement = applyMovement(axis === 'x' ? axisDelta : 0, axis === 'y' ? axisDelta : 0);
+      if (axisMovement.moving) {
+        npc.stuckTimer = 0;
+        return axisMovement;
+      }
+    }
+
     for (const { direction } of scoredDirections) {
       for (const step of STEER_DISTANCE_STEPS) {
         const fallbackMovement = applyMovement(
