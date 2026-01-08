@@ -9,6 +9,7 @@ const DEFAULT_WANDER_SPEED = 36 * TILE_SCALE;
 const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
 const DEFAULT_LETHAL_WANDER_SPEED = 30 * TILE_SCALE;
 const NPC_COLLISION_PADDING = 2 * TILE_SCALE;
+const STEER_DISTANCE_STEPS = [1, 0.65, 0.35];
 const STEER_DIRECTIONS = [
   { x: 1, y: 0 },
   { x: -1, y: 0 },
@@ -64,7 +65,10 @@ function updatePatrol(npc, dt, player, collision = {}) {
 
   const applySteeredMovement = (dx, dy) => {
     const movement = applyMovement(dx, dy);
-    if (movement.moving || !canMove) return movement;
+    if (movement.moving || !canMove) {
+      npc.stuckTimer = 0;
+      return movement;
+    }
 
     const moveDistance = Math.hypot(dx, dy);
     if (!moveDistance) return movement;
@@ -72,22 +76,31 @@ function updatePatrol(npc, dt, player, collision = {}) {
     const desired = normalizeVector(dx, dy);
     const lastDirection = normalizeVector(npc.lastDirection?.x ?? 0, npc.lastDirection?.y ?? 0);
     const hasLastDirection = lastDirection.x !== 0 || lastDirection.y !== 0;
+    npc.stuckTimer = (npc.stuckTimer ?? 0) + dt;
+    const stuckBias = Math.min(1, npc.stuckTimer / 0.6);
 
     const scoredDirections = STEER_DIRECTIONS.map((direction) => {
       const desiredScore = direction.x * desired.x + direction.y * desired.y;
       const lastScore = hasLastDirection
         ? direction.x * lastDirection.x + direction.y * lastDirection.y
         : 0;
+      const perpendicularScore = 1 - Math.abs(desiredScore);
       return {
         direction,
-        score: desiredScore + lastScore * 0.15,
+        score: desiredScore + lastScore * 0.15 + perpendicularScore * 0.35 * stuckBias,
       };
     }).sort((a, b) => b.score - a.score);
 
     for (const { direction } of scoredDirections) {
-      const fallbackMovement = applyMovement(direction.x * moveDistance, direction.y * moveDistance);
-      if (fallbackMovement.moving) {
-        return fallbackMovement;
+      for (const step of STEER_DISTANCE_STEPS) {
+        const fallbackMovement = applyMovement(
+          direction.x * moveDistance * step,
+          direction.y * moveDistance * step,
+        );
+        if (fallbackMovement.moving) {
+          npc.stuckTimer = 0;
+          return fallbackMovement;
+        }
       }
     }
 
@@ -249,6 +262,7 @@ export function createNpcs(spriteSheet, placements) {
       wanderCooldown: 0,
       wanderTarget: null,
       busyTimer: 0,
+      stuckTimer: 0,
       health,
       maxHealth: health,
       defeated: false,
