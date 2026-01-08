@@ -1,7 +1,6 @@
 import { COLORS, TILE } from '../core/constants.js';
 import { INPUT_ACTIONS } from '../core/input-actions.js';
 import { formatBinding, formatControlsHint } from '../core/input-bindings.js';
-import { runActions } from '../core/actions.js';
 import { createCombatSystem } from './combat.js';
 import { createHudSystem } from './hud.js';
 import { createInputSystem } from './input.js';
@@ -9,6 +8,8 @@ import { createInteractionSystem } from './interactions.js';
 import { registerScene, resume, setScene, showMenu } from '../core/scenes.js';
 import { format } from '../ui/messages.js';
 import { renderInventory, useInventorySlot } from '../ui/inventory.js';
+import { createQuizPanel } from '../ui/quiz-panel.js';
+import { createSafePanel } from '../ui/safe-panel.js';
 import {
   DEFAULT_LEVEL_ID,
   getLevelConfig,
@@ -77,32 +78,6 @@ function getHudDomRefs(root) {
   };
 }
 
-function getSafeDomRefs(root) {
-  if (!root) return {};
-  return {
-    safePanel: root.querySelector('[data-safe-panel]'),
-    safeForm: root.querySelector('[data-safe-form]'),
-    safeTitle: root.querySelector('[data-safe-title]'),
-    safeDescription: root.querySelector('[data-safe-description]'),
-    safeInput: root.querySelector('[data-safe-input]'),
-    safeSubmit: root.querySelector('[data-safe-submit]'),
-    safeCancel: root.querySelector('[data-safe-cancel]'),
-    safeFeedback: root.querySelector('[data-safe-feedback]'),
-  };
-}
-
-function getQuizDomRefs(root) {
-  if (!root) return {};
-  return {
-    quizPanel: root.querySelector('[data-quiz-panel]'),
-    quizTitle: root.querySelector('[data-quiz-title]'),
-    quizQuestion: root.querySelector('[data-quiz-question]'),
-    quizOptions: root.querySelector('[data-quiz-options]'),
-    quizFeedback: root.querySelector('[data-quiz-feedback]'),
-    quizCancel: root.querySelector('[data-quiz-cancel]'),
-  };
-}
-
 function toggleVisibility(element, visible) {
   if (!element) return;
   element.classList.toggle('hidden', !visible);
@@ -119,14 +94,13 @@ function formatSaveDate(timestamp) {
 
 export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetPromise, shell }) {
   const hudDomRefs = getHudDomRefs(shell.documentRoot);
-  const safeDomRefs = getSafeDomRefs(shell.documentRoot);
-  const quizDomRefs = getQuizDomRefs(shell.documentRoot);
+  const safePanelController = createSafePanel({ documentRoot: shell.documentRoot });
+  const quizPanelController = createQuizPanel({ documentRoot: shell.documentRoot });
 
   let inventoryToggleButton = null;
   let handleInventoryToggleClick = null;
   let questToggleButton = null;
   let handleQuestToggleClick = null;
-  let handleSafeCancelClick = null;
   let questLogCollapsed = true;
 
   const {
@@ -649,25 +623,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let safes = [];
     let spriteSheet = null;
     let savedSnapshot = null;
-    let safePanel = null;
-    let safeForm = null;
-    let safeTitle = null;
-    let safeDescription = null;
-    let safeInput = null;
-    let safeSubmit = null;
-    let safeCancel = null;
-    let safeFeedback = null;
-    let quizPanel = null;
-    let quizTitle = null;
-    let quizQuestion = null;
-    let quizOptions = null;
-    let quizFeedback = null;
-    let quizCancel = null;
-    let hideSafePanel = () => {};
-    let hideQuizPanel = () => {};
-    let handleSafeSubmit = null;
-    let handleQuizOptionClick = null;
-    let handleQuizCancelClick = null;
+    let handleSafeInteract = () => {};
+    let handleQuizStart = () => {};
     let interactQueued = false;
     let shootQueued = false;
     let cutscenePlayed = false;
@@ -847,26 +804,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       let inventoryCollapsed = true;
       let inventoryBindingLabel = '';
       questLogCollapsed = true;
-      ({
-        safePanel,
-        safeForm,
-        safeTitle,
-        safeDescription,
-        safeInput,
-        safeSubmit,
-        safeCancel,
-        safeFeedback,
-      } = safeDomRefs || {});
-      let activeSafe = null;
-      let activeQuiz = null;
-      ({
-        quizPanel,
-        quizTitle,
-        quizQuestion,
-        quizOptions,
-        quizFeedback,
-        quizCancel,
-      } = quizDomRefs || {});
       const handlePickupCollected = (pickup) => {
         if (pickup.id === 'ammo') {
           const amount = Number.isFinite(pickup.quantity) ? pickup.quantity : 1;
@@ -874,243 +811,27 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         }
       };
 
-      const setSafeFeedback = (messageId, params) => {
-        if (!safeFeedback) return;
-        if (!messageId) {
-          safeFeedback.textContent = '';
-          return;
-        }
-        safeFeedback.textContent = format(messageId, params);
-      };
+      safePanelController.init({
+        inventory,
+        renderInventory,
+        showNote: (noteId, params) => hudSystem.showNote(noteId, params),
+        saveProgress: (options) => game.saveProgress?.(options),
+      });
+      handleSafeInteract = safePanelController.handleSafeInteract;
 
-      hideSafePanel = () => {
-        if (safePanel) {
-          safePanel.classList.add('hidden');
-          safePanel.setAttribute('aria-hidden', 'true');
-        }
-        activeSafe = null;
-        setSafeFeedback();
-      };
-
-      function grantSafeReward(safe) {
-        if (!safe?.reward || safe.rewardClaimed) {
-          return { granted: false, note: safe?.emptyNote ?? 'note.safe.empty' };
-        }
-        const rewardItem = { ...safe.reward };
-        const stored = inventory.addItem(rewardItem);
-        if (!stored) {
-          return {
-            granted: false,
-            blocked: true,
-            note: 'note.safe.inventoryFull',
-            params: { item: rewardItem.name ?? rewardItem.id ?? 'loot' },
-          };
-        }
-        safe.rewardClaimed = true;
-        renderInventory(inventory);
-        return {
-          granted: true,
-          note: safe.rewardNote ?? 'note.safe.itemReceived',
-          params: { item: rewardItem.name ?? rewardItem.id ?? 'loot' },
-        };
-      }
-
-      function showSafePanel(targetSafe) {
-        if (!targetSafe || !safePanel || !safeInput) return;
-        activeSafe = targetSafe;
-        safePanel.classList.remove('hidden');
-        safePanel.setAttribute('aria-hidden', 'false');
-        const digits = Math.max(1, targetSafe.codeLength ?? 4);
-        if (safeTitle) {
-          safeTitle.textContent = targetSafe.name ?? 'Sejf';
-        }
-        if (safeDescription) {
-          safeDescription.textContent = format('note.safe.enterCode', { digits });
-        }
-        safeInput.value = '';
-        safeInput.maxLength = digits;
-        safeInput.setAttribute('aria-label', format('note.safe.enterCode', { digits }));
-        setSafeFeedback();
-        safeInput.focus?.({ preventScroll: true });
-      }
-
-      handleSafeSubmit = (event) => {
-        event?.preventDefault?.();
-        if (!activeSafe) {
-          hideSafePanel();
-          return;
-        }
-        const digits = Math.max(1, activeSafe.codeLength ?? 4);
-        const entered = (safeInput?.value ?? '').trim();
-        const numericEntry = entered.replace(/\D/g, '');
-        if (numericEntry.length !== digits) {
-          setSafeFeedback('note.safe.enterCode', { digits });
-          return;
-        }
-        const normalized = numericEntry.padStart(digits, '0');
-        const expected = (activeSafe.code ?? '').padStart(digits, '0');
-        if (normalized !== expected) {
-          setSafeFeedback('note.safe.wrongCode');
-          return;
-        }
-        activeSafe.opened = true;
-        const rewardResult = grantSafeReward(activeSafe);
-        const noteId =
-          rewardResult.note ??
-          (rewardResult.granted ? 'note.safe.itemReceived' : activeSafe.emptyNote ?? 'note.safe.empty');
-        hudSystem.showNote(noteId, rewardResult.params);
-        if (rewardResult.blocked) {
-          setSafeFeedback(rewardResult.note, rewardResult.params);
-          return;
-        }
-        setSafeFeedback('note.safe.unlocked');
-        game.saveProgress?.({ auto: true });
-        hideSafePanel();
-      };
-
-      function handleSafeInteract(targetSafe) {
-        if (!targetSafe) return;
-        if (targetSafe.opened) {
-          if (targetSafe.reward && !targetSafe.rewardClaimed) {
-            const rewardResult = grantSafeReward(targetSafe);
-            const noteId = rewardResult.note ?? 'note.safe.itemReceived';
-            hudSystem.showNote(noteId, rewardResult.params);
-            if (!rewardResult.blocked) {
-              game.saveProgress?.({ auto: true });
-            }
-            return;
-          }
-          const messageId = targetSafe.emptyNote ?? 'note.safe.empty';
-          hudSystem.showNote(messageId);
-          return;
-        }
-        showSafePanel(targetSafe);
-      }
-
-      const setQuizFeedback = (messageId, params) => {
-        if (!quizFeedback) return;
-        if (!messageId) {
-          quizFeedback.textContent = '';
-          return;
-        }
-        quizFeedback.textContent = format(messageId, params);
-      };
-
-      function clearQuizOptions() {
-        if (!quizOptions) return;
-        quizOptions.innerHTML = '';
-      }
-
-      hideQuizPanel = () => {
-        if (quizPanel) {
-          quizPanel.classList.add('hidden');
-          quizPanel.setAttribute('aria-hidden', 'true');
-        }
-        sessionState.activeQuiz = null;
-        activeQuiz = null;
-        setQuizFeedback();
-        clearQuizOptions();
-      };
-
-      function applyQuizStateChanges(nextState = {}) {
-        Object.entries(nextState).forEach(([key, value]) => {
-          persistentState.flags[key] = value;
-        });
-      }
-
-      function applyQuizActions(step) {
-        if (!step?.actions && !step?.rewardId) return { success: true, note: step?.note };
-        const rewards = level.getRewards();
-        const reward = step.rewardId ? rewards?.[step.rewardId] : undefined;
-        const baseActions = Array.isArray(step.actions) ? step.actions : step.actions ? [step.actions] : [];
-        const rewardActions = reward?.actions ?? [];
-        const actions = [...baseActions, ...rewardActions];
-        if (!actions.length) {
-          return { success: true, note: reward?.note ?? step?.note };
-        }
-        const result = runActions(
-          actions,
-          { inventory, renderInventory, level, game, hud: hudSystem, flags: persistentState.flags, persistentState, sessionState, state },
-          reward,
-        );
-        if (result.success !== false && reward?.note && !result.note) {
-          result.note = reward.note;
-        }
-        return result;
-      }
-
-      function showQuizPanel(payload = {}) {
-        const quiz = payload.quiz ?? payload.line?.quiz;
-        if (!quizPanel || !quiz || !quizQuestion || !quizOptions) return;
-        activeQuiz = {
-          ...payload,
-          quiz,
-        };
-        sessionState.activeQuiz = { id: payload.line?.id ?? payload.npc?.id ?? 'quiz' };
-        quizPanel.classList.remove('hidden');
-        quizPanel.setAttribute('aria-hidden', 'false');
-        if (quizTitle) {
-          quizTitle.textContent = payload.npc?.name ?? 'Kvíz';
-        }
-        quizQuestion.textContent = quiz.question ?? '';
-        clearQuizOptions();
-        quiz.options?.forEach((option, index) => {
-          const button = documentRoot?.createElement?.('button');
-          if (!button) return;
-          button.type = 'button';
-          button.className = 'menu-button';
-          button.dataset.quizOption = String(index);
-          button.textContent = option.label ?? '';
-          quizOptions.appendChild(button);
-        });
-        setQuizFeedback();
-      }
-
-      function handleQuizAnswer(index) {
-        if (!activeQuiz) return;
-        const quiz = activeQuiz.quiz ?? {};
-        const option = quiz.options?.[index];
-        if (!option) return;
-        if (!option.correct) {
-          setQuizFeedback(quiz.failureNote ?? 'note.quiz.wrong');
-          return;
-        }
-        const actionResult = applyQuizActions(activeQuiz.line);
-        if (actionResult.success === false) {
-          setQuizFeedback(actionResult.blockedNote ?? quiz.failureNote ?? 'note.quiz.inventoryFull');
-          return;
-        }
-        if (activeQuiz.line?.setState) {
-          applyQuizStateChanges(activeQuiz.line.setState);
-        }
-        const note = actionResult.note ?? quiz.successNote ?? activeQuiz.line?.note;
-        if (note) {
-          hudSystem.showNote(note);
-        }
-        hideQuizPanel();
-        clearDialogueState();
-        hudSystem.hideInteraction();
-      }
-
-      handleQuizOptionClick = (event) => {
-        const target = event?.target?.closest?.('[data-quiz-option]');
-        if (!target) return;
-        const index = Number.parseInt(target.dataset.quizOption ?? '-1', 10);
-        if (!Number.isFinite(index)) return;
-        handleQuizAnswer(index);
-      };
-
-      handleQuizCancelClick = (event) => {
-        event?.preventDefault?.();
-        hideQuizPanel();
-        clearDialogueState();
-        hudSystem.hideInteraction();
-      };
-
-      const handleQuizStart = (payload) => {
-        if (sessionState.activeQuiz) return;
-        showQuizPanel(payload);
-      };
+      quizPanelController.init({
+        inventory,
+        renderInventory,
+        level,
+        game,
+        hud: hudSystem,
+        persistentState,
+        sessionState,
+        state,
+        clearDialogueState,
+        hideInteraction: () => hudSystem.hideInteraction(),
+      });
+      handleQuizStart = quizPanelController.handleQuizStart;
 
       const handleInventoryUse = (slotIndex) =>
         useInventorySlot({
@@ -1198,16 +919,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         toggleQuestLog();
       };
       questToggleButton?.addEventListener?.('click', handleQuestToggleClick);
-
-      safeForm?.addEventListener?.('submit', handleSafeSubmit);
-      safeSubmit?.addEventListener?.('click', handleSafeSubmit);
-      handleSafeCancelClick = (event) => {
-        event?.preventDefault?.();
-        hideSafePanel();
-      };
-      safeCancel?.addEventListener?.('click', handleSafeCancelClick);
-      quizOptions?.addEventListener?.('click', handleQuizOptionClick);
-      quizCancel?.addEventListener?.('click', handleQuizCancelClick);
 
       setQuestLogCollapsed(true);
 
@@ -1439,8 +1150,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
     function pauseSession() {
       resetActionQueue();
-      hideSafePanel();
-      hideQuizPanel();
+      safePanelController.hide();
+      quizPanelController.hide();
       inputSystem?.stop?.();
     }
 
@@ -1462,13 +1173,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hudSystem?.hideToast?.();
       inventoryToggleButton?.removeEventListener?.('click', handleInventoryToggleClick);
       questToggleButton?.removeEventListener?.('click', handleQuestToggleClick);
-      safeForm?.removeEventListener?.('submit', handleSafeSubmit);
-      safeSubmit?.removeEventListener?.('click', handleSafeSubmit);
-      safeCancel?.removeEventListener?.('click', handleSafeCancelClick);
-      quizOptions?.removeEventListener?.('click', handleQuizOptionClick);
-      quizCancel?.removeEventListener?.('click', handleQuizCancelClick);
-      hideSafePanel();
-      hideQuizPanel();
+      safePanelController.cleanup();
+      quizPanelController.cleanup();
     }
 
     return {
