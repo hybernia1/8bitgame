@@ -4,6 +4,7 @@
  */
 
 import { COLORS, TILE, WORLD } from '../core/constants.js';
+import { isOccupyingTile } from '../utils/geometry.js';
 import { getDecorVariantIndex, getTileDefinition, isBlockingTileId, TILE_IDS } from './tile-registry.js';
 
 const DOOR_TILE = TILE_IDS.DOOR_CLOSED;
@@ -97,16 +98,6 @@ function resolveDestructibleTile(collisionTileId, decorTileId) {
   }
 
   return null;
-}
-
-function isOccupyingTile(entity, tx, ty) {
-  if (!entity || typeof entity.x !== 'number' || typeof entity.y !== 'number') return false;
-  const size = entity.size ?? entity.width ?? TILE;
-  const halfEntity = size / 2;
-  const halfTile = TILE / 2;
-  const cx = tx * TILE + halfTile;
-  const cy = ty * TILE + halfTile;
-  return Math.abs(entity.x - cx) < halfTile + halfEntity && Math.abs(entity.y - cy) < halfTile + halfEntity;
 }
 
 function resolveTileLayers(config) {
