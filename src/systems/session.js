@@ -83,10 +83,6 @@ function toggleVisibility(element, visible) {
   element.classList.toggle('hidden', !visible);
 }
 
-function setGameUiVisible(shell, visible) {
-  shell?.classList.toggle('ui-hidden', !visible);
-}
-
 function formatSaveDate(timestamp) {
   if (!timestamp) return '';
   try {
@@ -142,7 +138,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     pauseRestartButton,
     pauseSaveButton,
     pauseMenuButton,
-    gameShell,
     alertLayer,
     setFullscreenAvailability,
     fullscreenSupported,
@@ -287,7 +282,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function showMenuPanel() {
     setFullscreenAvailability(isFullscreenSupported);
-    setGameUiVisible(gameShell, false);
     refreshSaveSlotList();
     hideContinuePanel();
     showMenuScreen('main');
@@ -297,7 +291,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showPausePanel() {
-    setGameUiVisible(gameShell, false);
     toggleVisibility(pausePanel, true);
   }
 
@@ -306,7 +299,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showLoadingPanel(message = 'Načítání...') {
-    setGameUiVisible(gameShell, false);
     toggleVisibility(menuPanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, true);
@@ -324,7 +316,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showContinuePanel({ title, subtitle, detail } = {}) {
-    setGameUiVisible(gameShell, false);
     toggleVisibility(menuPanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
@@ -579,7 +570,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function showCutscenePanel() {
     hideAllPanels();
-    setGameUiVisible(gameShell, false);
     toggleVisibility(cutscenePanel, true);
     setFullscreenAvailability(isFullscreenSupported);
     cutsceneContinueButton?.focus?.();
@@ -1017,12 +1007,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       inputSystem?.stop?.();
       hudSystem?.hideInteraction?.();
       if (isCutsceneMapMode()) {
-        setGameUiVisible(gameShell, false);
         await waitForCutsceneMapContinue(cutsceneConfig);
       } else {
         await waitForCutsceneContinue(cutsceneConfig);
       }
-      setGameUiVisible(gameShell, true);
       if (cutsceneConfig?.nextLevelId) {
         state.levelAdvanceQueued = true;
         setTimeout(() => {
@@ -1618,7 +1606,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   registerScene('inGame', {
     async onEnter() {
       hideAllPanels();
-      setGameUiVisible(gameShell, true);
       setFullscreenAvailability(true);
       const introAdvanced = Boolean(await currentInGameSession?.runIntro?.());
       if (!introAdvanced) {
@@ -1631,7 +1618,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     },
     async onResume() {
       hidePausePanel();
-      setGameUiVisible(gameShell, true);
       currentInGameSession?.resume?.();
     },
     async onExit() {
