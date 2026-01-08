@@ -367,6 +367,11 @@ input[type='text']:focus {
   z-index: 3;
 }
 
+.game-shell.ui-hidden .hud-layer,
+.game-shell.ui-hidden .interaction-banner,
+.game-shell.ui-hidden .inventory-modal {
+  display: none;
+}
 
 .hud-top {
   display: flex;
