@@ -367,6 +367,13 @@ input[type='text']:focus {
   z-index: 3;
 }
 
+.game-shell.is-cutscene-only canvas,
+.game-shell.is-cutscene-only .hud-layer,
+.game-shell.is-cutscene-only .interaction-banner,
+.game-shell.is-cutscene-only .alert-layer {
+  display: none;
+}
+
 .hud-top {
   display: flex;
   flex-direction: column;

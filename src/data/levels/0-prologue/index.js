@@ -68,6 +68,7 @@ export const prologueLevel = {
     levelNumber: 0,
     dimensions: { width: WIDTH, height: HEIGHT },
     cutscene: prologueCutscene,
+    cutsceneOnly: true,
   },
   dimensions: { width: WIDTH, height: HEIGHT },
   tileLayers: {

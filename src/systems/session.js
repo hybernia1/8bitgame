@@ -96,6 +96,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   const hudDomRefs = getHudDomRefs(shell.documentRoot);
   const safePanelController = createSafePanel({ documentRoot: shell.documentRoot });
   const quizPanelController = createQuizPanel({ documentRoot: shell.documentRoot });
+  const gameShellElement = shell.documentRoot?.querySelector?.('.game-shell') ?? null;
 
   let inventoryToggleButton = null;
   let handleInventoryToggleClick = null;
@@ -166,6 +167,11 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       const isActive = screen.dataset.menuScreen === screenName;
       screen.classList.toggle('hidden', !isActive);
     });
+  }
+
+  function setCutsceneOnlyLayout(enabled) {
+    if (!gameShellElement) return;
+    gameShellElement.classList.toggle('is-cutscene-only', Boolean(enabled));
   }
 
   function getKnownLevelIds() {
@@ -781,6 +787,17 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       level = await game.loadLevel(levelId);
       savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
       cutsceneConfig = level?.meta?.cutscene ?? null;
+      const isCutsceneOnly = Boolean(level?.meta?.cutsceneOnly);
+      setCutsceneOnlyLayout(isCutsceneOnly);
+      if (isCutsceneOnly) {
+        updateFrame = noop;
+        renderFrame = () => {
+          ctx.fillStyle = COLORS.gridBackground;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        };
+        game.setSnapshotProvider(null);
+        return;
+      }
       const carryOverVitals = savedSnapshot?.playerVitals ? null : game.consumeCarryOverVitals?.();
       const mapDimensions = level?.getDimensions?.() ?? {};
       const mapBounds =
@@ -1205,6 +1222,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       levelScript = null;
       game.setSnapshotProvider(null);
       hudSystem?.hideToast?.();
+      setCutsceneOnlyLayout(false);
       inventoryToggleButton?.removeEventListener?.('click', handleInventoryToggleClick);
       questToggleButton?.removeEventListener?.('click', handleQuestToggleClick);
       safePanelController.cleanup();
