@@ -177,8 +177,6 @@ const npcPackage = buildNpcPackage([
           {
             type: 'giveItem',
             item: getPickupPreset('apple'),
-            blockedDialogue: 'Batoh je plný, odměnu teď neuneseš.',
-            blockedNote: 'note.quiz.inventoryFull',
           },
         ],
         note: 'note.quiz.reward',

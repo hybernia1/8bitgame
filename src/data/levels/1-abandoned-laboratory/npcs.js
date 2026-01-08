@@ -136,8 +136,6 @@ const npcPackage = buildNpcPackage([
           {
             type: 'giveItem',
             item: getPickupPreset('apple'),
-            blockedDialogue: 'Inventář máš plný, uvolni si místo, ať ti můžu dát jablko.',
-            blockedNote: 'Nemáš místo na jablko. Uvolni slot a promluv si se Správcem znovu.',
           },
         ],
         note: 'Správce ti předal jablko. Použij číslo slotu (1-12) nebo klikni na slot pro doplnění jednoho života.',
@@ -222,7 +220,6 @@ const npcPackage = buildNpcPackage([
           {
             type: 'giveItem',
             item: { id: 'gate-key', name: 'Klíč od dveří', icon: '🔑', tint: '#f2d45c' },
-            blockedDialogue: 'Tvůj inventář je plný, uvolni si místo na klíč.',
           },
           { type: 'unlock', targetId: 'gate' },
           { type: 'clearObjectives' },
