@@ -1,42 +1,8 @@
 import { getPickupPreset } from '../../pickups/index.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
-const presets = {
-  mayor: {
-    id: 'mayor',
-    name: 'Starostka Hana',
-    sprite: 'hana',
-    dialogue: 'Hana ti nastaví ruku: „Nechodíš potmě, jasné? Světlo je tady jediná jistota.“',
-  },
-  caretaker: {
-    id: 'caretaker',
-    name: 'Správce Laboratoře',
-    sprite: 'caretaker',
-    dialogue: 'Správce šeptá: „Tady se potmě chodit nesmí. Posviť si, než začneš pátrat.“',
-  },
-  technician: {
-    id: 'technician',
-    name: 'Technik Jára',
-    sprite: 'jara',
-    dialogue: 'Jára si drží baterku u hrudi: „Správce mi volal. Bez světla a dílů jsme tu slepí.“',
-    infoNote: 'Technik Jára tě šeptem upozornil: „Energoblok visí u hlídače klíče. Drž se světla.“',
-  },
-  keyGuard: {
-    id: 'key-guard',
-    name: 'Hlídač Klíče',
-    sprite: 'monster',
-    dialogue: 'Stůj! Klíč tady nikdo neukradne.',
-    speed: 50,
-    lethal: true,
-    health: 3,
-  },
-};
-
 const npcPackage = buildNpcPackage([
-  placeNpc({
-    preset: presets.mayor,
-    tx: 3,
-    ty: 2,
+  placeNpc('mayor', 3, 2, {
     script: {
       defaultDialogue:
         'Hana ztiší hlas: „Drž se světla. V téhle laboratoři je tma největší nepřítel.“',
@@ -73,10 +39,7 @@ const npcPackage = buildNpcPackage([
       ],
     },
   }),
-  placeNpc({
-    preset: presets.caretaker,
-    tx: 10,
-    ty: 4,
+  placeNpc('caretaker', 10, 4, {
     script: {
       defaultDialogue:
         'Správce nervózně kouká do stínu: „Tahle chodba bývala plná světla. Teď musíš rozsvítit, než se vydáš dál.“',
@@ -142,10 +105,7 @@ const npcPackage = buildNpcPackage([
       },
     },
   }),
-  placeNpc({
-    preset: presets.technician,
-    tx: 6,
-    ty: 9,
+  placeNpc('technician', 6, 9, {
     patrol: [
       { tx: 6, ty: 9 },
       { tx: 7, ty: 9 },
@@ -155,7 +115,7 @@ const npcPackage = buildNpcPackage([
     script: {
       defaultDialogue:
         'Jára si drží baterku u hrudi: „Bez světla a náhradních dílů se nikam nepohneme. U vypínače budeme v bezpečí.“',
-      infoNote: presets.technician.infoNote,
+      infoNote: 'Technik Jára tě šeptem upozornil: „Energoblok visí u hlídače klíče. Drž se světla.“',
       lines: [
         {
           id: 'technician-waiting-caretaker',
@@ -230,10 +190,7 @@ const npcPackage = buildNpcPackage([
       },
     },
   }),
-  placeNpc({
-    preset: presets.keyGuard,
-    tx: 18,
-    ty: 11,
+  placeNpc('key-guard', 18, 11, {
     patrol: [
       { tx: 18, ty: 1 },
       { tx: 18, ty: 12 },

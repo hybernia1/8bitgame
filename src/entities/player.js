@@ -1,5 +1,6 @@
 import { keyPressed } from '../kontra.mjs';
 import { COLORS, TILE, TILE_SCALE } from '../core/constants.js';
+import { resolveWorldPosition } from '../core/positioning.js';
 import { attemptPush, findBlockingPushable, findNearbyPushable } from './pushables.js';
 import { createAnimationMap, pickAnimation, resolveDirection } from './characterAnimations.js';
 
@@ -30,6 +31,7 @@ function getInputAxis() {
 
 export function createPlayer(spriteSheet, placements = {}) {
   const { playerStart = { x: 0, y: 0 } } = placements;
+  const { x, y } = resolveWorldPosition(playerStart);
   const animations = createAnimationMap(spriteSheet, 'player');
   const facing = 'down';
   const currentAnimation =
@@ -37,8 +39,8 @@ export function createPlayer(spriteSheet, placements = {}) {
   currentAnimation?.start?.();
 
   return {
-    x: playerStart.x,
-    y: playerStart.y,
+    x,
+    y,
     speed: PLAYER_SPEED,
     size: PLAYER_SIZE,
     color: '#5cf2cc',

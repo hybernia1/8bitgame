@@ -1,45 +1,8 @@
 import { TILE } from '../../../core/constants.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
-const presets = {
-  cat: {
-    id: 'cat',
-    name: 'Kočka',
-    sprite: 'cat',
-    speed: 28,
-    wanderRadius: TILE * 3,
-    wanderInterval: 0.8,
-    dialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
-  },
-  recordingCabinet: {
-    id: 'recording-cabinet',
-    name: 'Záznamová skříň',
-    sprite: 'decor.console',
-    animationBase: 'decor.console',
-    dialogue: 'Skříň je plná prázdných šuplíků.',
-  },
-  vcrPlayer: {
-    id: 'vcr-player',
-    name: 'Přehrávač',
-    sprite: 'decor.console',
-    animationBase: 'decor.console',
-    dialogue: 'Bez kazety přehrávač nepomůže.',
-  },
-  spider: {
-    id: 'spider',
-    name: 'Pavouk',
-    sprite: 'spider',
-    lethal: true,
-    wanderRadius: TILE * 4,
-    wanderInterval: 1.2,
-  },
-};
-
 const npcPackage = buildNpcPackage([
-  placeNpc({
-    preset: presets.cat,
-    tx: 4,
-    ty: 3,
+  placeNpc('cat', 4, 3, {
     script: {
       defaultDialogue: 'Kočka se nechá podrbat na bříšku. *purr*',
       lines: [
@@ -96,10 +59,7 @@ const npcPackage = buildNpcPackage([
       },
     },
   }),
-  placeNpc({
-    preset: presets.recordingCabinet,
-    tx: 5,
-    ty: 5,
+  placeNpc('recording-cabinet', 5, 5, {
     script: {
       defaultDialogue: 'Skříň je plná prázdných šuplíků.',
       lines: [
@@ -131,10 +91,7 @@ const npcPackage = buildNpcPackage([
       },
     },
   }),
-  placeNpc({
-    preset: presets.vcrPlayer,
-    tx: 13,
-    ty: 10,
+  placeNpc('vcr-player', 13, 10, {
     script: {
       defaultDialogue: 'Bez kazety přehrávač nepomůže.',
       lines: [
@@ -163,24 +120,18 @@ const npcPackage = buildNpcPackage([
       ],
     },
   }),
-  placeNpc({
-    preset: { ...presets.spider, id: 'spider-1' },
-    tx: 9,
-    ty: 8,
+  placeNpc('spider', 9, 8, {
+    id: 'spider-1',
     wanderRadius: TILE * 4,
     wanderInterval: 1.4,
   }),
-  placeNpc({
-    preset: { ...presets.spider, id: 'spider-2' },
-    tx: 12,
-    ty: 6,
+  placeNpc('spider', 12, 6, {
+    id: 'spider-2',
     wanderRadius: TILE * 5,
     wanderInterval: 1.2,
   }),
-  placeNpc({
-    preset: { ...presets.spider, id: 'spider-3' },
-    tx: 6,
-    ty: 9,
+  placeNpc('spider', 6, 9, {
+    id: 'spider-3',
     wanderRadius: TILE * 3,
     wanderInterval: 1,
   }),

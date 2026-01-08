@@ -1,32 +1,8 @@
 import { getPickupPreset } from '../../pickups/index.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
-const presets = {
-  mayor: {
-    id: 'mayor',
-    name: 'Starostka Hana',
-    sprite: 'hana',
-    dialogue: 'Hana se sklání k lůžku a hlídá každý tvůj dech.',
-  },
-  doctor: {
-    id: 'doctor',
-    name: 'Doktor Viktor',
-    sprite: 'npc',
-    dialogue: 'Doktor Viktor si zapisuje tvůj puls a prohlíží nástroje.',
-  },
-  quizmaster: {
-    id: 'quizmaster',
-    name: 'Archivářka Nora',
-    sprite: 'npc',
-    dialogue: 'Archivářka Nora drží tablet a čeká, až odpovíš na kontrolní otázky.',
-  },
-};
-
 const npcPackage = buildNpcPackage([
-  placeNpc({
-    preset: presets.mayor,
-    tx: 4,
-    ty: 2,
+  placeNpc('mayor', 4, 2, {
     script: {
       defaultDialogue: 'Hana tě uklidňuje: „Doktor tě podrží, hlavně zhluboka dýchej.“',
       lines: [
@@ -84,10 +60,7 @@ const npcPackage = buildNpcPackage([
       ],
     },
   }),
-  placeNpc({
-    preset: presets.doctor,
-    tx: 6,
-    ty: 4,
+  placeNpc('doctor', 6, 4, {
     script: {
       defaultDialogue: 'Doktor Viktor si zapisuje poznámky a mávne: „Odpočívej, hlava ti poděkuje.“',
       lines: [
@@ -113,10 +86,7 @@ const npcPackage = buildNpcPackage([
       ],
     },
   }),
-  placeNpc({
-    preset: presets.quizmaster,
-    tx: 2,
-    ty: 5,
+  placeNpc('quizmaster', 2, 5, {
     script: {
       defaultDialogue: 'Archivářka Nora přepíná mezi záznamy: „Když chceš odměnu, zkus kvíz.“',
       lines: [
