@@ -281,7 +281,7 @@ function parseLightingLayer(layer) {
 }
 
 function parseSpawnLayer(layer) {
-  const actors = { monsters: [], props: [], npcs: [] };
+  const actors = { props: [], npcs: [] };
   if (!layer || layer.type !== 'objectgroup') return actors;
 
   layer.objects?.forEach((obj) => {
@@ -316,11 +316,6 @@ function parseSpawnLayer(layer) {
       } else {
         actors.npcs.push({ ...common, dialogue: props.dialogue, sprite: props.sprite });
       }
-      return;
-    }
-
-    if (obj.type === 'monster' || props.monster) {
-      actors.monsters.push({ ...common, patrol: props.patrol });
       return;
     }
 

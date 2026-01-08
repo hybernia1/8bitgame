@@ -53,7 +53,6 @@ export const hospitalLevel = {
   },
   actors: {
     playerStart: { x: TILE * 4.5, y: TILE * 3.5 },
-    monsters: [],
     props: [],
     npcs: [...hospitalNpcPackage.placements],
   },

@@ -43,7 +43,6 @@ export const prologueLevel = {
   },
   actors: {
     playerStart: { x: TILE * 5, y: TILE * 4 },
-    monsters: [],
     props: [],
     npcs: [],
   },

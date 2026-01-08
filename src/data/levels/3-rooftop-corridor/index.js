@@ -38,7 +38,6 @@ export const rooftopCorridorLevel = {
   interactables: {},
   actors: {
     playerStart: { x: TILE * 4.5, y: TILE * 4.5 },
-    monsters: [],
     props: [],
     npcs: [],
   },

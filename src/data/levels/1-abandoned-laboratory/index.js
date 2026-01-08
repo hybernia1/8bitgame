@@ -1,6 +1,6 @@
 import { TILE } from '../../../core/constants.js';
 import { buildTileLayersFromTokens, resolveTileToken } from '../map-utils.js';
-import { placePickup } from '../../pickups/index.js';
+import { placePickup } from '../../items/index.js';
 import { abandonedLaboratoryNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 20;
@@ -148,7 +148,6 @@ export const abandonedLaboratoryLevel = {
   },
   actors: {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },
-    monsters: [],
     props: [],
     npcs: [...abandonedLaboratoryNpcPackage.placements],
   },
