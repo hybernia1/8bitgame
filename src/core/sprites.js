@@ -646,7 +646,7 @@ export async function loadSpriteSheet() {
     image,
     frameWidth: TILE,
     frameHeight: TILE,
-    frameMargin: 0,
+    spacing: 0,
     animations,
   });
 

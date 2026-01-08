@@ -6,5 +6,8 @@
     "test": "node --test",
     "import:maps": "node scripts/import-maps.js",
     "import": "npm run import:maps"
+  },
+  "dependencies": {
+    "kontra": "^10.0.2"
   }
 }

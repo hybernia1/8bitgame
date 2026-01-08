@@ -1,14 +1,371 @@
 /**
  * @preserve
- * Kontra.js v9.0.0
+ * Kontra.js v10.0.2
  */
 import { getStorageSafely } from './core/storage.js';
+/**
+ * A group of helpful functions that are commonly used for game development. Includes things such as converting between radians and degrees and getting random integers.
+ *
+ * ```js
+ * import { degToRad } from 'kontra';
+ *
+ * let radians = degToRad(180);  // => 3.14
+ * ```
+ * @sectionName Helpers
+ */
+
+/**
+ * Convert degrees to radians.
+ * @function degToRad
+ *
+ * @param {Number} deg - Degrees to convert.
+ *
+ * @returns {Number} The value in radians.
+ */
+function degToRad(deg) {
+  return (deg * Math.PI) / 180;
+}
+
+/**
+ * Convert radians to degrees.
+ * @function radToDeg
+ *
+ * @param {Number} rad - Radians to convert.
+ *
+ * @returns {Number} The value in degrees.
+ */
+function radToDeg(rad) {
+  return (rad * 180) / Math.PI;
+}
+
+/**
+ * Return the angle in radians from one point to another point.
+ *
+ * ```js
+ * import { angleToTarget, Sprite } from 'kontra';
+ *
+ * let sprite = Sprite({
+ *   x: 10,
+ *   y: 10,
+ *   width: 20,
+ *   height: 40,
+ *   color: 'blue'
+ * });
+ *
+ * sprite.rotation = angleToTarget(sprite, {x: 100, y: 30});
+ *
+ * let sprite2 = Sprite({
+ *   x: 100,
+ *   y: 30,
+ *   width: 20,
+ *   height: 40,
+ *   color: 'red',
+ * });
+ *
+ * sprite2.rotation = angleToTarget(sprite2, sprite);
+ * ```
+ * @function angleToTarget
+ *
+ * @param {{x: Number, y: Number}} source - The {x,y} source point.
+ * @param {{x: Number, y: Number}} target - The {x,y} target point.
+ *
+ * @returns {Number} Angle (in radians) from the source point to the target point.
+ */
+function angleToTarget(source, target) {
+  return Math.atan2(target.y - source.y, target.x - source.x);
+}
+
+/**
+ * Rotate a point by an angle.
+ * @function rotatePoint
+ *
+ * @param {{x: Number, y: Number}} point - The {x,y} point to rotate.
+ * @param {Number} angle - Angle (in radians) to rotate.
+ *
+ * @returns {{x: Number, y: Number}} The new x and y coordinates after rotation.
+ */
+function rotatePoint(point, angle) {
+  let sin = Math.sin(angle);
+  let cos = Math.cos(angle);
+
+  return {
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos
+  };
+}
+
+/**
+ * Move a point by an angle and distance.
+ * @function movePoint
+ *
+ * @param {{x: Number, y: Number}} point - The {x,y} point to move.
+ * @param {Number} angle - Angle (in radians) to move.
+ * @param {Number} distance - Distance to move.
+ *
+ * @returns {{x: Number, y: Number}} The new x and y coordinates after moving.
+ */
+function movePoint(point, angle, distance) {
+  return {
+    x: point.x + Math.cos(angle) * distance,
+    y: point.y + Math.sin(angle) * distance
+  };
+}
+
+/**
+ * Linearly interpolate between two values. The function calculates the number between two values based on a percent. Great for smooth transitions.
+ *
+ * ```js
+ * import { lerp } from 'kontra';
+ *
+ * console.log( lerp(10, 20, 0.5) );  // => 15
+ * console.log( lerp(10, 20, 2) );  // => 30
+ * ```
+ * @function lerp
+ *
+ * @param {Number} start - Start value.
+ * @param {Number} end - End value.
+ * @param {Number} percent - Percent to interpolate.
+ *
+ * @returns {Number} Interpolated number between the start and end values
+ */
+function lerp(start, end, percent) {
+  return start * (1 - percent) + end * percent;
+}
+
+/**
+ * Return the linear interpolation percent between two values. The function calculates the percent between two values of a given value.
+ *
+ * ```js
+ * import { inverseLerp } from 'kontra';
+ *
+ * console.log( inverseLerp(10, 20, 15) );  // => 0.5
+ * console.log( inverseLerp(10, 20, 30) );  // => 2
+ * ```
+ * @function inverseLerp
+ *
+ * @param {Number} start - Start value.
+ * @param {Number} end - End value.
+ * @param {Number} value - Value between start and end.
+ *
+ * @returns {Number} Percent difference between the start and end values.
+ */
+function inverseLerp(start, end, value) {
+  return (value - start) / (end - start);
+}
+
+/**
+ * Clamp a number between two values, preventing it from going below or above the minimum and maximum values.
+ * @function clamp
+ *
+ * @param {Number} min - Min value.
+ * @param {Number} max - Max value.
+ * @param {Number} value - Value to clamp.
+ *
+ * @returns {Number} Value clamped between min and max.
+ */
+function clamp(min, max, value) {
+  return Math.min(Math.max(min, value), max);
+}
+
+/**
+ * Save an item to localStorage. A value of `undefined` will remove the item from localStorage.
+ * @function setStoreItem
+ *
+ * @param {String} key - The name of the key.
+ * @param {*} value - The value to store.
+ */
+function setStoreItem(key, value) {
+  let storage = getStorageSafely();
+  if (!storage) return;
+  if (value == undefined) {
+    storage.removeItem(key);
+  } else {
+    storage.setItem(key, JSON.stringify(value));
+  }
+}
+
+/**
+ * Retrieve an item from localStorage and convert it back to its original type.
+ *
+ * Normally when you save a value to LocalStorage it converts it into a string. So if you were to save a number, it would be saved as `"12"` instead of `12`. This function enables the value to be returned as `12`.
+ * @function getStoreItem
+ *
+ * @param {String} key - Name of the key of the item to retrieve.
+ *
+ * @returns {*} The retrieved item.
+ */
+function getStoreItem(key) {
+  let storage = getStorageSafely();
+  if (!storage) return null;
+  let value = storage.getItem(key);
+
+  try {
+    value = JSON.parse(value);
+  } catch (e) {
+    // do nothing
+  }
+
+  return value;
+}
+
+/**
+ * Check if two objects collide. Uses a simple [Axis-Aligned Bounding Box (AABB) collision check](https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection#Axis-Aligned_Bounding_Box). Takes into account the objects [anchor](api/gameObject#anchor) and [scale](api/gameObject#scale).
+ *
+ * **NOTE:** Does not take into account object rotation. If you need collision detection between rotated objects you will need to implement your own `collides()` function. I suggest looking at the Separate Axis Theorem.
+ *
+ * ```js
+ * import { Sprite, collides } from 'kontra';
+ *
+ * let sprite = Sprite({
+ *   x: 100,
+ *   y: 200,
+ *   width: 20,
+ *   height: 40
+ * });
+ *
+ * let sprite2 = Sprite({
+ *   x: 150,
+ *   y: 200,
+ *   width: 20,
+ *   height: 20
+ * });
+ *
+ * collides(sprite, sprite2);  //=> false
+ *
+ * sprite2.x = 115;
+ *
+ * collides(sprite, sprite2);  //=> true
+ * ```
+ * @function collides
+ *
+ * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj1 - Object reference.
+ * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj2 - Object to check collision against.
+ *
+ * @returns {Boolean} `true` if the objects collide, `false` otherwise.
+ */
+function collides(obj1, obj2) {
+  let rect1 = getWorldRect(obj1);
+  let rect2 = getWorldRect(obj2);
+
+  // @ifdef GAMEOBJECT_RADIUS
+  // don't work with ellipses (i.e. scaling has made
+  // the width and height not the same which means it's
+  // an ellipse and not a circle)
+  if (
+    (obj1.radius && rect1.width != rect1.height) ||
+    (obj2.radius && rect2.width != rect2.height)
+  ) {
+    return false;
+  }
+
+  [rect1, rect2] = [rect1, rect2].map(rect => {
+    if ((rect == rect1 ? obj1 : obj2).radius) {
+      rect.radius = rect.width / 2;
+      rect.x += rect.radius;
+      rect.y += rect.radius;
+    }
+
+    return rect;
+  });
+
+  if (obj1.radius && obj2.radius) {
+    return (
+      Math.hypot(rect1.x - rect2.x, rect1.y - rect2.y) <
+      rect1.radius + rect2.radius
+    );
+  }
+
+  if (obj1.radius || obj2.radius) {
+    return circleRectCollision(
+      obj1.radius ? rect1 : rect2, // circle
+      obj1.radius ? obj2 : obj1 // rect
+    );
+  }
+  // @endif
+
+  return (
+    rect1.x < rect2.x + rect2.width &&
+    rect1.x + rect1.width > rect2.x &&
+    rect1.y < rect2.y + rect2.height &&
+    rect1.y + rect1.height > rect2.y
+  );
+}
+
+/**
+ * Return the world rect of an object. The rect is the world position of the top-left corner of the object and its size. Takes into account the objects anchor and scale.
+ * @function getWorldRect
+ *
+ * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}|{mapwidth: Number, mapheight: Number}} obj - Object to get world rect of.
+ *
+ * @returns {{x: Number, y: Number, width: Number, height: Number}} The world `x`, `y`, `width`, and `height` of the object.
+ */
+function getWorldRect(obj) {
+  let { x = 0, y = 0, width, height, radius } = obj.world || obj;
+
+  // take into account tileEngine
+  if (obj.mapwidth) {
+    width = obj.mapwidth;
+    height = obj.mapheight;
+  }
+
+  // @ifdef GAMEOBJECT_RADIUS
+  // account for circle
+  if (radius) {
+    width = radius.x * 2;
+    height = radius.y * 2;
+  }
+  // @endif
+
+  // @ifdef GAMEOBJECT_ANCHOR
+  // account for anchor
+  if (obj.anchor) {
+    x -= width * obj.anchor.x;
+    y -= height * obj.anchor.y;
+  }
+  // @endif
+
+  // @ifdef GAMEOBJECT_SCALE
+  // account for negative scales
+  if (width < 0) {
+    x += width;
+    width *= -1;
+  }
+  if (height < 0) {
+    y += height;
+    height *= -1;
+  }
+  // @endif
+
+  return {
+    x,
+    y,
+    width,
+    height
+  };
+}
+
+/**
+ * Compare two objects world rects to determine how to sort them. Is used as the `compareFunction` to [Array.prototype.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort).
+ * @function depthSort
+ *
+ * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj1 - First object to compare.
+ * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj2 - Second object to compare.
+ * @param {String} [prop='y'] - Objects [getWorldRect](api/helpers#getWorldRect) property to compare.
+ *
+ * @returns {Number} The difference between the objects compare property.
+ */
+function depthSort(obj1, obj2, prop = 'y') {
+  [obj1, obj2] = [obj1, obj2].map(getWorldRect);
+  return obj1[prop] - obj2[prop];
+}
 
 let noop = () => {};
 
 // style used for DOM nodes needed for screen readers
 let srOnlyStyle =
   'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);';
+// prevent focus from scrolling the page
+let focusParams = { preventScroll: true };
 
 /**
  * Append a node directly after the canvas and as the last element of other kontra nodes.
@@ -22,10 +379,14 @@ function addToDom(node, canvas) {
   node.setAttribute('data-kontra', '');
   if (container) {
     let target =
-      container.querySelector('[data-kontra]:last-of-type') || canvas;
-    container.insertBefore(node, target.nextSibling);
+      [
+        ...container.querySelectorAll(':scope > [data-kontra]')
+      ].pop() || canvas;
+    target.after(node);
+  } else if (canvas.nodeName == 'CANVAS') {
+    document.body.append(node);
   } else {
-    document.body.appendChild(node);
+    canvas.append(node);
   }
 }
 
@@ -43,6 +404,29 @@ function removeFromArray(array, item) {
     array.splice(index, 1);
     return true;
   }
+}
+
+/**
+ * Detection collision between a rectangle and a circle.
+ * @see https://yal.cc/rectangle-circle-intersection-test/
+ *
+ * @param {Object} rect - Rectangular object to check collision against.
+ * @param {Object} circle - Circular object to check collision against.
+ *
+ * @returns {Boolean} True if objects collide.
+ */
+function circleRectCollision(circle, rect) {
+  let { x, y, width, height } = getWorldRect(rect);
+
+  // account for camera
+  do {
+    x -= rect.sx || 0;
+    y -= rect.sy || 0;
+  } while ((rect = rect.parent));
+
+  let dx = circle.x - Math.max(x, Math.min(circle.x, x + width));
+  let dy = circle.y - Math.max(y, Math.min(circle.y, y + height));
+  return dx * dx + dy * dy < circle.radius * circle.radius;
 }
 
 /**
@@ -239,7 +623,12 @@ function init$1(canvas, { contextless = false } = {}) {
  */
 class Animation {
   constructor({ spriteSheet, frames, frameRate, loop = true, name }) {
-    let { width, height, margin = 0 } = spriteSheet.frame;
+    let {
+      width,
+      height,
+      spacing = 0,
+      margin = 0
+    } = spriteSheet.frame;
 
     Object.assign(this, {
       /**
@@ -292,7 +681,14 @@ class Animation {
       height,
 
       /**
-       * The space between each frame. Taken from the [frame margin value](api/spriteSheet#frame) of the sprite sheet.
+       * The space between each frame. Taken from the [frame spacing value](api/spriteSheet#frame) of the sprite sheet.
+       * @memberof Animation
+       * @property {Number} spacing
+       */
+      spacing,
+
+      /**
+       * The border space around the sprite sheet image. Taken from the [frame margin value](api/spriteSheet#frame) of the sprite sheet.
        * @memberof Animation
        * @property {Number} margin
        */
@@ -423,8 +819,8 @@ class Animation {
 
     context.drawImage(
       this.spriteSheet.image,
-      col * this.width + (col * 2 + 1) * this.margin,
-      row * this.height + (row * 2 + 1) * this.margin,
+      this.margin + col * this.width + (col * 2 + 1) * this.spacing,
+      this.margin + row * this.height + (row * 2 + 1) * this.spacing,
       this.width,
       this.height,
       x,
@@ -903,372 +1299,6 @@ function load(...urls) {
         : loadData(asset);
     })
   );
-}
-
-/**
- * A group of helpful functions that are commonly used for game development. Includes things such as converting between radians and degrees and getting random integers.
- *
- * ```js
- * import { degToRad } from 'kontra';
- *
- * let radians = degToRad(180);  // => 3.14
- * ```
- * @sectionName Helpers
- */
-
-/**
- * Convert degrees to radians.
- * @function degToRad
- *
- * @param {Number} deg - Degrees to convert.
- *
- * @returns {Number} The value in radians.
- */
-function degToRad(deg) {
-  return (deg * Math.PI) / 180;
-}
-
-/**
- * Convert radians to degrees.
- * @function radToDeg
- *
- * @param {Number} rad - Radians to convert.
- *
- * @returns {Number} The value in degrees.
- */
-function radToDeg(rad) {
-  return (rad * 180) / Math.PI;
-}
-
-/**
- * Return the angle in radians from one point to another point.
- *
- * ```js
- * import { angleToTarget, Sprite } from 'kontra';
- *
- * let sprite = Sprite({
- *   x: 10,
- *   y: 10,
- *   width: 20,
- *   height: 40,
- *   color: 'blue'
- * });
- *
- * sprite.rotation = angleToTarget(sprite, {x: 100, y: 30});
- *
- * let sprite2 = Sprite({
- *   x: 100,
- *   y: 30,
- *   width: 20,
- *   height: 40,
- *   color: 'red',
- * });
- *
- * sprite2.rotation = angleToTarget(sprite2, sprite);
- * ```
- * @function angleToTarget
- *
- * @param {{x: Number, y: Number}} source - The {x,y} source point.
- * @param {{x: Number, y: Number}} target - The {x,y} target point.
- *
- * @returns {Number} Angle (in radians) from the source point to the target point.
- */
-function angleToTarget(source, target) {
-  return Math.atan2(target.y - source.y, target.x - source.x);
-}
-
-/**
- * Rotate a point by an angle.
- * @function rotatePoint
- *
- * @param {{x: Number, y: Number}} point - The {x,y} point to rotate.
- * @param {Number} angle - Angle (in radians) to rotate.
- *
- * @returns {{x: Number, y: Number}} The new x and y coordinates after rotation.
- */
-function rotatePoint(point, angle) {
-  let sin = Math.sin(angle);
-  let cos = Math.cos(angle);
-
-  return {
-    x: point.x * cos - point.y * sin,
-    y: point.x * sin + point.y * cos
-  };
-}
-
-/**
- * Move a point by an angle and distance.
- * @function movePoint
- *
- * @param {{x: Number, y: Number}} point - The {x,y} point to move.
- * @param {Number} angle - Angle (in radians) to move.
- * @param {Number} distance - Distance to move.
- *
- * @returns {{x: Number, y: Number}} The new x and y coordinates after moving.
- */
-function movePoint(point, angle, distance) {
-  return {
-    x: point.x + Math.cos(angle) * distance,
-    y: point.y + Math.sin(angle) * distance
-  };
-}
-
-/**
- * Return a random integer between a minimum (inclusive) and maximum (inclusive) integer.
- * @see https://stackoverflow.com/a/1527820/2124254
- * @function randInt
- *
- * @param {Number} min - Min integer.
- * @param {Number} max - Max integer.
- *
- * @returns {Number} Random integer between min and max values.
- */
-function randInt(min, max) {
-  return ((Math.random() * (max - min + 1)) | 0) + min;
-}
-
-/**
- * Create a seeded random number generator.
- *
- * ```js
- * import { seedRand } from 'kontra';
- *
- * let rand = seedRand('kontra');
- * console.log(rand());  // => always 0.33761959057301283
- * ```
- * @see https://stackoverflow.com/a/47593316/2124254
- * @see https://github.com/bryc/code/blob/master/jshash/PRNGs.md
- *
- * @function seedRand
- *
- * @param {String} str - String to seed the random number generator.
- *
- * @returns {() => Number} Seeded random number generator function.
- */
-function seedRand(str) {
-  // based on the above references, this was the smallest code yet
-  // decent quality seed random function
-
-  // first create a suitable hash of the seed string using xfnv1a
-  // @see https://github.com/bryc/code/blob/master/jshash/PRNGs.md#addendum-a-seed-generating-functions
-  for (var i = 0, h = 2166136261 >>> 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 16777619);
-  }
-  h += h << 13;
-  h ^= h >>> 7;
-  h += h << 3;
-  h ^= h >>> 17;
-  let seed = (h += h << 5) >>> 0;
-
-  // then return the seed function and discard the first result
-  // @see https://github.com/bryc/code/blob/master/jshash/PRNGs.md#lcg-lehmer-rng
-  let rand = () =>
-    ((2 ** 31 - 1) & (seed = Math.imul(48271, seed))) / 2 ** 31;
-  rand();
-  return rand;
-}
-
-/**
- * Linearly interpolate between two values. The function calculates the number between two values based on a percent. Great for smooth transitions.
- *
- * ```js
- * import { lerp } from 'kontra';
- *
- * console.log( lerp(10, 20, 0.5) );  // => 15
- * console.log( lerp(10, 20, 2) );  // => 30
- * ```
- * @function lerp
- *
- * @param {Number} start - Start value.
- * @param {Number} end - End value.
- * @param {Number} percent - Percent to interpolate.
- *
- * @returns {Number} Interpolated number between the start and end values
- */
-function lerp(start, end, percent) {
-  return start * (1 - percent) + end * percent;
-}
-
-/**
- * Return the linear interpolation percent between two values. The function calculates the percent between two values of a given value.
- *
- * ```js
- * import { inverseLerp } from 'kontra';
- *
- * console.log( inverseLerp(10, 20, 15) );  // => 0.5
- * console.log( inverseLerp(10, 20, 30) );  // => 2
- * ```
- * @function inverseLerp
- *
- * @param {Number} start - Start value.
- * @param {Number} end - End value.
- * @param {Number} value - Value between start and end.
- *
- * @returns {Number} Percent difference between the start and end values.
- */
-function inverseLerp(start, end, value) {
-  return (value - start) / (end - start);
-}
-
-/**
- * Clamp a number between two values, preventing it from going below or above the minimum and maximum values.
- * @function clamp
- *
- * @param {Number} min - Min value.
- * @param {Number} max - Max value.
- * @param {Number} value - Value to clamp.
- *
- * @returns {Number} Value clamped between min and max.
- */
-function clamp(min, max, value) {
-  return Math.min(Math.max(min, value), max);
-}
-
-/**
- * Save an item to localStorage. A value of `undefined` will remove the item from localStorage.
- * @function setStoreItem
- *
- * @param {String} key - The name of the key.
- * @param {*} value - The value to store.
- */
-function setStoreItem(key, value) {
-  let storage = getStorageSafely();
-  if (!storage) return;
-  if (value == undefined) {
-    storage.removeItem(key);
-  } else {
-    storage.setItem(key, JSON.stringify(value));
-  }
-}
-
-/**
- * Retrieve an item from localStorage and convert it back to its original type.
- *
- * Normally when you save a value to LocalStorage it converts it into a string. So if you were to save a number, it would be saved as `"12"` instead of `12`. This function enables the value to be returned as `12`.
- * @function getStoreItem
- *
- * @param {String} key - Name of the key of the item to retrieve.
- *
- * @returns {*} The retrieved item.
- */
-function getStoreItem(key) {
-  let storage = getStorageSafely();
-  if (!storage) return null;
-  let value = storage.getItem(key);
-
-  try {
-    value = JSON.parse(value);
-  } catch (e) {
-    // do nothing
-  }
-
-  return value;
-}
-
-/**
- * Check if two objects collide. Uses a simple [Axis-Aligned Bounding Box (AABB) collision check](https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection#Axis-Aligned_Bounding_Box). Takes into account the objects [anchor](api/gameObject#anchor) and [scale](api/gameObject#scale).
- *
- * **NOTE:** Does not take into account object rotation. If you need collision detection between rotated objects you will need to implement your own `collides()` function. I suggest looking at the Separate Axis Theorem.
- *
- * ```js
- * import { Sprite, collides } from 'kontra';
- *
- * let sprite = Sprite({
- *   x: 100,
- *   y: 200,
- *   width: 20,
- *   height: 40
- * });
- *
- * let sprite2 = Sprite({
- *   x: 150,
- *   y: 200,
- *   width: 20,
- *   height: 20
- * });
- *
- * collides(sprite, sprite2);  //=> false
- *
- * sprite2.x = 115;
- *
- * collides(sprite, sprite2);  //=> true
- * ```
- * @function collides
- *
- * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj1 - Object reference.
- * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj2 - Object to check collision against.
- *
- * @returns {Boolean} `true` if the objects collide, `false` otherwise.
- */
-function collides(obj1, obj2) {
-  [obj1, obj2] = [obj1, obj2].map(obj => getWorldRect(obj));
-
-  return (
-    obj1.x < obj2.x + obj2.width &&
-    obj1.x + obj1.width > obj2.x &&
-    obj1.y < obj2.y + obj2.height &&
-    obj1.y + obj1.height > obj2.y
-  );
-}
-
-/**
- * Return the world rect of an object. The rect is the world position of the top-left corner of the object and its size. Takes into account the objects anchor and scale.
- * @function getWorldRect
- *
- * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}|{mapwidth: Number, mapheight: Number}} obj - Object to get world rect of.
- *
- * @returns {{x: Number, y: Number, width: Number, height: Number}} The world `x`, `y`, `width`, and `height` of the object.
- */
-function getWorldRect(obj) {
-  let { x = 0, y = 0, width, height } = obj.world || obj;
-
-  // take into account tileEngine
-  if (obj.mapwidth) {
-    width = obj.mapwidth;
-    height = obj.mapheight;
-  }
-
-  // @ifdef GAMEOBJECT_ANCHOR
-  // account for anchor
-  if (obj.anchor) {
-    x -= width * obj.anchor.x;
-    y -= height * obj.anchor.y;
-  }
-  // @endif
-
-  // @ifdef GAMEOBJECT_SCALE
-  // account for negative scales
-  if (width < 0) {
-    x += width;
-    width *= -1;
-  }
-  if (height < 0) {
-    y += height;
-    height *= -1;
-  }
-  // @endif
-
-  return {
-    x,
-    y,
-    width,
-    height
-  };
-}
-
-/**
- * Compare two objects world rects to determine how to sort them. Is used as the `compareFunction` to [Array.prototype.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort).
- * @function depthSort
- *
- * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj1 - First object to compare.
- * @param {{x: Number, y: Number, width: Number, height: Number}|{world: {x: Number, y: Number, width: Number, height: Number}}} obj2 - Second object to compare.
- * @param {String} [prop='y'] - Objects [getWorldRect](/api/helpers#getWorldRect) property to compare.
- *
- * @returns {Number} The difference between the objects compare property.
- */
-function depthSort(obj1, obj2, prop = 'y') {
-  [obj1, obj2] = [obj1, obj2].map(getWorldRect);
-  return obj1[prop] - obj2[prop];
 }
 
 /**
@@ -1763,6 +1793,7 @@ class Updatable {
  * @param {Number} [properties.y] - Y coordinate of the position vector.
  * @param {Number} [properties.width] - Width of the game object.
  * @param {Number} [properties.height] - Height of the game object.
+ * @param {Number} [properties.radius] - Radius of the game object. **Note:** radius is mutually exclusive with `width` and `height` as the GameObject will always use `radius` over `width` and `height` for any logic.
  *
  * @param {CanvasRenderingContext2D} [properties.context] - The context the game object should draw to. Defaults to [core.getContext()](api/core#getContext).
  *
@@ -1776,6 +1807,8 @@ class Updatable {
  * @param {GameObject[]} [properties.children] - Children to add to the game object.
  * @param {Number} [properties.opacity=1] - The opacity of the game object.
  * @param {Number} [properties.rotation=0] - The rotation around the anchor in radians.
+ * @param {Number} [properties.drotation=0] - The angular velocity of the rotation in radians.
+ * @param {Number} [properties.ddrotation=0] - The angular acceleration of the rotation in radians.
  * @param {Number} [properties.scaleX=1] - The x scale of the game object.
  * @param {Number} [properties.scaleY=1] - The y scale of the game object.
  *
@@ -1828,6 +1861,12 @@ class GameObject extends Updatable {
     // --------------------------------------------------
     // optionals
     // --------------------------------------------------
+
+    /**
+     * The radius of the game object. Represents the local radius of the object as opposed to the [world](api/gameObject#world) radius.
+     * @memberof GameObject
+     * @property {Number} radius
+     */
 
     // @ifdef GAMEOBJECT_GROUP
     /**
@@ -1912,6 +1951,24 @@ class GameObject extends Updatable {
      * @property {Number} rotation
      */
     rotation = 0,
+
+    // @ifdef GAMEOBJECT_VELOCITY
+    /**
+     * Angular velocity of the rotation in radians.
+     * @memberof GameObject
+     * @property {Number} drotation
+     */
+    drotation = 0,
+    // @endif
+
+    // @ifdef GAMEOBJECT_ACCELERATION
+    /**
+     * Angular acceleration of the rotation in radians.
+     * @memberof GameObject
+     * @property {Number} ddrotation
+     */
+    ddrotation = 0,
+    // @endif
     // @endif
 
     // @ifdef GAMEOBJECT_SCALE
@@ -1956,6 +2013,14 @@ class GameObject extends Updatable {
 
       // @ifdef GAMEOBJECT_ROTATION
       rotation,
+
+      // @ifdef GAMEOBJECT_VELOCITY
+      drotation,
+      // @endif
+
+      // @ifdef GAMEOBJECT_ACCELERATION
+      ddrotation,
+      // @endif
       // @endif
 
       // @ifdef GAMEOBJECT_SCALE
@@ -2039,8 +2104,17 @@ class GameObject extends Updatable {
     // @ifdef GAMEOBJECT_ANCHOR
     // 5) translate to the anchor so (0,0) is the top left corner
     // for the render function
-    let anchorX = -this.width * this.anchor.x;
-    let anchorY = -this.height * this.anchor.y;
+    let width = this.width;
+    let height = this.height;
+
+    // @ifdef GAMEOBJECT_RADIUS
+    if (this.radius) {
+      width = height = this.radius * 2;
+    }
+    // @endif
+
+    let anchorX = -width * this.anchor.x;
+    let anchorY = -height * this.anchor.y;
 
     if (anchorX || anchorY) {
       context.translate(anchorX, anchorY);
@@ -2185,7 +2259,7 @@ class GameObject extends Updatable {
       // @endif
 
       // @ifdef GAMEOBJECT_ROTATION
-      _wr = 0,
+      _wrot = 0,
       // @endif
 
       // @ifdef GAMEOBJECT_SCALE
@@ -2203,6 +2277,14 @@ class GameObject extends Updatable {
     this._ww = this.width;
     this._wh = this.height;
 
+    // @ifdef GAMEOBJECT_RADIUS
+    // wrx = world radius x, wry = world radius y
+    if (this.radius) {
+      this._wrx = this.radius;
+      this._wry = this.radius;
+    }
+    // @endif
+
     // @ifdef GAMEOBJECT_OPACITY
     // wo = world opacity
     this._wo = _wo * this.opacity;
@@ -2217,13 +2299,20 @@ class GameObject extends Updatable {
     this._wy = this._wy * _wsy;
     this._ww = this.width * this._wsx;
     this._wh = this.height * this._wsy;
+
+    // @ifdef GAMEOBJECT_RADIUS
+    if (this.radius) {
+      this._wrx = this.radius * this._wsx;
+      this._wry = this.radius * this._wsy;
+    }
+    // @endif
     // @endif
 
     // @ifdef GAMEOBJECT_ROTATION
-    // wr = world rotation
-    this._wr = _wr + this.rotation;
+    // wrot = world rotation
+    this._wrot = _wrot + this.rotation;
 
-    let { x, y } = rotatePoint({ x: this._wx, y: this._wy }, _wr);
+    let { x, y } = rotatePoint({ x: this._wx, y: this._wy }, _wrot);
     this._wx = x;
     this._wy = y;
     // @endif
@@ -2237,7 +2326,7 @@ class GameObject extends Updatable {
   /**
    * The world position, width, height, opacity, rotation, and scale. The world property is the true position, width, height, etc. of the object, taking into account all parents.
    *
-   * The world property does not adjust for anchor or scale, so if you set a negative scale the world width or height could be negative. Use [getWorldRect](/api/helpers#getWorldRect) to get the world position and size adjusted for anchor and scale.
+   * The world property does not adjust for anchor or scale, so if you set a negative scale the world width or height could be negative. Use [getWorldRect](api/helpers#getWorldRect) to get the world position and size adjusted for anchor and scale.
    * @property {{x: Number, y: Number, width: Number, height: Number, opacity: Number, rotation: Number, scaleX: Number, scaleY: Number}} world
    * @memberof GameObject
    */
@@ -2248,12 +2337,18 @@ class GameObject extends Updatable {
       width: this._ww,
       height: this._wh,
 
+      // @ifdef GAMEOBJECT_RADIUS
+      radius: this.radius
+        ? { x: this._wrx, y: this._wry }
+        : undefined,
+      // @endif
+
       // @ifdef GAMEOBJECT_OPACITY
       opacity: this._wo,
       // @endif
 
       // @ifdef GAMEOBJECT_ROTATION
-      rotation: this._wr,
+      rotation: this._wrot,
       // @endif
 
       // @ifdef GAMEOBJECT_SCALE
@@ -2347,6 +2442,22 @@ class GameObject extends Updatable {
   // @endif
 
   // --------------------------------------------------
+  // radius
+  // --------------------------------------------------
+
+  // @ifdef GAMEOBJECT_RADIUS
+  get radius() {
+    // r = radius
+    return this._r;
+  }
+
+  set radius(value) {
+    this._r = value;
+    this._pc();
+  }
+  // @endif
+
+  // --------------------------------------------------
   // opacity
   // --------------------------------------------------
 
@@ -2374,6 +2485,21 @@ class GameObject extends Updatable {
     this._rot = value;
     this._pc();
   }
+
+  // @ifdef GAMEOBJECT_VELOCITY||GAMEOBJECT_ACCELERATION
+  advance(dt) {
+    super.advance(dt);
+
+    // @ifdef GAMEOBJECT_VELOCITY
+    // @ifdef GAMEOBJECT_ACCELERATION
+    this.drotation += this.ddrotation;
+    // @endif
+
+    this.rotation += this.drotation;
+    // @endif
+  }
+  // @endif
+
   // @endif
 
   // --------------------------------------------------
@@ -2603,6 +2729,22 @@ class Sprite extends GameObject {
 
     if (this.color) {
       this.context.fillStyle = this.color;
+
+      // @ifdef GAMEOBJECT_RADIUS
+      if (this.radius) {
+        this.context.beginPath();
+        this.context.arc(
+          this.radius,
+          this.radius,
+          this.radius,
+          0,
+          Math.PI * 2
+        );
+        this.context.fill();
+        return;
+      }
+      // @endif
+
       this.context.fillRect(0, 0, this.width, this.height);
     }
   }
@@ -3017,26 +3159,6 @@ function getPointer(canvas = getCanvas()) {
 }
 
 /**
- * Detection collision between a rectangle and a circle.
- * @see https://yal.cc/rectangle-circle-intersection-test/
- *
- * @param {Object} object - Object to check collision against.
- */
-function circleRectCollision(object, pointer) {
-  let { x, y, width, height } = getWorldRect(object);
-
-  // account for camera
-  do {
-    x -= object.sx || 0;
-    y -= object.sy || 0;
-  } while ((object = object.parent));
-
-  let dx = pointer.x - Math.max(x, Math.min(pointer.x, x + width));
-  let dy = pointer.y - Math.max(y, Math.min(pointer.y, y + height));
-  return dx * dx + dy * dy < pointer.radius * pointer.radius;
-}
-
-/**
  * Get the first on top object that the pointer collides with.
  *
  * @param {Object} pointer - The pointer object
@@ -3054,7 +3176,7 @@ function getCurrentObject(pointer) {
     let object = renderedObjects[i];
     let collides = object.collidesWithPointer
       ? object.collidesWithPointer(pointer)
-      : circleRectCollision(object, pointer);
+      : circleRectCollision(pointer, object);
 
     if (collides) {
       return object;
@@ -3363,12 +3485,12 @@ function track(...objects) {
 
     // override the objects render function to keep track of render
     // order
-    if (!object._r) {
-      object._r = object.render;
+    if (!object.__r) {
+      object.__r = object.render;
 
       object.render = function () {
         pointer._cf.push(this);
-        this._r();
+        this.__r();
       };
 
       pointer._o.push(object);
@@ -3404,8 +3526,8 @@ function untrack(...objects) {
 
     // restore original render function to no longer track render
     // order
-    object.render = object._r;
-    object._r = 0; // 0 is the shortest falsy value
+    object.render = object.__r;
+    object.__r = 0; // 0 is the shortest falsy value
 
     removeFromArray(pointer._o, object);
   });
@@ -3548,6 +3670,7 @@ function pointerPressed(button) {
  * @param {Boolean} [properties.disabled] - Whether the button is disabled when created.
  * @param {Number} [properties.padX=0] - The horizontal padding.
  * @param {Number} [properties.padY=0] - The vertical padding.
+ * @param {HTMLElement} [properties.container] - The HTMLElement that the HTMLButtonElement will be appended to.
  * @param {Function} [properties.onEnable] - Function called when the button is enabled.
  * @param {Function} [properties.onDisable] - Function called when the button is disabled.
  * @param {Function} [properties.onFocus] - Function called when the button is focused by the keyboard.
@@ -3575,6 +3698,7 @@ class Button extends Sprite {
 
     text,
     disabled = false,
+    container,
     onDown,
     onUp,
     ...props
@@ -3629,7 +3753,7 @@ class Button extends Sprite {
     button.addEventListener('keydown', evt => this._kd(evt));
     button.addEventListener('keyup', evt => this._ku(evt));
 
-    addToDom(button, this.context.canvas);
+    addToDom(button, container ?? this.context.canvas);
 
     this._uw();
     this._p();
@@ -3649,6 +3773,16 @@ class Button extends Sprite {
     this._d = true;
     this.textNode.text = value;
   }
+
+  /**
+   * The HTML button element associated with the button (used for accessibility). Typically you won't need to interact with the `node` directly, but it can be useful to move its position in the DOM to better support accessible component design.
+   * @memberof Button
+   * @property {HTMLButtonElement} node
+   */
+  get node() {
+    return this._dn;
+  }
+  // do not allow setting the node value by not having a setter
 
   /**
    * Clean up the button by removing the HTMLButtonElement from the DOM.
@@ -3724,7 +3858,8 @@ class Button extends Sprite {
        */
       this.focused = true;
       // prevent infinite loop
-      if (document.activeElement != this._dn) this._dn.focus();
+      if (document.activeElement != this._dn)
+        this._dn.focus(focusParams);
 
       this.onFocus();
     }
@@ -3934,10 +4069,10 @@ function GameLoop({
       return;
     }
 
-    emit('tick');
     accumulator += dt;
 
     while (accumulator >= delta) {
+      emit('tick');
       loop.update(step);
 
       accumulator -= delta;
@@ -4001,9 +4136,11 @@ function GameLoop({
      * @function start
      */
     start() {
-      last = performance.now();
-      this.isStopped = false;
-      requestAnimationFrame(frame);
+      if (this.isStopped) {
+        last = performance.now();
+        this.isStopped = false;
+        requestAnimationFrame(frame);
+      }
     },
 
     /**
@@ -4031,7 +4168,7 @@ function GameLoop({
 /**
  * A simple gamepad API. You can use it move the main sprite or respond to gamepad events.
  *
- * **NOTE:** Gamepad support requires using a secure context (HTTPS) and the [GameLoop](/api/gameLoop) (since the gamepad state must be checked every frame as there are no global event listeners for gamepad button / axes events).
+ * **NOTE:** Gamepad support requires using a secure context (HTTPS) and the [GameLoop](api/gameLoop) (since the gamepad state must be checked every frame as there are no global event listeners for gamepad button / axes events).
  *
  * ```js
  * import { initGamepad, GameLoop, gamepadPressed } from 'kontra';
@@ -4143,7 +4280,7 @@ function blurEventHandler$1() {
 }
 
 /**
- * Update the gamepad state. Call this function every frame only if you are not using the [GameLoop](/api/gameLoop). Otherwise it is called automatically.
+ * Update the gamepad state. Call this function every frame only if you are not using the [GameLoop](api/gameLoop). Otherwise it is called automatically.
  *
  * ```js
  * import { initGamepad, updateGamepad, gamepadPressed } from 'kontra';
@@ -5263,7 +5400,7 @@ function isGesture(value) {
  * @function initInput
  *
  * @param {Object} [options] - Input options.
- * @param {Object} [options.pointer] - [Pointer options](/api/pointer#initPointer).
+ * @param {Object} [options.pointer] - [Pointer options](api/pointer#initPointer).
  *
  * @returns {{pointer: {x: Number, y: Number, radius: Number, canvas: HTMLCanvasElement, touches: Object}}} Object with `pointer` property which is the pointer object for the canvas.
  */
@@ -5277,7 +5414,7 @@ function initInput(options = {}) {
 }
 
 /**
- * Register a function to be called on an input event. Takes a single input or an array of inputs. See the [keyboard](api/keyboard#available-keys), [gamepad](api/gamepad#available-buttons), [gesture](api/gesture#available-gestures), and [pointer](/api/pointer#onPointer) docs for the lists of available input names.
+ * Register a function to be called on an input event. Takes a single input or an array of inputs. See the [keyboard](api/keyboard#available-keys), [gamepad](api/gamepad#available-buttons), [gesture](api/gesture#available-gestures), and [pointer](api/pointer#onPointer) docs for the lists of available input names.
  *
  * ```js
  * import { initInput, onInput } from 'kontra';
@@ -5296,8 +5433,8 @@ function initInput(options = {}) {
  * @param {String|String[]} inputs - Inputs or inputs to register callback for.
  * @param {Function} callback -  The function to be called on the input event.
  * @param {Object} [options] - Input options.
- * @param {Object} [options.gamepad] - [onGamepad options](/api/gamepad#onGamepad).
- * @param {Object} [options.key] - [onKey options](/api/keyboard#onKey).
+ * @param {Object} [options.gamepad] - [onGamepad options](api/gamepad#onGamepad).
+ * @param {Object} [options.key] - [onKey options](api/keyboard#onKey).
  */
 function onInput(inputs, callback, { gamepad, key } = {}) {
   [].concat(inputs).map(input => {
@@ -5331,8 +5468,8 @@ function onInput(inputs, callback, { gamepad, key } = {}) {
  *
  * @param {String|String[]} inputs - Inputs or inputs to unregister callback for.
  * @param {Object} [options] - Input options.
- * @param {Object} [options.gamepad] - [offGamepad options](/api/gamepad#offGamepad).
- * @param {Object} [options.key] - [offKey options](/api/keyboard#offKey).
+ * @param {Object} [options.gamepad] - [offGamepad options](api/gamepad#offGamepad).
+ * @param {Object} [options.key] - [offKey options](api/keyboard#offKey).
  */
 function offInput(inputs, { gamepad, key } = {}) {
   [].concat(inputs).map(input => {
@@ -5981,6 +6118,103 @@ function factory$3() {
 }
 
 /**
+ * A pseudo-random number generator (PRNG).
+ *
+ * @sectionName Random
+ */
+let seed;
+
+/**
+ * Return a random number between 0 (inclusive) and 1 (exclusive).
+ * @see https://github.com/bryc/code/blob/master/jshash/PRNGs.md#splitmix32
+ * @function rand
+ *
+ * @returns {Number} Random number between 0 and <1.
+ */
+function rand() {
+  seed ??= Date.now();
+  seed |= 0;
+  seed = (seed + 0x9e3779b9) | 0;
+  let t = seed ^ (seed >>> 16);
+  t = Math.imul(t, 0x21f0aaad);
+  t = t ^ (t >>> 15);
+  t = Math.imul(t, 0x735a2d97);
+  return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
+}
+
+/**
+ * Return a random integer between a minimum (inclusive) and maximum (inclusive) integer.
+ *
+ * ```js
+ * import { randInt, rand } from 'kontra';
+ *
+ * // random number between 10 and 20
+ * console.log( randInt(10, 20) );
+ *
+ * // bias the result of the random integer to be closer
+ * // to the max
+ * console.log( randInt(10, 20, () => rand() ** 2) );
+ * ```
+ * @see https://stackoverflow.com/a/1527820/2124254
+ * @function randInt
+ *
+ * @param {Number} min - Min integer.
+ * @param {Number} max - Max integer.
+ * @param {() => Number} [randFn] - Function that generates a random number. Useful for [biasing the random number](https://gamedev.stackexchange.com/a/116875).
+ *
+ * @returns {Number} Random integer between min and max values.
+ */
+function randInt(min, max, randFn = rand) {
+  return ((randFn() * (max - min + 1)) | 0) + min;
+}
+
+/**
+ * Get the current seed value of the random number generator.
+ * @function getSeed
+ *
+ * @returns {Number} The seed value.
+ */
+function getSeed() {
+  return seed;
+}
+
+/**
+ * Initialize the random number generator with a given seed.
+ *
+ * ```js
+ * import { seedRand, rand } from 'kontra';
+ *
+ * seedRand('kontra');
+ * console.log(rand()); // => always 0.26133555523119867
+ * ```
+ * @see https://stackoverflow.com/a/47593316/2124254
+ * @see https://github.com/bryc/code/blob/master/jshash/PRNGs.md
+ *
+ * @function seedRand
+ *
+ * @param {Number|String} [value=Date.now()] - Number or string to seed the random number generator.
+ */
+function seedRand(value = Date.now()) {
+  seed = value;
+
+  if (typeof value == 'string') {
+    // create a suitable hash of the seed string using MurmurHash3
+    // @see https://github.com/bryc/code/blob/master/jshash/PRNGs.md#addendum-a-seed-generating-functions
+    for (
+      var i = 0, h = 1779033703 ^ value.length;
+      i < value.length;
+      i++
+    ) {
+      (h = Math.imul(h ^ value.charCodeAt(i), 3432918353)),
+        (h = (h << 13) | (h >>> 19));
+    }
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    seed = (h ^= h >>> 16) >>> 0;
+  }
+}
+
+/**
  * Recursively get all objects HTML nodes.
  * @param {Object} object - Root object.
  *
@@ -6082,7 +6316,7 @@ class Scene {
     cullFunction = collides,
 
     /**
-     * Function used to sort the objects of the scene before rendering. Can be used in conjunction with [helpers.depthSort](/api/helpers#depthSort). Only direct objects of the scene are sorted.
+     * Function used to sort the objects of the scene before rendering. Can be used in conjunction with [helpers.depthSort](api/helpers#depthSort). Only direct objects of the scene are sorted.
      *
      * ```js
      * import { Scene, Sprite, depthSort } from 'kontra';
@@ -6177,11 +6411,11 @@ class Scene {
         x,
         y,
         width,
-        height,
+        height
       });
 
-      if (!this._dn.isConnected) {
-        addToDom(this._dn, canvas);
+      if (!section.isConnected) {
+        addToDom(section, canvas);
       }
     };
 
@@ -6202,6 +6436,16 @@ class Scene {
   }
 
   /**
+   * The HTML section element associated with the scene (used for accessibility). Typically you won't need to interact with the `node` directly, but it can be useful to move its position in the DOM to better support accessible component design.
+   * @memberof Scene
+   * @property {HTMLElement} node
+   */
+  get node() {
+    return this._dn;
+  }
+  // do not allow setting the node value by not having a setter
+
+  /**
    * Add an object to the scene.
    * @memberof Scene
    * @function add
@@ -6216,9 +6460,7 @@ class Scene {
       // move all objects to be in the scenes DOM node so we can
       // hide and show the DOM node and thus hide and show all the
       // objects
-      getAllNodes(object).map(node => {
-        this._dn.appendChild(node);
-      });
+      this._dn.append(...getAllNodes(object));
     });
   }
 
@@ -6235,7 +6477,7 @@ class Scene {
       object.parent = null;
 
       getAllNodes(object).map(node => {
-        addToDom(node, this.context);
+        addToDom(node, this.context.canvas);
       });
     });
   }
@@ -6256,9 +6498,9 @@ class Scene {
     // find first focusable object
     let focusableObject = this._o.find(object => object.focus);
     if (focusableObject) {
-      focusableObject.focus();
+      focusableObject.focus(focusParams);
     } else {
-      this._dn.focus();
+      this._dn.focus(focusParams);
     }
 
     this.onShow();
@@ -6345,7 +6587,7 @@ class Scene {
   }
 
   /**
-   * Render all objects of the scene by calling the objects `render()` function. If [cullObjects](/api/scene#cullObjects) is set to true then only those objects which are inside the camera bounds will be rendered.
+   * Render all objects of the scene by calling the objects `render()` function. If [cullObjects](api/scene#cullObjects) is set to true then only those objects which are inside the camera bounds will be rendered.
    * @memberof Scene
    * @function render
    */
@@ -6495,7 +6737,8 @@ function parseFrames(consecutiveFrames) {
  * @param {HTMLImageElement|HTMLCanvasElement} properties.image - The sprite sheet image.
  * @param {Number} properties.frameWidth - The width of a single frame.
  * @param {Number} properties.frameHeight - The height of a single frame.
- * @param {Number} [properties.frameMargin=0] - The amount of whitespace between each frame.
+ * @param {Number} [properties.spacing=0] - The amount of whitespace between each frame.
+ * @param {Number} [properties.margin=0] - The amount of whitespace border around the entire image.
  * @param {Object} [properties.animations] - Animations to create from the sprite sheet using [Animation](api/animation). Passed directly into the sprite sheets [createAnimations()](api/spriteSheet#createAnimations) function.
  */
 class SpriteSheet {
@@ -6503,7 +6746,8 @@ class SpriteSheet {
     image,
     frameWidth,
     frameHeight,
-    frameMargin,
+    spacing = 0,
+    margin = 0,
     animations
   } = {}) {
     // @ifdef DEBUG
@@ -6527,20 +6771,21 @@ class SpriteSheet {
     this.image = image;
 
     /**
-     * An object that defines properties of a single frame in the sprite sheet. It has properties of `width`, `height`, and `margin`.
+     * An object that defines properties of a single frame in the sprite sheet. It has properties of `width`, `height`, `spacing`, and `margin`.
      *
-     * `width` and `height` are the width of a single frame, while `margin` defines the amount of whitespace between each frame.
+     * `width` and `height` are the width of a single frame, while `spacing` defines the amount of whitespace between each frame, and `margin` defines the amount of whitespace border around the image.
      * @memberof SpriteSheet
-     * @property {{width: Number, height: Number, margin: Number}} frame
+     * @property {{width: Number, height: Number, spacing: Number, margin: Number}} frame
      */
     this.frame = {
       width: frameWidth,
       height: frameHeight,
-      margin: frameMargin
+      spacing,
+      margin
     };
 
     // f = framesPerRow
-    this._f = (image.width / frameWidth) | 0;
+    this._f = ((image.width - margin) / frameWidth) | 0;
 
     this.createAnimations(animations);
   }
@@ -6644,6 +6889,18 @@ function factory$1() {
   return new SpriteSheet(...arguments);
 }
 
+// @ifdef TILEENGINE_TILED
+
+// Tiled uses the bits 32 and 31 to denote that a tile is
+// flipped horizontally or vertically (respectively)
+// @see https://doc.mapeditor.org/en/stable/reference/global-tile-ids/
+let FLIPPED_HORIZONTALLY = 0x80000000;
+let FLIPPED_VERTICALLY = 0x40000000;
+// tile can be rotated also and use the bit 30 in conjunction
+// with bit 32 or/and 31 to denote that
+let FLIPPED_DIAGONALLY = 0x20000000;
+// @endif
+
 /**
  * Get the row from the y coordinate.
  * @private
@@ -6691,7 +6948,8 @@ function getCol(x, tilewidth) {
  * @param {Object[]} properties.tilesets - Array of tileset objects.
  * @param {Number} properties.<tilesetN>.firstgid - First tile index of the tileset. The first tileset will have a firstgid of 1 as 0 represents an empty tile.
  * @param {String|HTMLImageElement} properties.<tilesetN>.image - Relative path to the HTMLImageElement or an HTMLImageElement. If passing a relative path, the image file must have been [loaded](api/assets#load) first.
- * @param {Number} [properties.<tilesetN>.margin=0] - The amount of whitespace between each tile (in pixels).
+ * @param {Number} [properties.<tilesetN>.spacing=0] - The amount of whitespace between each tile (in pixels).
+ * @param {Number} [properties.<tilesetN>.margin=0] - The amount of whitespace border around the entire tileset image (in pixels).
  * @param {Number} [properties.<tilesetN>.tilewidth] - Width of the tileset (in pixels). Defaults to properties.tilewidth.
  * @param {Number} [properties.<tilesetN>.tileheight] - Height of the tileset (in pixels). Defaults to properties.tileheight.
  * @param {String} [properties.<tilesetN>.source] - Relative path to the source JSON file. The source JSON file must have been [loaded](api/assets#load) first.
@@ -6938,6 +7196,61 @@ class TileEngine {
     });
   }
   // @endif
+
+  /**
+   * Get the tile position of a pointer event.
+   *
+   * ```js
+   * import { initPointer, track, TileEngine } from 'kontra';
+   *
+   * initPointer();
+   * let tileEngine = TileEngine({
+   *   tilewidth: 32,
+   *   tileheight: 32,
+   *   width: 4,
+   *   height: 4,
+   *   tilesets: [{
+   *     // ...
+   *   }],
+   *   layers: [{
+   *     name: 'collision',
+   *     data: [ 0,0,0,0,
+   *             0,1,4,0,
+   *             0,2,5,0,
+   *             0,0,0,0 ]
+   *   }],
+   *   onDown(evt) {
+   *     // row and col is the tile position that was clicked
+   *     let { row, col } = this.getPosition(evt);
+   *   }
+   * });
+   *
+   * track(tileEngine);
+   * ```
+   * @memberof TileEngine
+   * @function getPosition
+   *
+   * @param {{x: Number, y: Number}} event - The pointer event with `x` and `y` properties.
+   *
+   * @returns {{x: Number, y: Number, row: Number, col: Number}} The `x`, `y`, `row`, and `col` of the pointer event within the tile engine.
+   */
+  getPosition(event) {
+    let rect = getCanvas().getBoundingClientRect();
+    let x = event.x - rect.x;
+    let y = event.y - rect.y;
+
+    // @ifdef TILEENGINE_CAMERA
+    x += this.sx;
+    y += this.sy;
+    // @endif
+
+    return {
+      x,
+      y,
+      row: getRow(y, this.tileheight),
+      col: getCol(x, this.tilewidth)
+    };
+  }
 
   // @ifdef TILEENGINE_DYNAMIC
   /**
@@ -7218,14 +7531,14 @@ class TileEngine {
       canvas.height = mapheight;
 
       layerCanvases[name] = canvas;
-      this._r(layer, context);
+      this._rl(layer, context);
     }
 
     // @ifdef TILEENGINE_DYNAMIC
     if (layer._d) {
       layer._d = false;
       context.clearRect(0, 0, canvas.width, canvas.height);
-      this._r(layer, context);
+      this._rl(layer, context);
     }
     // @endif
 
@@ -7247,7 +7560,7 @@ class TileEngine {
       layerMap[name] = layer;
 
       if (data && visible != false) {
-        this._r(layer, _ctx);
+        this._rl(layer, _ctx);
       }
     });
   }
@@ -7258,7 +7571,7 @@ class TileEngine {
    * @param {Object} layer - Layer data.
    * @param {Context} context - Context to draw layer to.
    */
-  _r(layer, context) {
+  _rl(layer, context) {
     let { opacity, data = [] } = layer;
     let { tilesets, width, tilewidth, tileheight } = this;
 
@@ -7268,6 +7581,44 @@ class TileEngine {
     data.map((tile, index) => {
       // skip empty tiles (0)
       if (!tile) return;
+
+      let flipped = 0;
+      let rotated = 0;
+
+      // @ifdef TILEENGINE_TILED
+      // read flags
+      let flippedHorizontal = tile & FLIPPED_HORIZONTALLY;
+      let flippedVertical = tile & FLIPPED_VERTICALLY;
+      let turnedClockwise = 0;
+      let turnedAntiClockwise = 0;
+      let flippedAndturnedClockwise = 0;
+      let flippedAndturnedAntiClockwise = 0;
+      let flippedDiagonally = 0;
+      flipped = flippedHorizontal || flippedVertical;
+
+      tile &= ~(FLIPPED_HORIZONTALLY | FLIPPED_VERTICALLY);
+
+      flippedDiagonally = tile & FLIPPED_DIAGONALLY;
+      // Identify tile rotation
+      if (flippedDiagonally) {
+        if (flippedHorizontal && flippedVertical) {
+          flippedAndturnedClockwise = 1;
+        } else if (flippedHorizontal) {
+          turnedClockwise = 1;
+        } else if (flippedVertical) {
+          turnedAntiClockwise = 1;
+        } else {
+          flippedAndturnedAntiClockwise = 1;
+        }
+        rotated =
+          turnedClockwise ||
+          turnedAntiClockwise ||
+          flippedAndturnedClockwise ||
+          flippedAndturnedAntiClockwise;
+
+        tile &= ~FLIPPED_DIAGONALLY;
+      }
+      // @endif
 
       // find the tileset the tile belongs to
       // assume tilesets are ordered by firstgid
@@ -7280,14 +7631,58 @@ class TileEngine {
         }
       }
 
-      let { image, margin = 0, firstgid, columns } = tileset;
+      let {
+        image,
+        spacing = 0,
+        margin = 0,
+        firstgid,
+        columns
+      } = tileset;
+
       let offset = tile - firstgid;
-      let cols = columns ?? (image.width / (tilewidth + margin)) | 0;
+      let cols = columns ?? (image.width / (tilewidth + spacing)) | 0;
 
       let x = (index % width) * tilewidth;
       let y = ((index / width) | 0) * tileheight;
-      let sx = (offset % cols) * (tilewidth + margin);
-      let sy = ((offset / cols) | 0) * (tileheight + margin);
+      let sx = margin + (offset % cols) * (tilewidth + spacing);
+      let sy =
+        margin + ((offset / cols) | 0) * (tileheight + spacing);
+
+      // @ifdef TILEENGINE_TILED
+      if (rotated) {
+        context.save();
+        // Translate to the center of the tile
+        context.translate(x + tilewidth / 2, y + tileheight / 2);
+        if (turnedAntiClockwise || flippedAndturnedAntiClockwise) {
+          // Rotate 90° anticlockwise
+          context.rotate(-Math.PI / 2); // 90° in radians
+        } else if (turnedClockwise || flippedAndturnedClockwise) {
+          // Rotate 90° clockwise
+          context.rotate(Math.PI / 2); // 90° in radians
+        }
+        if (
+          flippedAndturnedClockwise ||
+          flippedAndturnedAntiClockwise
+        ) {
+          // Then flip horizontally
+          context.scale(-1, 1);
+        }
+        x = -tilewidth / 2;
+        y = -tileheight / 2;
+      } else if (flipped) {
+        context.save();
+        context.translate(
+          x + (flippedHorizontal ? tilewidth : 0),
+          y + (flippedVertical ? tileheight : 0)
+        );
+        context.scale(
+          flippedHorizontal ? -1 : 1,
+          flippedVertical ? -1 : 1
+        );
+        x = flipped ? 0 : x;
+        y = flipped ? 0 : y;
+      }
+      // @endif
 
       context.drawImage(
         image,
@@ -7300,6 +7695,12 @@ class TileEngine {
         tilewidth,
         tileheight
       );
+
+      // @ifdef TILEENGINE_TILED
+      if (flipped || rotated) {
+        context.restore();
+      }
+      // @endif
     });
 
     context.restore();
@@ -7361,8 +7762,6 @@ let kontra = {
   angleToTarget,
   rotatePoint,
   movePoint,
-  randInt,
-  seedRand,
   lerp,
   inverseLerp,
   clamp,
@@ -7401,6 +7800,11 @@ let kontra = {
   Quadtree: factory$3,
   QuadtreeClass: Quadtree,
 
+  rand,
+  randInt,
+  getSeed,
+  seedRand,
+
   Scene: factory$2,
   SceneClass: Scene,
 
@@ -7420,4 +7824,4 @@ let kontra = {
   VectorClass: Vector
 };
 
-export { factory$b as Animation, Animation as AnimationClass, factory$6 as Button, Button as ButtonClass, GameLoop, factory$9 as GameObject, GameObject as GameObjectClass, factory$5 as Grid, Grid as GridClass, factory$4 as Pool, Pool as PoolClass, factory$3 as Quadtree, Quadtree as QuadtreeClass, factory$2 as Scene, Scene as SceneClass, factory$8 as Sprite, Sprite as SpriteClass, factory$1 as SpriteSheet, SpriteSheet as SpriteSheetClass, factory$7 as Text, Text as TextClass, factory as TileEngine, TileEngine as TileEngineClass, factory$a as Vector, Vector as VectorClass, angleToTarget, audioAssets, clamp, collides, dataAssets, kontra as default, degToRad, depthSort, emit, extendObject, gamepadAxis, gamepadMap, gamepadPressed, gestureMap, getCanvas, getContext, getPointer, getStoreItem, getWorldRect, imageAssets, init$1 as init, initGamepad, initGesture, initInput, initKeys, initPointer, inverseLerp, keyMap, keyPressed, lerp, load, loadAudio, loadData, loadImage, movePoint, off, offGamepad, offGesture, offInput, offKey, offPointer, on, onGamepad, onGesture, onInput, onKey, onPointer, pointerOver, pointerPressed, radToDeg, randInt, registerPlugin, rotatePoint, seedRand, setAudioPath, setDataPath, setImagePath, setStoreItem, track, unregisterPlugin, untrack, updateGamepad };
+export { factory$b as Animation, Animation as AnimationClass, factory$6 as Button, Button as ButtonClass, GameLoop, factory$9 as GameObject, GameObject as GameObjectClass, factory$5 as Grid, Grid as GridClass, factory$4 as Pool, Pool as PoolClass, factory$3 as Quadtree, Quadtree as QuadtreeClass, factory$2 as Scene, Scene as SceneClass, factory$8 as Sprite, Sprite as SpriteClass, factory$1 as SpriteSheet, SpriteSheet as SpriteSheetClass, factory$7 as Text, Text as TextClass, factory as TileEngine, TileEngine as TileEngineClass, factory$a as Vector, Vector as VectorClass, angleToTarget, audioAssets, clamp, collides, dataAssets, kontra as default, degToRad, depthSort, emit, extendObject, gamepadAxis, gamepadMap, gamepadPressed, gestureMap, getCanvas, getContext, getPointer, getSeed, getStoreItem, getWorldRect, imageAssets, init$1 as init, initGamepad, initGesture, initInput, initKeys, initPointer, inverseLerp, keyMap, keyPressed, lerp, load, loadAudio, loadData, loadImage, movePoint, off, offGamepad, offGesture, offInput, offKey, offPointer, on, onGamepad, onGesture, onInput, onKey, onPointer, pointerOver, pointerPressed, radToDeg, rand, randInt, registerPlugin, rotatePoint, seedRand, setAudioPath, setDataPath, setImagePath, setStoreItem, track, unregisterPlugin, untrack, updateGamepad };
