@@ -1,3 +1,4 @@
+import { VIEWPORT } from './constants.js';
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 import { getStorageSafely } from './storage.js';
@@ -24,13 +25,17 @@ export function createGame({ inventory, hudSystem } = {}) {
   function createCutsceneLevel(config) {
     const meta = config?.meta ?? { name: 'Unknown Sector' };
     const dimensions = config?.dimensions ?? meta?.dimensions ?? {};
+    const fallbackDimensions = {
+      width: VIEWPORT.width,
+      height: VIEWPORT.height,
+    };
     return {
       config,
       meta,
       getObjectiveTotal: () => 0,
       getDimensions: () => ({
-        width: Number.isFinite(dimensions.width) ? dimensions.width : 0,
-        height: Number.isFinite(dimensions.height) ? dimensions.height : 0,
+        width: Number.isFinite(dimensions.width) ? dimensions.width : fallbackDimensions.width,
+        height: Number.isFinite(dimensions.height) ? dimensions.height : fallbackDimensions.height,
       }),
       getActorPlacements: () => ({}),
       getPickupTemplates: () => [],
