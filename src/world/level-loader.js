@@ -4,6 +4,7 @@
  */
 
 import { TILE } from '../core/constants.js';
+import { placeNpc } from '../data/npcs/index.js';
 import { DEFAULT_TILED_IMPORT_OPTIONS } from '../data/tiled-presets.js';
 import {
   TILE_DEFINITIONS,
@@ -293,6 +294,8 @@ function parseSpawnLayer(layer) {
 
     if (obj.type === 'player' || props.player) {
       actors.playerStart = {
+        tx: common.tx,
+        ty: common.ty,
         x: common.tx * TILE + TILE / 2,
         y: common.ty * TILE + TILE / 2,
       };
@@ -300,7 +303,19 @@ function parseSpawnLayer(layer) {
     }
 
     if (obj.type === 'npc' || props.npc) {
-      actors.npcs.push({ ...common, dialogue: props.dialogue, sprite: props.sprite });
+      const presetId = props.presetId ?? props.preset ?? props.npcPreset;
+      if (presetId) {
+        actors.npcs.push(
+          placeNpc(presetId, common.tx, common.ty, {
+            id: common.id,
+            name: common.name,
+            sprite: props.sprite,
+            dialogue: props.dialogue,
+          }),
+        );
+      } else {
+        actors.npcs.push({ ...common, dialogue: props.dialogue, sprite: props.sprite });
+      }
       return;
     }
 
