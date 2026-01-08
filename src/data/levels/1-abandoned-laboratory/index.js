@@ -74,10 +74,10 @@ const baseLayoutTokens = [
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F4', 'F4', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1E2', 'DOOR_OPEN', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1D1', 'F1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1E2', 'OD', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1D1', 'F1', 'W1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'DOOR_OPEN', 'F1', 'F1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'F1', 'W1',
+  'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'OD', 'F1', 'F1', 'W1', 'DR', 'W1', 'W1', 'W1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1D1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1', 'W1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'W1',
@@ -86,7 +86,7 @@ const baseLayoutTokens = [
 const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
 const baseUnlockMask = [
 
-  { tx: 14, ty: 10, tile: resolveTileToken('DOOR_OPEN') },
+  { tx: 14, ty: 10, tile: resolveTileToken('OD') },
 
 ];
 
@@ -123,7 +123,7 @@ export const abandonedLaboratoryLevel = {
       tx: 14,
       ty: 10,
       locked: true,
-      openTile: resolveTileToken('DOOR_OPEN'),
+      openTile: resolveTileToken('OD'),
       nextLevelId: 'level-2',
       sealedTiles: [
         [14, 9],

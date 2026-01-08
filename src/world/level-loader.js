@@ -38,17 +38,17 @@ function normalizeVariantToken(token) {
   const numeric = Number.parseInt(stringValue, 10);
   if (!Number.isNaN(numeric)) return numeric;
 
-  const floorMatch = stringValue.match(/^f(?:loor)?\.?(\d+)$/i);
+  const floorMatch = stringValue.match(/^f(\d+)$/i);
   if (floorMatch) {
     return getFloorVariantTileId(Number.parseInt(floorMatch[1], 10));
   }
 
-  const wallMatch = stringValue.match(/^w(?:all)?\.?(\d+)$/i);
+  const wallMatch = stringValue.match(/^w(\d+)$/i);
   if (wallMatch) {
     return getWallVariantTileId(Number.parseInt(wallMatch[1], 10));
   }
 
-  const destroyMatch = stringValue.match(/^d(?:estroy)?\.?(\d+)$/i);
+  const destroyMatch = stringValue.match(/^d(\d+)$/i);
   if (destroyMatch) {
     return getDestroyOverlayTileId(Number.parseInt(destroyMatch[1], 10));
   }
