@@ -1263,9 +1263,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           player.flashVisible = true;
         }
 
-        const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt, {
-          canMove: level.canMove.bind(level),
-        });
+        const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt);
 
         if (guardCollision && playerVitals.invulnerableTime === 0) {
           handlePlayerHit();
