@@ -6,7 +6,7 @@ This project lets you write maps by hand (JS modules) or import them from Tiled 
 
 - **Floors:** `F1`, `F2`, … (default is `F1`).
 - **Walls:** `W1`, `W2`, … (default is `W1`).
-- **Doors:** `DOOR`/`DOOR_CLOSED`, `DOOR_OPEN`.
+- **Doors:** `DR` (closed), `OD` (open).
 - **Decor:** `CONSOLE`/`DECOR`.
 - **Decor overlays:** `E1`, `E2`, … (GIFs loaded from `assets/decor/<n>.gif`). Use `W1E5` or `F2E3` to place a decor element on a specific wall or floor tile without changing collision.
 - **Broken floor:** `FLOOR_BROKEN`.
@@ -33,7 +33,7 @@ const layoutTokens = [
 const { collision, decor } = buildTileLayersFromTokens(layoutTokens);
 ```
 
-If you need a single numeric tile ID (e.g., for unlock masks or gate replacements), call `resolveTileToken('DOOR_OPEN')`.
+If you need a single numeric tile ID (e.g., for unlock masks or gate replacements), call `resolveTileToken('OD')`.
 
 ## Using Tiled
 

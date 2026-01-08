@@ -23,7 +23,7 @@ function addAnimationsFromBase(animations, spriteSheet, baseName, { onlyMissing 
     }
   });
 
-  const defaultWalk = clone(hasAnimations?.[`${baseName}Walk`]) || clone(hasAnimations?.[baseName]);
+  const defaultWalk = clone(hasAnimations?.[`${baseName}Walk`]);
   const defaultIdle = clone(hasAnimations?.[`${baseName}Idle`]);
 
   if (defaultWalk && (!onlyMissing || !animations['walk-default'])) {

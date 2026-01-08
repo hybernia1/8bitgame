@@ -89,13 +89,11 @@ const CHARACTER_SPRITES = ['player', 'npc', 'hana', 'jara', 'caretaker', 'cat', 
 const SPRITE_ANIMATIONS = Object.fromEntries(
   CHARACTER_SPRITES.map((name) => [
     name,
-    (frameCount) => getDirectionalAnimationDefs(name, frameCount, { includeLegacyDefault: true }),
+    (frameCount) => getDirectionalAnimationDefs(name, frameCount),
   ]),
 );
 
-function getDirectionalAnimationDefs(baseName, frameCount, { includeLegacyDefault = false } = {}) {
-  const addLegacy = (frame) => includeLegacyDefault && { name: baseName, frames: [frame] };
-
+function getDirectionalAnimationDefs(baseName, frameCount) {
   // Prefer 3x4 directional sheets (down, left, right, up) with three frames each.
   if (frameCount >= 12) {
     return [
@@ -107,21 +105,17 @@ function getDirectionalAnimationDefs(baseName, frameCount, { includeLegacyDefaul
       { name: `${baseName}IdleRight`, frames: [7] },
       { name: `${baseName}WalkUp`, frames: '9..11', frameRate: 8 },
       { name: `${baseName}IdleUp`, frames: [10] },
-      // Keep a legacy single-frame animation for compatibility with existing lookups
-      addLegacy(1),
-    ].filter(Boolean);
+    ];
   }
 
   if (frameCount >= 5) {
     return [
       { name: `${baseName}Walk`, frames: '0..3', frameRate: 8 },
       { name: `${baseName}Idle`, frames: [4] },
-      // Keep a legacy single-frame animation for compatibility with existing lookups
-      addLegacy(0),
-    ].filter(Boolean);
+    ];
   }
 
-  return [{ name: `${baseName}Idle`, frames: [0] }, addLegacy(0)].filter(Boolean);
+  return [{ name: `${baseName}Idle`, frames: [0] }];
 }
 
 function makeCanvas(frames) {

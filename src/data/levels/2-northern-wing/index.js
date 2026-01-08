@@ -6,7 +6,7 @@ import { northernWingNpcPackage } from './npcs.js';
 const BASE_WIDTH = 16;
 
 const baseLayoutTokens = [
-  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'DOOR', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
+  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'DR', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
   'W1', 'F1', 'F2', 'F2', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1D1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
@@ -15,7 +15,7 @@ const baseLayoutTokens = [
   'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1',
   'W1', 'F1', 'F1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'F1', 'W1', 'W1', 'W1', 'W1D1', 'W1',
-  'W1', 'F1', 'F2', 'W1D1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'DOOR', 'F1', 'F1', 'W1D1', 'W1',
+  'W1', 'F1', 'F2', 'W1D1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'DR', 'F1', 'F1', 'W1D1', 'W1',
   'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'F1', 'W1', 'W1', 'W1', 'F1', 'W1',
   'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
@@ -30,8 +30,8 @@ layoutWithVcrRoom.collision[toIndex(13, 10)] = resolveTileToken('F1');
 layoutWithVcrRoom.decor[toIndex(12, 10)] = resolveTileToken('F1');
 layoutWithVcrRoom.decor[toIndex(13, 10)] = resolveTileToken('F1');
 const BASE_HEIGHT = baseLayout.collision.length / BASE_WIDTH;
-const DOOR_OPEN_TILE = resolveTileToken('DOOR_OPEN');
-const DOOR_CLOSED_TILE = resolveTileToken('DOOR');
+const DOOR_OPEN_TILE = resolveTileToken('OD');
+const DOOR_CLOSED_TILE = resolveTileToken('DR');
 
 /** @type {import('../../types.js').LevelConfig} */
 export const northernWingLevel = {
