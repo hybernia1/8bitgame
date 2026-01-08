@@ -10,6 +10,10 @@ const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
 const DEFAULT_LETHAL_WANDER_SPEED = 30 * TILE_SCALE;
 const NPC_COLLISION_PADDING = 2 * TILE_SCALE;
 const STEER_DISTANCE_STEPS = [1, 0.65, 0.35];
+const PATHFIND_PADDING_TILES = 4;
+const PATHFIND_MAX_RANGE_TILES = 20;
+const PATHFIND_MAX_NODES = 500;
+const PATHFIND_REFRESH_TIME = 0.35;
 const STEER_DIRECTIONS = [
   { x: 1, y: 0 },
   { x: -1, y: 0 },
@@ -29,6 +33,20 @@ function normalizeVector(x = 0, y = 0) {
   const length = Math.hypot(x, y);
   if (!length) return { x: 0, y: 0 };
   return { x: x / length, y: y / length };
+}
+
+function toTile(point = {}) {
+  return {
+    tx: Math.floor(point.x / TILE),
+    ty: Math.floor(point.y / TILE),
+  };
+}
+
+function toTileCenter({ tx, ty }, { tileSize = TILE, offset = tileSize / 2 } = {}) {
+  return {
+    x: tx * tileSize + offset,
+    y: ty * tileSize + offset,
+  };
 }
 
 function snapToGridPosition(point = {}, { tileSize = TILE, offset = tileSize / 2 } = {}) {
@@ -65,6 +83,96 @@ function buildWanderCandidates(
   }
 
   return candidates;
+}
+
+function buildPath(
+  startTile,
+  goalTile,
+  canMove,
+  collisionSize,
+  { maxNodes = PATHFIND_MAX_NODES, padding = PATHFIND_PADDING_TILES, maxRange = PATHFIND_MAX_RANGE_TILES } = {},
+) {
+  if (!canMove) return null;
+  const dx = goalTile.tx - startTile.tx;
+  const dy = goalTile.ty - startTile.ty;
+  const distance = Math.max(Math.abs(dx), Math.abs(dy));
+  if (distance > maxRange) return null;
+
+  const range = Math.min(maxRange, distance + padding);
+  const minTx = Math.min(startTile.tx, goalTile.tx) - range;
+  const maxTx = Math.max(startTile.tx, goalTile.tx) + range;
+  const minTy = Math.min(startTile.ty, goalTile.ty) - range;
+  const maxTy = Math.max(startTile.ty, goalTile.ty) + range;
+
+  const openSet = new Map();
+  const gScore = new Map();
+  const fScore = new Map();
+  const cameFrom = new Map();
+
+  const startKey = `${startTile.tx},${startTile.ty}`;
+  gScore.set(startKey, 0);
+  fScore.set(startKey, Math.abs(dx) + Math.abs(dy));
+  openSet.set(startKey, startTile);
+
+  const neighbors = [
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+  ];
+
+  let visited = 0;
+
+  while (openSet.size && visited < maxNodes) {
+    let currentKey = null;
+    let currentTile = null;
+    let bestScore = Infinity;
+    for (const [key, tile] of openSet.entries()) {
+      const score = fScore.get(key) ?? Infinity;
+      if (score < bestScore) {
+        bestScore = score;
+        currentKey = key;
+        currentTile = tile;
+      }
+    }
+
+    if (!currentTile) break;
+    if (currentTile.tx === goalTile.tx && currentTile.ty === goalTile.ty) {
+      const path = [];
+      let key = currentKey;
+      while (key && key !== startKey) {
+        const [tx, ty] = key.split(',').map((value) => Number.parseInt(value, 10));
+        path.unshift(toTileCenter({ tx, ty }));
+        key = cameFrom.get(key);
+      }
+      return path;
+    }
+
+    openSet.delete(currentKey);
+    visited += 1;
+
+    for (const offset of neighbors) {
+      const nextTile = { tx: currentTile.tx + offset.x, ty: currentTile.ty + offset.y };
+      if (nextTile.tx < minTx || nextTile.tx > maxTx || nextTile.ty < minTy || nextTile.ty > maxTy) continue;
+
+      const center = toTileCenter(nextTile);
+      if (!canMove(collisionSize, center.x, center.y)) continue;
+
+      const neighborKey = `${nextTile.tx},${nextTile.ty}`;
+      const tentativeG = (gScore.get(currentKey) ?? Infinity) + 1;
+      if (tentativeG >= (gScore.get(neighborKey) ?? Infinity)) continue;
+
+      cameFrom.set(neighborKey, currentKey);
+      gScore.set(neighborKey, tentativeG);
+      fScore.set(
+        neighborKey,
+        tentativeG + Math.abs(goalTile.tx - nextTile.tx) + Math.abs(goalTile.ty - nextTile.ty),
+      );
+      openSet.set(neighborKey, nextTile);
+    }
+  }
+
+  return null;
 }
 
 function updatePatrol(npc, dt, player, collision = {}) {
@@ -168,14 +276,49 @@ function updatePatrol(npc, dt, player, collision = {}) {
     return { dx: 0, dy: 0, moving: false };
   }
 
+  if (!npc.pursuesPlayer || !player) {
+    npc.path = null;
+    npc.pathIndex = 0;
+    npc.pathTarget = null;
+    npc.pathCooldown = 0;
+  }
+
   if (npc.pursuesPlayer && player) {
+    npc.pathCooldown = Math.max(0, (npc.pathCooldown ?? 0) - dt);
     const dx = player.x - npc.x;
     const dy = player.y - npc.y;
     const distance = Math.hypot(dx, dy);
     if (distance > 0) {
       const chaseSpeed = (npc.chaseSpeed ?? patrolSpeed) * dt;
       const move = Math.min(chaseSpeed, distance);
-      const normalized = normalizeVector(dx, dy);
+      let target = player;
+      if (canMove) {
+        const targetTile = toTile(player);
+        const currentTile = toTile(npc);
+        const shouldRefreshPath =
+          npc.pathCooldown <= 0 ||
+          !npc.path?.length ||
+          npc.pathTarget?.tx !== targetTile.tx ||
+          npc.pathTarget?.ty !== targetTile.ty;
+
+        if (shouldRefreshPath) {
+          npc.path = buildPath(currentTile, targetTile, canMove, collisionSize);
+          npc.pathIndex = 0;
+          npc.pathTarget = targetTile;
+          npc.pathCooldown = PATHFIND_REFRESH_TIME;
+        }
+
+        if (npc.path?.length) {
+          const pathPoint = npc.path[npc.pathIndex] ?? npc.path[0];
+          const pathDistance = Math.hypot(pathPoint.x - npc.x, pathPoint.y - npc.y);
+          if (pathDistance < MIN_TARGET_DISTANCE) {
+            npc.pathIndex = Math.min(npc.pathIndex + 1, npc.path.length - 1);
+          }
+          target = npc.path[npc.pathIndex] ?? target;
+        }
+      }
+
+      const normalized = normalizeVector(target.x - npc.x, target.y - npc.y);
       const movement = applySteeredMovement(normalized.x * move, normalized.y * move);
       updateFacingFromMovement(movement, npc.facing);
       if (!movement.moving) {
@@ -187,7 +330,16 @@ function updatePatrol(npc, dt, player, collision = {}) {
 
   if (npc.wanderRadius > 0) {
     npc.wanderCooldown = Math.max(0, npc.wanderCooldown - dt);
-    const anchor = npc.wanderAnchor ?? { x: npc.x, y: npc.y };
+    let anchor = npc.wanderAnchor ?? { x: npc.x, y: npc.y };
+    if (npc.dynamicWanderAnchor) {
+      const anchorDistance = Math.hypot(npc.x - anchor.x, npc.y - anchor.y);
+      if (anchorDistance > npc.wanderRadius) {
+        anchor = { x: npc.x, y: npc.y };
+        npc.wanderAnchor = anchor;
+        npc.wanderAreaKey = null;
+        npc.wanderCandidates = null;
+      }
+    }
     const wanderAreaKey = `${anchor.x.toFixed(2)}:${anchor.y.toFixed(2)}:${npc.wanderRadius.toFixed(2)}`;
     if (canMove && npc.wanderAreaKey !== wanderAreaKey) {
       npc.wanderAreaKey = wanderAreaKey;
@@ -195,6 +347,12 @@ function updatePatrol(npc, dt, player, collision = {}) {
     }
 
     if (!npc.wanderTarget && npc.wanderCooldown <= 0) {
+      if (npc.dynamicWanderAnchor) {
+        anchor = { x: npc.x, y: npc.y };
+        npc.wanderAnchor = anchor;
+        npc.wanderAreaKey = null;
+        npc.wanderCandidates = null;
+      }
       if (npc.wanderCandidates?.length) {
         npc.wanderTarget = npc.wanderCandidates[Math.floor(Math.random() * npc.wanderCandidates.length)];
       } else {
@@ -234,6 +392,10 @@ function updatePatrol(npc, dt, player, collision = {}) {
   }
 
   if (!npc.patrolPoints?.length) return { dx: 0, dy: 0, moving: false };
+
+  npc.path = null;
+  npc.pathIndex = 0;
+  npc.pathTarget = null;
 
   const target = npc.patrolPoints[npc.patrolIndex];
   const dx = target.x - npc.x;
@@ -314,6 +476,7 @@ export function createNpcs(spriteSheet, placements) {
       speed,
       wanderSpeed,
       gridSteering,
+      dynamicWanderAnchor: npc.dynamicWanderAnchor ?? true,
       ...toWorldPosition(npc),
       patrolPoints:
         npc.patrol?.map((point) => {
@@ -339,6 +502,10 @@ export function createNpcs(spriteSheet, placements) {
       animationState: currentAnimation ? 'idle' : null,
       currentAnimation,
       lastDirection: { x: 0, y: 1 },
+      path: null,
+      pathIndex: 0,
+      pathCooldown: 0,
+      pathTarget: null,
     };
   });
 }
