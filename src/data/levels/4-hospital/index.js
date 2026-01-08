@@ -31,6 +31,7 @@ export const hospitalLevel = {
   tileLayers: {
     collision: [...baseLayout.collision],
     decor: [...baseLayout.decor],
+    destroyedFloors: [...baseLayout.destroyedFloors],
   },
   lighting: {
     litZones: [{ x: 1, y: 1, w: BASE_WIDTH - 2, h: BASE_HEIGHT - 2 }],

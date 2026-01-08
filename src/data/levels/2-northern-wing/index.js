@@ -23,12 +23,15 @@ const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
 const layoutWithVcrRoom = {
   collision: [...baseLayout.collision],
   decor: [...baseLayout.decor],
+  destroyedFloors: [...baseLayout.destroyedFloors],
 };
 const toIndex = (x, y) => y * BASE_WIDTH + x;
 layoutWithVcrRoom.collision[toIndex(12, 10)] = resolveTileToken('F1');
 layoutWithVcrRoom.collision[toIndex(13, 10)] = resolveTileToken('F1');
 layoutWithVcrRoom.decor[toIndex(12, 10)] = resolveTileToken('F1');
 layoutWithVcrRoom.decor[toIndex(13, 10)] = resolveTileToken('F1');
+layoutWithVcrRoom.destroyedFloors[toIndex(12, 10)] = null;
+layoutWithVcrRoom.destroyedFloors[toIndex(13, 10)] = null;
 const BASE_HEIGHT = baseLayout.collision.length / BASE_WIDTH;
 const DOOR_OPEN_TILE = resolveTileToken('OD');
 const DOOR_CLOSED_TILE = resolveTileToken('DR');
@@ -47,6 +50,7 @@ export const northernWingLevel = {
   tileLayers: {
     collision: [...layoutWithVcrRoom.collision],
     decor: [...layoutWithVcrRoom.decor],
+    destroyedFloors: [...layoutWithVcrRoom.destroyedFloors],
   },
   interactables: {
     pressureSwitches: [

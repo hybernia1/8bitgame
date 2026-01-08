@@ -103,6 +103,7 @@ export const abandonedLaboratoryLevel = {
   tileLayers: {
     collision: [...baseLayout.collision],
     decor: [...baseLayout.decor],
+    destroyedFloors: [...baseLayout.destroyedFloors],
     unlockMask: baseUnlockMask,
   },
   lighting: {
