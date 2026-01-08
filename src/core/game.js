@@ -47,7 +47,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
     const saved = progress[currentLevelId];
     if (saved) {
-      currentLevel.restoreState(saved.levelState);
+      currentLevel.restoreSnapshot?.(saved.levelState);
       objectivesCollected = saved.objectivesCollected ?? 0;
       if (inventory && saved.inventory) {
         inventory.restore(saved.inventory);
@@ -64,7 +64,7 @@ export function createGame({ inventory, hudSystem } = {}) {
     const snapshot = {
       objectivesCollected,
       inventory: inventory?.serialize?.(),
-      levelState: currentLevel?.serializeState?.(),
+      levelState: extraSnapshot.levelState ?? currentLevel?.createSnapshot?.(),
       playerState: extraSnapshot.playerState ?? null,
       playerVitals: extraSnapshot.playerVitals ?? null,
       projectiles: extraSnapshot.projectiles ?? [],
