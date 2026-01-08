@@ -31,6 +31,15 @@ function normalizeVector(x = 0, y = 0) {
   return { x: x / length, y: y / length };
 }
 
+function snapToGridPosition(point = {}, { tileSize = TILE, offset = tileSize / 2 } = {}) {
+  const tx = Math.round((point.x - offset) / tileSize);
+  const ty = Math.round((point.y - offset) / tileSize);
+  return {
+    x: tx * tileSize + offset,
+    y: ty * tileSize + offset,
+  };
+}
+
 function updatePatrol(npc, dt, player, collision = {}) {
   const canMove = typeof collision?.canMove === 'function' ? collision.canMove : null;
   const size = npc.size ?? TILE;
@@ -155,10 +164,11 @@ function updatePatrol(npc, dt, player, collision = {}) {
     if (!npc.wanderTarget && npc.wanderCooldown <= 0) {
       const angle = Math.random() * Math.PI * 2;
       const distance = Math.random() * npc.wanderRadius;
-      npc.wanderTarget = {
+      const wanderTarget = {
         x: anchor.x + Math.cos(angle) * distance,
         y: anchor.y + Math.sin(angle) * distance,
       };
+      npc.wanderTarget = npc.gridSteering ? snapToGridPosition(wanderTarget) : wanderTarget;
     }
 
     if (npc.wanderTarget) {
@@ -256,6 +266,7 @@ export function createNpcs(spriteSheet, placements) {
           : npc.lethal
             ? DEFAULT_LETHAL_WANDER_SPEED
             : DEFAULT_WANDER_SPEED;
+    const gridSteering = npc.gridSteering ?? true;
 
     return {
       ...npc,
@@ -265,8 +276,13 @@ export function createNpcs(spriteSheet, placements) {
       size,
       speed,
       wanderSpeed,
+      gridSteering,
       ...toWorldPosition(npc),
-      patrolPoints: npc.patrol?.map(toWorldPosition) ?? [],
+      patrolPoints:
+        npc.patrol?.map((point) => {
+          const worldPoint = toWorldPosition(point);
+          return gridSteering ? snapToGridPosition(worldPoint) : worldPoint;
+        }) ?? [],
       patrolIndex: 0,
       wanderRadius: npc.wanderRadius ?? 0,
       wanderInterval: npc.wanderInterval ?? 1.2,
