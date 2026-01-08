@@ -18,7 +18,12 @@ import {
   loaderRegistry,
   registry,
 } from '../world/level-data.js';
-import { drawCameraBounds, drawGrid, getLevelDimensions as resolveLevelDimensions } from '../world/level-instance.js';
+import {
+  LevelInstance,
+  drawCameraBounds,
+  drawGrid,
+  getLevelDimensions as resolveLevelDimensions,
+} from '../world/level-instance.js';
 import { overlapsEntity } from '../utils/geometry.js';
 import { getItemHandlers } from '../data/items/index.js';
 import {
@@ -83,6 +88,21 @@ function toggleVisibility(element, visible) {
   element.classList.toggle('hidden', !visible);
 }
 
+function setGameUiVisible(shell, visible) {
+  shell?.classList.toggle('ui-hidden', !visible);
+}
+
+function renderMapOnly(ctx, canvas, level, camera, spriteSheet) {
+  if (!level || !spriteSheet) return;
+  const levelDimensions = resolveLevelDimensions(level);
+  drawGrid(ctx, canvas, levelDimensions, camera);
+  level.drawLevel(ctx, camera, spriteSheet);
+  level.drawPressureSwitches(ctx, camera);
+  level.drawLightSwitches(ctx, camera);
+  level.drawLighting(ctx, camera);
+  drawCameraBounds(ctx, levelDimensions, camera);
+}
+
 function formatSaveDate(timestamp) {
   if (!timestamp) return '';
   try {
@@ -101,6 +121,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   let questToggleButton = null;
   let handleQuestToggleClick = null;
   let questLogCollapsed = true;
+  let menuMapLevel = null;
+  let menuMapSpriteSheet = null;
+  const menuMapCamera = { x: 0, y: 0 };
 
   const {
     documentRoot,
@@ -138,6 +161,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     pauseRestartButton,
     pauseSaveButton,
     pauseMenuButton,
+    gameShell,
     alertLayer,
     setFullscreenAvailability,
     fullscreenSupported,
@@ -157,6 +181,19 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   function setSlotInputValue(value) {
     if (!slotInput || !value) return;
     slotInput.value = value;
+  }
+
+  async function ensureMenuMapLevel() {
+    if (menuMapLevel && menuMapSpriteSheet) return;
+    menuMapSpriteSheet = await spriteSheetPromise;
+    const config = await loadLevelConfig(INTRO_LEVEL_ID);
+    menuMapLevel = new LevelInstance(config);
+    const levelDimensions = resolveLevelDimensions(menuMapLevel);
+    const center = {
+      x: (levelDimensions.width * TILE) / 2,
+      y: (levelDimensions.height * TILE) / 2,
+    };
+    menuMapLevel.clampCamera(menuMapCamera, center, canvas);
   }
 
   function showMenuScreen(screenName) {
@@ -282,6 +319,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function showMenuPanel() {
     setFullscreenAvailability(isFullscreenSupported);
+    setGameUiVisible(gameShell, false);
     refreshSaveSlotList();
     hideContinuePanel();
     showMenuScreen('main');
@@ -291,6 +329,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showPausePanel() {
+    setGameUiVisible(gameShell, false);
     toggleVisibility(pausePanel, true);
   }
 
@@ -299,6 +338,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showLoadingPanel(message = 'Načítání...') {
+    setGameUiVisible(gameShell, false);
     toggleVisibility(menuPanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, true);
@@ -316,6 +356,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   }
 
   function showContinuePanel({ title, subtitle, detail } = {}) {
+    setGameUiVisible(gameShell, false);
     toggleVisibility(menuPanel, false);
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
@@ -570,6 +611,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function showCutscenePanel() {
     hideAllPanels();
+    setGameUiVisible(gameShell, false);
     toggleVisibility(cutscenePanel, true);
     setFullscreenAvailability(isFullscreenSupported);
     cutsceneContinueButton?.focus?.();
@@ -1007,10 +1049,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       inputSystem?.stop?.();
       hudSystem?.hideInteraction?.();
       if (isCutsceneMapMode()) {
+        setGameUiVisible(gameShell, false);
         await waitForCutsceneMapContinue(cutsceneConfig);
       } else {
         await waitForCutsceneContinue(cutsceneConfig);
       }
+      setGameUiVisible(gameShell, true);
       if (cutsceneConfig?.nextLevelId) {
         state.levelAdvanceQueued = true;
         setTimeout(() => {
@@ -1377,6 +1421,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         drawCameraBounds(ctx, getLevelDimensions(), camera);
       };
 
+      renderMapFrame = () => {
+        renderMapOnly(ctx, canvas, level, camera, spriteSheet);
+      };
+
       game.setSnapshotProvider(() => createSnapshot());
     }
 
@@ -1483,6 +1531,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     const noop = () => {};
     let updateFrame = noop;
     let renderFrame = noop;
+    let renderMapFrame = noop;
 
     function pauseSession() {
       resetActionQueue();
@@ -1529,6 +1578,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       }),
       updateFrame: (dt) => updateFrame(dt),
       renderFrame: () => renderFrame(),
+      renderMapOnly: () => renderMapFrame(),
       levelId: () => level?.meta?.id ?? levelId ?? DEFAULT_LEVEL_ID,
     };
   }
@@ -1538,9 +1588,14 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   registerScene('menu', {
     async onEnter() {
       setFullscreenAvailability(isFullscreenSupported);
+      await ensureMenuMapLevel();
       showMenuPanel();
     },
     onRender() {
+      if (menuMapLevel && menuMapSpriteSheet) {
+        renderMapOnly(ctx, canvas, menuMapLevel, menuMapCamera, menuMapSpriteSheet);
+        return;
+      }
       ctx.fillStyle = COLORS.gridBackground;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     },
@@ -1606,6 +1661,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   registerScene('inGame', {
     async onEnter() {
       hideAllPanels();
+      setGameUiVisible(gameShell, true);
       setFullscreenAvailability(true);
       const introAdvanced = Boolean(await currentInGameSession?.runIntro?.());
       if (!introAdvanced) {
@@ -1618,6 +1674,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     },
     async onResume() {
       hidePausePanel();
+      setGameUiVisible(gameShell, true);
       currentInGameSession?.resume?.();
     },
     async onExit() {
@@ -1640,7 +1697,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hidePausePanel();
     },
     onRender() {
-      currentInGameSession?.renderFrame?.();
+      currentInGameSession?.renderMapOnly?.();
     },
   });
 
