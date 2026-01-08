@@ -16,7 +16,6 @@
   --shell-chrome: 96px;
   --game-scale: 1.5;
   --page-padding: clamp(10px, 1.4vw, 20px);
-  --canvas-rendering: pixelated;
   --font-family: 'Gamefont', 'Courier New', monospace;
 }
 
@@ -83,7 +82,7 @@ canvas {
   background: repeating-linear-gradient(0deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     repeating-linear-gradient(90deg, var(--grid), var(--grid) 2px, transparent 2px, transparent 24px),
     #130c08;
-  image-rendering: var(--canvas-rendering, pixelated);
+  image-rendering: auto;
 }
 
 .game-shell.is-fullscreen canvas {
@@ -439,7 +438,7 @@ input[type='text']:focus {
   background-repeat: no-repeat;
   background-position: 50% 0;
   background-size: 300% 400%;
-  image-rendering: pixelated;
+  image-rendering: auto;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
@@ -706,7 +705,7 @@ input[type='text']:focus {
   background-repeat: no-repeat;
   background-position: 50% 0;
   background-size: 300% 400%;
-  image-rendering: pixelated;
+  image-rendering: auto;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
