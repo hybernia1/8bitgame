@@ -8,9 +8,25 @@ const MIN_TARGET_DISTANCE = 4 * TILE_SCALE;
 const DEFAULT_WANDER_SPEED = 36 * TILE_SCALE;
 const DEFAULT_PATROL_SPEED = 40 * TILE_SCALE;
 const DEFAULT_LETHAL_WANDER_SPEED = 30 * TILE_SCALE;
+const STEER_DIRECTIONS = [
+  { x: 1, y: 0 },
+  { x: -1, y: 0 },
+  { x: 0, y: 1 },
+  { x: 0, y: -1 },
+  { x: Math.SQRT1_2, y: Math.SQRT1_2 },
+  { x: -Math.SQRT1_2, y: Math.SQRT1_2 },
+  { x: Math.SQRT1_2, y: -Math.SQRT1_2 },
+  { x: -Math.SQRT1_2, y: -Math.SQRT1_2 },
+];
 
 function toWorldPosition(point = {}) {
   return resolveWorldPosition(point);
+}
+
+function normalizeVector(x = 0, y = 0) {
+  const length = Math.hypot(x, y);
+  if (!length) return { x: 0, y: 0 };
+  return { x: x / length, y: y / length };
 }
 
 function updatePatrol(npc, dt, player, collision = {}) {
@@ -44,6 +60,46 @@ function updatePatrol(npc, dt, player, collision = {}) {
     return { dx: movedX, dy: movedY, moving: movedX !== 0 || movedY !== 0 };
   };
 
+  const applySteeredMovement = (dx, dy) => {
+    const movement = applyMovement(dx, dy);
+    if (movement.moving || !canMove) return movement;
+
+    const moveDistance = Math.hypot(dx, dy);
+    if (!moveDistance) return movement;
+
+    const desired = normalizeVector(dx, dy);
+    const lastDirection = normalizeVector(npc.lastDirection?.x ?? 0, npc.lastDirection?.y ?? 0);
+    const hasLastDirection = lastDirection.x !== 0 || lastDirection.y !== 0;
+
+    const scoredDirections = STEER_DIRECTIONS.map((direction) => {
+      const desiredScore = direction.x * desired.x + direction.y * desired.y;
+      const lastScore = hasLastDirection
+        ? direction.x * lastDirection.x + direction.y * lastDirection.y
+        : 0;
+      return {
+        direction,
+        score: desiredScore + lastScore * 0.15,
+      };
+    }).sort((a, b) => b.score - a.score);
+
+    for (const { direction } of scoredDirections) {
+      const fallbackMovement = applyMovement(direction.x * moveDistance, direction.y * moveDistance);
+      if (fallbackMovement.moving) {
+        return fallbackMovement;
+      }
+    }
+
+    return movement;
+  };
+
+  const updateFacingFromMovement = (movement, fallbackFacing) => {
+    if (!movement?.moving) return;
+    const normalized = normalizeVector(movement.dx, movement.dy);
+    if (!normalized.x && !normalized.y) return;
+    npc.lastDirection = normalized;
+    npc.facing = resolveDirection(normalized.x, normalized.y, fallbackFacing);
+  };
+
   if (npc.busyTimer > 0) {
     npc.busyTimer = Math.max(0, npc.busyTimer - dt);
     return { dx: 0, dy: 0, moving: false };
@@ -56,13 +112,9 @@ function updatePatrol(npc, dt, player, collision = {}) {
     if (distance > 0) {
       const chaseSpeed = (npc.chaseSpeed ?? patrolSpeed) * dt;
       const move = Math.min(chaseSpeed, distance);
-      const normalizedX = dx / (distance || 1);
-      const normalizedY = dy / (distance || 1);
-      const facing = resolveDirection(normalizedX, normalizedY, npc.facing);
-
-      npc.lastDirection = { x: normalizedX, y: normalizedY };
-      npc.facing = facing;
-      const movement = applyMovement(normalizedX * move, normalizedY * move);
+      const normalized = normalizeVector(dx, dy);
+      const movement = applySteeredMovement(normalized.x * move, normalized.y * move);
+      updateFacingFromMovement(movement, npc.facing);
       if (!movement.moving) {
         return { dx: 0, dy: 0, moving: false };
       }
@@ -95,13 +147,9 @@ function updatePatrol(npc, dt, player, collision = {}) {
 
       const step = wanderSpeed * dt;
       const move = Math.min(step, distance);
-      const normalizedX = dx / (distance || 1);
-      const normalizedY = dy / (distance || 1);
-      const facing = resolveDirection(normalizedX, normalizedY, npc.facing);
-
-      npc.lastDirection = { x: normalizedX, y: normalizedY };
-      npc.facing = facing;
-      const movement = applyMovement(normalizedX * move, normalizedY * move);
+      const normalized = normalizeVector(dx, dy);
+      const movement = applySteeredMovement(normalized.x * move, normalized.y * move);
+      updateFacingFromMovement(movement, npc.facing);
       if (!movement.moving) {
         npc.wanderTarget = null;
         npc.wanderCooldown = npc.wanderInterval;
@@ -125,13 +173,9 @@ function updatePatrol(npc, dt, player, collision = {}) {
 
   const step = patrolSpeed * dt;
   const move = Math.min(step, distance);
-  const normalizedX = dx / (distance || 1);
-  const normalizedY = dy / (distance || 1);
-  const facing = resolveDirection(normalizedX, normalizedY, npc.facing);
-
-  npc.lastDirection = { x: normalizedX, y: normalizedY };
-  npc.facing = facing;
-  const movement = applyMovement(normalizedX * move, normalizedY * move);
+  const normalized = normalizeVector(dx, dy);
+  const movement = applySteeredMovement(normalized.x * move, normalized.y * move);
+  updateFacingFromMovement(movement, npc.facing);
   if (!movement.moving) {
     npc.patrolIndex = (npc.patrolIndex + 1) % npc.patrolPoints.length;
     return { dx: 0, dy: 0, moving: false };
