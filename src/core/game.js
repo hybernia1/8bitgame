@@ -1,4 +1,3 @@
-import { VIEWPORT } from './constants.js';
 import { getLevelMeta, loadLevelConfig } from '../world/level-data.js';
 import { LevelInstance } from '../world/level-instance.js';
 import { getStorageSafely } from './storage.js';
@@ -22,27 +21,6 @@ export function createGame({ inventory, hudSystem } = {}) {
   let snapshotProvider = null;
   let carryOverVitals = null;
 
-  function createCutsceneLevel(config) {
-    const meta = config?.meta ?? { name: 'Unknown Sector' };
-    const dimensions = config?.dimensions ?? meta?.dimensions ?? {};
-    const fallbackDimensions = {
-      width: VIEWPORT.width,
-      height: VIEWPORT.height,
-    };
-    return {
-      config,
-      meta,
-      getObjectiveTotal: () => 0,
-      getDimensions: () => ({
-        width: Number.isFinite(dimensions.width) ? dimensions.width : fallbackDimensions.width,
-        height: Number.isFinite(dimensions.height) ? dimensions.height : fallbackDimensions.height,
-      }),
-      getActorPlacements: () => ({}),
-      getPickupTemplates: () => [],
-      createSnapshot: () => ({}),
-    };
-  }
-
   function getStorageKey(slotId) {
     return `${storagePrefix}${slotId}`;
   }
@@ -62,7 +40,7 @@ export function createGame({ inventory, hudSystem } = {}) {
 
   async function loadLevel(id) {
     const config = await loadLevelConfig(id);
-    currentLevel = config?.meta?.cutsceneOnly ? createCutsceneLevel(config) : new LevelInstance(config);
+    currentLevel = new LevelInstance(config);
     currentLevelId = config.meta?.id ?? id ?? 'level';
     objectivesCollected = 0;
     syncHud();
