@@ -373,6 +373,19 @@ input[type='text']:focus {
   display: none;
 }
 
+.menu-fullscreen {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  pointer-events: auto;
+  display: none;
+}
+
+.game-shell.ui-hidden .menu-fullscreen {
+  display: flex;
+}
+
 .hud-top {
   display: flex;
   flex-direction: column;
