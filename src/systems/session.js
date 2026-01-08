@@ -472,7 +472,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       overlay: `rgba(0, 0, 0, ${overlayAlpha})`,
       panel: '#241610',
       border: '#4a2f22',
-      heading: '#f3d19a',
       text: '#f1e2cf',
       muted: 'rgba(241, 226, 207, 0.55)',
       button: '#2f1e16',
@@ -822,7 +821,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     const panelX = panelPadding;
     const panelWidth = canvas.width - panelPadding * 2;
     const panelHeightSafe = Math.max(panelHeight, panelPadding * 3);
-    const imageAreaHeight = Math.max(panelY - panelPadding * 1.5, 0);
+    const imageAreaHeight = Math.max(panelY, 0);
     const headingFontSize = Math.max(16, Math.round(TILE * 0.32));
     const bodyFontSize = Math.max(14, Math.round(TILE * 0.26));
     const buttonFontSize = Math.max(12, Math.round(TILE * 0.22));
@@ -833,7 +832,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     const panelColors = {
       background: '#241610',
       border: '#4a2f22',
-      heading: '#f3d19a',
       text: '#f1e2cf',
       accent: '#c49a5a',
       button: '#2f1e16',
@@ -847,14 +845,19 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (image && imageAreaHeight > 0) {
-      const maxWidth = canvas.width - panelPadding * 2;
+      const maxWidth = canvas.width;
       const maxHeight = imageAreaHeight;
-      const scale = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+      const scale = Math.max(maxWidth / image.width, maxHeight / image.height);
       const drawWidth = image.width * scale;
       const drawHeight = image.height * scale;
-      const drawX = (canvas.width - drawWidth) / 2;
-      const drawY = panelPadding + (maxHeight - drawHeight) / 2;
+      const drawX = (maxWidth - drawWidth) / 2;
+      const drawY = (maxHeight - drawHeight) / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, maxWidth, maxHeight);
+      ctx.clip();
       ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+      ctx.restore();
     }
 
     ctx.fillStyle = panelColors.background;
@@ -869,13 +872,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let textY = panelY + panelPadding;
     const textWidth = panelWidth - panelPadding * 2;
 
-    ctx.font = `${headingFontSize}px sans-serif`;
-    ctx.fillStyle = panelColors.heading;
-    const heading = `${step?.kicker ?? 'Příběh'} • Krok ${Math.min(stepIndex + 1, total)}`;
-    ctx.fillText(heading, textX, textY);
-    textY += Math.round(headingFontSize * 1.4);
-
     if (step?.title) {
+      ctx.font = `${headingFontSize}px sans-serif`;
       ctx.fillStyle = panelColors.accent;
       ctx.fillText(step.title, textX, textY);
       textY += Math.round(headingFontSize * 1.2);
