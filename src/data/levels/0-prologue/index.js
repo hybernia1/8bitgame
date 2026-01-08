@@ -1,3 +1,11 @@
+import { TILE, VIEWPORT } from '../../../core/constants.js';
+import { buildTileLayersFromTokens } from '../map-utils.js';
+
+const BASE_WIDTH = VIEWPORT.width;
+const BASE_HEIGHT = VIEWPORT.height;
+const baseLayoutTokens = Array.from({ length: BASE_WIDTH * BASE_HEIGHT }, () => 'F1');
+const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
+
 export const prologueCutscene = {
   id: 'prologue',
   nextLevelId: 'level-1',
@@ -48,8 +56,31 @@ export const prologueLevel = {
     subtitle: 'Úvod do pátrání',
     levelNumber: 0,
     cutscene: prologueCutscene,
-    cutsceneOnly: true,
+    dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
   },
+  dimensions: { width: BASE_WIDTH, height: BASE_HEIGHT },
+  tileLayers: {
+    collision: [...baseLayout.collision],
+    decor: [...baseLayout.decor],
+    destroyedFloors: [...baseLayout.destroyedFloors],
+    unlockMask: [],
+  },
+  lighting: {
+    litZones: [
+      {
+        x: 0,
+        y: 0,
+        w: BASE_WIDTH,
+        h: BASE_HEIGHT,
+      },
+    ],
+  },
+  actors: {
+    playerStart: { x: TILE * (BASE_WIDTH / 2), y: TILE * (BASE_HEIGHT / 2) },
+    props: [],
+    npcs: [],
+  },
+  pickups: [],
 };
 
 export default {
