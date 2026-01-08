@@ -15,6 +15,46 @@ const layoutTokens = [
   'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
 ];
 
+export const prologueCutscene = {
+  id: 'prologue',
+  nextLevelId: 'level-1',
+  steps: [
+    {
+      title: 'Návrat snu',
+      kicker: 'Prolog',
+      speaker: 'Ty',
+      speakerType: 'player',
+      avatar: 'player',
+      actionLabel: 'Probudit se',
+      body: [
+        'Zase se mi vrací sen o rodině – dětský smích, ruce, které už nedržím, a pak jen ticho prořezané sirénou.',
+        'Probudím se s hlavou těžkou od léků, které mají ty obrazy utlumit. Ale místo klidu cítím jen stín, který mě žene dál.',
+      ],
+    },
+    {
+      title: 'Telefonát ve tmě',
+      kicker: 'Zvonění uprostřed noci',
+      speaker: 'Hana',
+      speakerType: 'npc',
+      avatar: 'hana',
+      actionLabel: 'Vyrazím',
+      body: [
+        '„Potřebuju tě,“ šeptá Hana. „Během měsíce zmizely tři děti a policie tápe.“',
+        '„Všechny stopy vedou k opuštěné laboratoři na kopci.“',
+      ],
+    },
+    {
+      title: 'Odpověď',
+      kicker: 'Rozhodnutí',
+      speaker: 'Ty',
+      speakerType: 'player',
+      avatar: 'player',
+      actionLabel: 'Vyrazit do vesnice',
+      body: ['Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.'],
+    },
+  ],
+};
+
 const layout = buildTileLayersFromTokens(layoutTokens);
 
 export const prologueLevel = {
@@ -25,6 +65,7 @@ export const prologueLevel = {
     subtitle: 'Úvod do pátrání',
     levelNumber: 0,
     dimensions: { width: WIDTH, height: HEIGHT },
+    cutscene: prologueCutscene,
   },
   dimensions: { width: WIDTH, height: HEIGHT },
   tileLayers: {
@@ -51,45 +92,6 @@ export const prologueLevel = {
   quests: [],
 };
 
-export const prologueDialogues = [
-  {
-    title: 'Návrat snu',
-    kicker: 'Prolog',
-    speaker: 'Ty',
-    speakerType: 'player',
-    avatar: 'player',
-    actionLabel: 'Probudit se',
-    body: [
-      'Zase se mi vrací sen o rodině – dětský smích, ruce, které už nedržím, a pak jen ticho prořezané sirénou.',
-      'Probudím se s hlavou těžkou od léků, které mají ty obrazy utlumit. Ale místo klidu cítím jen stín, který mě žene dál.',
-    ],
-  },
-  {
-    title: 'Telefonát ve tmě',
-    kicker: 'Zvonění uprostřed noci',
-    speaker: 'Hana',
-    speakerType: 'npc',
-    avatar: 'hana',
-    actionLabel: 'Vyrazím',
-    body: [
-      '„Potřebuju tě,“ šeptá Hana. „Během měsíce zmizely tři děti a policie tápe.“',
-      '„Všechny stopy vedou k opuštěné laboratoři na kopci.“',
-    ],
-  },
-  {
-    title: 'Odpověď',
-    kicker: 'Rozhodnutí',
-    speaker: 'Ty',
-    speakerType: 'player',
-    avatar: 'player',
-    actionLabel: 'Vyrazit do vesnice',
-    body: ['Přijímám bez váhání – i kdybych měl znovu otevřít rány, které nikdy nezmizely.'],
-  },
-];
-
-export const dialogues = { prologue: prologueDialogues };
-
 export default {
   config: prologueLevel,
-  dialogues,
 };

@@ -42,11 +42,8 @@ import {
   serializeNpcs,
   updateNpcStates,
 } from '../entities/npc.js';
-import { prologueDialogues } from '../data/levels/0-prologue/index.js';
 import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor/script.js';
 
-const PROLOGUE_LEVEL_ID = 'level-0-prologue';
-const PROLOGUE_STEPS = Array.isArray(prologueDialogues) ? prologueDialogues : [];
 const itemHandlers = getItemHandlers();
 
 function getHudDomRefs(root) {
@@ -146,15 +143,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     continueTitle,
     continueSubtitle,
     continueDetail,
-    prologuePanel,
-    prologueContinueButton,
-    prologueBackButton,
-    prologueStepTitle,
-    prologueStepBody,
-    prologueProgress,
-    prologueAvatar,
-    prologueSpeaker,
-    prologueKicker,
+    cutscenePanel,
+    cutsceneContinueButton,
+    cutsceneBackButton,
+    cutsceneSkipButton,
+    cutsceneStepTitle,
+    cutsceneStepBody,
+    cutsceneProgress,
+    cutsceneAvatar,
+    cutsceneSpeaker,
+    cutsceneKicker,
     slotInput,
     saveSlotList,
     startButton,
@@ -372,92 +370,93 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     });
   }
 
-  function renderPrologueStep(index = 0, steps = PROLOGUE_STEPS) {
+  function renderCutsceneStep(index = 0, steps = []) {
     const step = steps[index] ?? steps[0];
     const total = steps.length;
-    if (prologueStepTitle) {
-      prologueStepTitle.textContent = step?.title ?? 'Prolog';
+    if (cutsceneStepTitle) {
+      cutsceneStepTitle.textContent = step?.title ?? 'Příběh';
     }
-    if (prologueSpeaker) {
-      prologueSpeaker.textContent = step?.speaker ?? '';
+    if (cutsceneSpeaker) {
+      cutsceneSpeaker.textContent = step?.speaker ?? '';
     }
-    if (prologueKicker) {
-      prologueKicker.textContent = step?.kicker ?? 'Prolog';
+    if (cutsceneKicker) {
+      cutsceneKicker.textContent = step?.kicker ?? 'Příběh';
     }
-    if (prologueProgress) {
-      prologueProgress.textContent = `${Math.min(index + 1, total)} / ${total}`;
+    if (cutsceneProgress) {
+      cutsceneProgress.textContent = `${Math.min(index + 1, total)} / ${total}`;
     }
-    if (prologueContinueButton && step?.actionLabel) {
-      prologueContinueButton.textContent = step.actionLabel;
+    if (cutsceneContinueButton && step?.actionLabel) {
+      cutsceneContinueButton.textContent = step.actionLabel;
     }
-    if (prologueAvatar) {
+    if (cutsceneAvatar) {
       const avatarId = step?.avatar || step?.speakerType || '';
       if (avatarId) {
-        prologueAvatar.dataset.avatar = avatarId;
-        prologueAvatar.classList.remove('hidden');
+        cutsceneAvatar.dataset.avatar = avatarId;
+        cutsceneAvatar.classList.remove('hidden');
       } else {
-        prologueAvatar.dataset.avatar = '';
-        prologueAvatar.classList.add('hidden');
+        cutsceneAvatar.dataset.avatar = '';
+        cutsceneAvatar.classList.add('hidden');
       }
     }
-    if (prologueStepBody) {
-      prologueStepBody.innerHTML = '';
+    if (cutsceneStepBody) {
+      cutsceneStepBody.innerHTML = '';
       (step?.body ?? []).forEach((paragraph) => {
         const p = document.createElement('p');
         p.textContent = paragraph;
-        prologueStepBody.appendChild(p);
+        cutsceneStepBody.appendChild(p);
       });
     }
   }
 
-  function showProloguePanel() {
+  function showCutscenePanel() {
     hideAllPanels();
-    toggleVisibility(prologuePanel, true);
+    toggleVisibility(cutscenePanel, true);
     setFullscreenAvailability(isFullscreenSupported);
-    prologueContinueButton?.focus?.();
+    cutsceneContinueButton?.focus?.();
   }
 
-  function hideProloguePanel() {
-    toggleVisibility(prologuePanel, false);
+  function hideCutscenePanel() {
+    toggleVisibility(cutscenePanel, false);
   }
 
-  function waitForPrologueContinue(steps = PROLOGUE_STEPS) {
-    if (!prologuePanel) return Promise.resolve();
+  function waitForCutsceneContinue({ steps = [] } = {}) {
+    if (!cutscenePanel || !steps.length) return Promise.resolve({ skipped: false });
     let stepIndex = 0;
-    renderPrologueStep(stepIndex, steps);
-    showProloguePanel();
+    renderCutsceneStep(stepIndex, steps);
+    showCutscenePanel();
 
     const updateNav = () => {
       const step = steps[stepIndex];
       const isLast = stepIndex >= steps.length - 1;
-      if (prologueContinueButton) {
-        prologueContinueButton.textContent = step?.actionLabel || (isLast ? 'Vyrazit' : 'Další');
+      if (cutsceneContinueButton) {
+        cutsceneContinueButton.textContent = step?.actionLabel || (isLast ? 'Vyrazit' : 'Další');
       }
-      if (prologueBackButton) {
-        prologueBackButton.disabled = stepIndex === 0;
-        prologueBackButton.setAttribute('aria-disabled', stepIndex === 0 ? 'true' : 'false');
+      if (cutsceneBackButton) {
+        cutsceneBackButton.disabled = stepIndex === 0;
+        cutsceneBackButton.setAttribute('aria-disabled', stepIndex === 0 ? 'true' : 'false');
       }
     };
 
     updateNav();
 
     return new Promise((resolve) => {
-      const cleanup = () => {
+      const cleanup = (skipped = false) => {
         window.removeEventListener('keydown', keyHandler);
-        prologueContinueButton?.removeEventListener('click', nextHandler);
-        prologueBackButton?.removeEventListener('click', backHandler);
-        hideProloguePanel();
-        resolve();
+        cutsceneContinueButton?.removeEventListener('click', nextHandler);
+        cutsceneBackButton?.removeEventListener('click', backHandler);
+        cutsceneSkipButton?.removeEventListener('click', skipHandler);
+        hideCutscenePanel();
+        resolve({ skipped });
       };
       const advance = (direction = 1) => {
         const nextIndex = stepIndex + direction;
         if (nextIndex < 0) return;
         if (nextIndex >= steps.length) {
-          cleanup();
+          cleanup(false);
           return;
         }
         stepIndex = nextIndex;
-        renderPrologueStep(stepIndex, steps);
+        renderCutsceneStep(stepIndex, steps);
         updateNav();
       };
       const keyHandler = (event) => {
@@ -466,25 +465,29 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           advance(-1);
         } else if (event.key === 'ArrowRight') {
           advance(1);
+        } else if (event.key === 'Escape') {
+          cleanup(true);
         } else if (event.key === 'Enter' || event.key === ' ') {
           if (stepIndex >= steps.length - 1) {
-            cleanup();
+            cleanup(false);
           } else {
             advance(1);
           }
         }
       };
       const nextHandler = () => {
-        if (stepIndex >= PROLOGUE_STEPS.length - 1) {
-          cleanup();
+        if (stepIndex >= steps.length - 1) {
+          cleanup(false);
         } else {
           advance(1);
         }
       };
       const backHandler = () => advance(-1);
+      const skipHandler = () => cleanup(true);
       window.addEventListener('keydown', keyHandler);
-      prologueContinueButton?.addEventListener('click', nextHandler);
-      prologueBackButton?.addEventListener('click', backHandler);
+      cutsceneContinueButton?.addEventListener('click', nextHandler);
+      cutsceneBackButton?.addEventListener('click', backHandler);
+      cutsceneSkipButton?.addEventListener('click', skipHandler);
     });
   }
 
@@ -493,7 +496,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     toggleVisibility(pausePanel, false);
     toggleVisibility(loadingPanel, false);
     hideContinuePanel();
-    hideProloguePanel();
+    hideCutscenePanel();
   }
 
   function togglePauseScene() {
@@ -670,9 +673,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let handleQuizCancelClick = null;
     let interactQueued = false;
     let shootQueued = false;
-    let prologuePlayed = false;
-
-    const isPrologueLevel = () => (level?.meta?.id ?? levelId ?? '') === PROLOGUE_LEVEL_ID;
+    let cutscenePlayed = false;
+    let cutsceneConfig = null;
 
     function getLevelDimensions() {
       return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
@@ -720,16 +722,18 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       });
     }
 
-    async function runPrologueSequence() {
-      if (prologuePlayed || !isPrologueLevel()) return false;
-      prologuePlayed = true;
+    async function runCutsceneSequence() {
+      if (cutscenePlayed || !cutsceneConfig?.steps?.length) return false;
+      cutscenePlayed = true;
       inputSystem?.stop?.();
       hudSystem?.hideInteraction?.();
-      await waitForPrologueContinue(PROLOGUE_STEPS);
-      state.levelAdvanceQueued = true;
-      setTimeout(() => {
-        game.advanceToNextMap?.(DEFAULT_LEVEL_ID);
-      }, 0);
+      await waitForCutsceneContinue(cutsceneConfig);
+      if (cutsceneConfig?.nextLevelId) {
+        state.levelAdvanceQueued = true;
+        setTimeout(() => {
+          game.advanceToNextMap?.(cutsceneConfig.nextLevelId);
+        }, 0);
+      }
       return true;
     }
 
@@ -779,6 +783,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       spriteSheet = await spriteSheetPromise;
       level = await game.loadLevel(levelId);
       savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
+      cutsceneConfig = level?.meta?.cutscene ?? null;
       const carryOverVitals = savedSnapshot?.playerVitals ? null : game.consumeCarryOverVitals?.();
       const mapDimensions = level?.getDimensions?.() ?? {};
       const mapBounds =
@@ -1480,7 +1485,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       pause: pauseSession,
       resume: resumeSession,
       cleanup,
-      runIntro: () => runPrologueSequence(),
+      runIntro: () => runCutsceneSequence(),
       manualSave,
       getCarryOverVitals: () => ({
         ammo: playerVitals.ammo ?? 0,
