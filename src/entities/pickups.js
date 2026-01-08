@@ -1,5 +1,6 @@
 import { TILE } from '../core/constants.js';
 import { resolveWorldPosition } from '../core/positioning.js';
+import { getItem } from '../data/items/index.js';
 
 export function createPickups(templates = []) {
   return templates.map((pickup) => ({
@@ -17,6 +18,9 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
   const pickupSprite = spriteSheet?.animations?.pickup;
   pickups.forEach((pickup) => {
     if (pickup.collected) return;
+    const item = getItem(pickup.id);
+    const icon = item?.icon ?? pickup.icon;
+    const tint = item?.tint ?? pickup.tint;
     const px = pickup.x - camera.x;
     const py = pickup.y - camera.y;
     ctx.save();
@@ -24,7 +28,7 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
     if (pickupSprite) {
       pickupSprite.render({ context: ctx, x: -TILE / 2 + 2, y: -TILE / 2 + 2, width: TILE - 4, height: TILE - 4 });
     }
-    ctx.fillStyle = pickup.tint || '#f2d45c';
+    ctx.fillStyle = tint || '#f2d45c';
     ctx.beginPath();
     ctx.moveTo(0, -10);
     ctx.lineTo(10, 0);
@@ -36,7 +40,7 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
     ctx.font = '12px "Press Start 2P", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(pickup.icon || '◆', 0, 1);
+    ctx.fillText(icon || '◆', 0, 1);
     ctx.restore();
   });
 }
@@ -49,10 +53,15 @@ export function collectNearbyPickups(player, pickups, inventory, { onCollect } =
     const dy = pickup.y - player.y;
     const distance = Math.hypot(dx, dy);
     if (distance <= player.size / 2 + 12) {
+      const item = getItem(pickup.id);
+      const displayName = item?.name ?? pickup.name ?? pickup.id;
+      const displayIcon = item?.icon ?? pickup.icon;
+      const displayTint = item?.tint ?? pickup.tint;
       const handleCollected = () => {
         const approved = onCollect?.(pickup);
         if (approved === false) return false;
         pickup.collected = true;
+        pickup.name = displayName;
         collected.push(pickup);
         return true;
       };
@@ -65,9 +74,9 @@ export function collectNearbyPickups(player, pickups, inventory, { onCollect } =
       if (!inventory?.addItem) return;
       const stored = inventory.addItem({
         id: pickup.id,
-        name: pickup.name,
-        icon: pickup.icon,
-        tint: pickup.tint,
+        name: displayName,
+        icon: displayIcon,
+        tint: displayTint,
         objective: pickup.objective,
         stackable: pickup.stackable,
         quantity: pickup.quantity,

@@ -1,4 +1,5 @@
 import { TILE } from '../../../core/constants.js';
+import { getItem } from '../../items/index.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
 const npcPackage = buildNpcPackage([
@@ -48,7 +49,7 @@ const npcPackage = buildNpcPackage([
         actions: [
           {
             type: 'giveItem',
-            item: { id: 'collar-key', name: 'Klíček z obojku', icon: '🗝️', tint: '#f2d45c' },
+            item: getItem('collar-key'),
           },
           { type: 'unlock', targetId: 'north-gate' },
           { type: 'setFlag', flag: 'northGateUnlocked', value: true },
@@ -84,7 +85,7 @@ const npcPackage = buildNpcPackage([
         actions: [
           {
             type: 'giveItem',
-            item: { id: 'videotape', name: 'Videokazeta', icon: '📼', tint: '#f2d45c' },
+            item: getItem('videotape'),
           },
         ],
         note: 'note.videotape.found',

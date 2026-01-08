@@ -17,7 +17,7 @@ import {
   registry,
 } from '../world/level-data.js';
 import { drawGrid } from '../world/level-instance.js';
-import { itemHandlers } from '../items.js';
+import { getItemHandlers } from '../data/items/index.js';
 import {
   createPlayer,
   drawPlayer,
@@ -46,6 +46,7 @@ import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor/s
 
 const PROLOGUE_LEVEL_ID = 'level-0-prologue';
 const PROLOGUE_STEPS = Array.isArray(prologueDialogues) ? prologueDialogues : [];
+const itemHandlers = getItemHandlers();
 
 function getHudDomRefs(root) {
   if (!root) return {};
