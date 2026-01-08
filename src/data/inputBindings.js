@@ -1,11 +1,13 @@
+import { INPUT_ACTIONS } from '../core/input-actions.js';
+
 const inputBindings = {
   keyboard: {
-    interact: ['KeyE'],
-    shoot: ['Space'],
-    'toggle-pause': ['KeyP'],
-    'toggle-inventory': ['KeyB'],
-    'toggle-quest-log': ['KeyI'],
-    'use-slot': [
+    [INPUT_ACTIONS.INTERACT]: ['KeyE'],
+    [INPUT_ACTIONS.SHOOT]: ['Space'],
+    [INPUT_ACTIONS.TOGGLE_PAUSE]: ['KeyP'],
+    [INPUT_ACTIONS.TOGGLE_INVENTORY]: ['KeyB'],
+    [INPUT_ACTIONS.TOGGLE_QUEST_LOG]: ['KeyI'],
+    [INPUT_ACTIONS.USE_SLOT]: [
       'Digit1',
       'Digit2',
       'Digit3',
@@ -21,11 +23,11 @@ const inputBindings = {
     ],
   },
   gamepad: {
-    interact: [0],
-    shoot: [1],
-    'toggle-pause': [9],
-    'toggle-inventory': [2],
-    'toggle-quest-log': [3],
+    [INPUT_ACTIONS.INTERACT]: [0],
+    [INPUT_ACTIONS.SHOOT]: [1],
+    [INPUT_ACTIONS.TOGGLE_PAUSE]: [9],
+    [INPUT_ACTIONS.TOGGLE_INVENTORY]: [2],
+    [INPUT_ACTIONS.TOGGLE_QUEST_LOG]: [3],
   },
 };
 

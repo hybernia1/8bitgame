@@ -1,4 +1,5 @@
 import defaultBindings from '../data/inputBindings.js';
+import { GAMEPAD_ACTIONS, INPUT_ACTIONS, KEYBOARD_ACTIONS } from './input-actions.js';
 import { getStorageSafely } from './storage.js';
 
 const STORAGE_KEY = '8bitgame.inputBindings';
@@ -40,34 +41,18 @@ function sanitizeBindings(bindings = {}) {
     return filtered.length ? uniq(filtered) : [...allowed];
   };
 
+  const sanitizeDevice = (actions, deviceBindings, allowedBindings) =>
+    actions.reduce(
+      (acc, action) => ({
+        ...acc,
+        [action]: sanitizeList(deviceBindings?.[action], allowedBindings?.[action] ?? []),
+      }),
+      {},
+    );
+
   return {
-    keyboard: {
-      interact: sanitizeList(bindings.keyboard?.interact, allowedKeyboard.interact),
-      shoot: sanitizeList(bindings.keyboard?.shoot, allowedKeyboard.shoot),
-      'toggle-pause': sanitizeList(bindings.keyboard?.['toggle-pause'], allowedKeyboard['toggle-pause']),
-      'toggle-inventory': sanitizeList(
-        bindings.keyboard?.['toggle-inventory'],
-        allowedKeyboard['toggle-inventory'],
-      ),
-      'toggle-quest-log': sanitizeList(
-        bindings.keyboard?.['toggle-quest-log'],
-        allowedKeyboard['toggle-quest-log'],
-      ),
-      'use-slot': sanitizeList(bindings.keyboard?.['use-slot'], allowedKeyboard['use-slot']),
-    },
-    gamepad: {
-      interact: sanitizeList(bindings.gamepad?.interact, allowedGamepad.interact),
-      shoot: sanitizeList(bindings.gamepad?.shoot, allowedGamepad.shoot),
-      'toggle-pause': sanitizeList(bindings.gamepad?.['toggle-pause'], allowedGamepad['toggle-pause']),
-      'toggle-inventory': sanitizeList(
-        bindings.gamepad?.['toggle-inventory'],
-        allowedGamepad['toggle-inventory'],
-      ),
-      'toggle-quest-log': sanitizeList(
-        bindings.gamepad?.['toggle-quest-log'],
-        allowedGamepad['toggle-quest-log'],
-      ),
-    },
+    keyboard: sanitizeDevice(KEYBOARD_ACTIONS, bindings.keyboard, allowedKeyboard),
+    gamepad: sanitizeDevice(GAMEPAD_ACTIONS, bindings.gamepad, allowedGamepad),
   };
 }
 
@@ -118,15 +103,15 @@ export function formatBinding(bindingConfig, action) {
 
 export function formatControlsHint(bindingConfig) {
   return {
-    interact: formatBinding(bindingConfig, 'interact'),
-    shoot: formatBinding(bindingConfig, 'shoot'),
-    inventory: formatBinding(bindingConfig, 'toggle-inventory'),
-    pause: formatBinding(bindingConfig, 'toggle-pause'),
+    interact: formatBinding(bindingConfig, INPUT_ACTIONS.INTERACT),
+    shoot: formatBinding(bindingConfig, INPUT_ACTIONS.SHOOT),
+    inventory: formatBinding(bindingConfig, INPUT_ACTIONS.TOGGLE_INVENTORY),
+    pause: formatBinding(bindingConfig, INPUT_ACTIONS.TOGGLE_PAUSE),
   };
 }
 
 export function getSlotIndexFromBinding(bindingConfig, code, device = 'keyboard') {
-  const bindings = bindingConfig?.[device]?.['use-slot'];
+  const bindings = bindingConfig?.[device]?.[INPUT_ACTIONS.USE_SLOT];
   if (!Array.isArray(bindings)) return -1;
   return bindings.findIndex((bindingCode) => bindingCode === code);
 }
