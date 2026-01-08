@@ -777,6 +777,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       spriteSheet = await spriteSheetPromise;
       level = await game.loadLevel(levelId);
       savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
+      const carryOverVitals = savedSnapshot?.playerVitals ? null : game.consumeCarryOverVitals?.();
       const mapDimensions = level?.getDimensions?.() ?? {};
       const mapBounds =
         Number.isFinite(mapDimensions.width) && Number.isFinite(mapDimensions.height)
@@ -802,6 +803,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
       if (savedSnapshot?.playerVitals) {
         Object.assign(playerVitals, savedSnapshot.playerVitals);
+      } else if (carryOverVitals) {
+        Object.assign(playerVitals, carryOverVitals);
       }
 
       const normalizedMaxAmmo = Number.isFinite(playerVitals.maxAmmo)
@@ -1461,6 +1464,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       cleanup,
       runIntro: () => runPrologueSequence(),
       manualSave,
+      getCarryOverVitals: () => ({
+        ammo: playerVitals.ammo ?? 0,
+        maxAmmo: playerVitals.maxAmmo ?? 0,
+      }),
       updateFrame: (dt) => updateFrame(dt),
       renderFrame: () => renderFrame(),
       levelId: () => level?.meta?.id ?? levelId ?? DEFAULT_LEVEL_ID,
@@ -1620,6 +1627,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     refreshSaveSlotList();
   });
   game.onAdvanceToMap((nextLevelId) => {
+    const carryOverVitals = currentInGameSession?.getCarryOverVitals?.();
+    if (carryOverVitals) {
+      game.setCarryOverVitals?.(carryOverVitals);
+    }
     if (nextLevelId) {
       setScene('loading', { levelId: nextLevelId, waitForContinue: true });
       return;
