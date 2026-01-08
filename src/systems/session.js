@@ -812,6 +812,22 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     return lines;
   }
 
+  function drawCutsceneBackgroundImage(ctx, canvas, image, { alpha = 1, scale = 1, filter = 'none' } = {}) {
+    if (!image) return;
+    const maxWidth = canvas.width;
+    const maxHeight = canvas.height;
+    const coverScale = Math.max(maxWidth / image.width, maxHeight / image.height);
+    const drawWidth = image.width * coverScale * scale;
+    const drawHeight = image.height * coverScale * scale;
+    const drawX = (maxWidth - drawWidth) / 2;
+    const drawY = (maxHeight - drawHeight) / 2;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.filter = filter;
+    ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+    ctx.restore();
+  }
+
   function drawCutsceneMap(ctx, canvas, { stepIndex = 0, steps = [], image = null } = {}) {
     const step = steps[stepIndex] ?? steps[0];
     const total = steps.length || 1;
@@ -843,20 +859,27 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.fillStyle = COLORS.gridBackground;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (image) {
-      const maxWidth = canvas.width;
-      const maxHeight = canvas.height;
-      const scale = Math.max(maxWidth / image.width, maxHeight / image.height);
-      const drawWidth = image.width * scale;
-      const drawHeight = image.height * scale;
-      const drawX = (maxWidth - drawWidth) / 2;
-      const drawY = (maxHeight - drawHeight) / 2;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(0, 0, maxWidth, maxHeight);
-      ctx.clip();
-      ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-      ctx.restore();
+    if (image?.transition) {
+      const { fromImage, toImage, progress } = image.transition;
+      const eased = Math.min(Math.max(progress, 0), 1);
+      const flashAlpha = eased < 0.3 ? (0.3 - eased) / 0.3 : 0;
+      drawCutsceneBackgroundImage(ctx, canvas, fromImage, { alpha: 1 - eased * 0.35 });
+      drawCutsceneBackgroundImage(ctx, canvas, toImage, {
+        alpha: eased,
+        scale: 1.08 - eased * 0.08,
+        filter: `brightness(${0.6 + eased * 0.4}) saturate(${1.4 - eased * 0.3}) contrast(${
+          1.2 - eased * 0.2
+        })`,
+      });
+      if (flashAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = flashAlpha * 0.6;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+    } else if (image) {
+      drawCutsceneBackgroundImage(ctx, canvas, image);
     }
 
     ctx.fillStyle = panelColors.background;
@@ -974,11 +997,18 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     }
     if (cutsceneImage && cutsceneMedia) {
       const imageSrc = resolveCutsceneImageSource(index, step, cutsceneConfig);
+      const previousSrc = cutsceneImage.getAttribute('src');
       if (imageSrc) {
+        if (imageSrc !== previousSrc) {
+          cutsceneMedia.classList.remove('cutscene-media-transition');
+          void cutsceneMedia.offsetWidth;
+          cutsceneMedia.classList.add('cutscene-media-transition');
+        }
         cutsceneImage.src = imageSrc;
         cutsceneImage.alt = step?.title ?? 'Ilustrace';
         cutsceneMedia.classList.remove('hidden');
       } else {
+        cutsceneMedia.classList.remove('cutscene-media-transition');
         cutsceneImage.removeAttribute('src');
         cutsceneImage.alt = '';
         cutsceneMedia.classList.add('hidden');
@@ -1235,6 +1265,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let cutsceneStepIndex = 0;
     let cutsceneButtonRects = {};
     let cutsceneImages = new Map();
+    let cutsceneImageTransition = null;
     let cutsceneCanvasHandler = null;
     let cutsceneKeyHandler = null;
 
@@ -1329,27 +1360,43 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     }
 
     function handleCutsceneAction(action, totalSteps) {
+      const previousIndex = cutsceneStepIndex;
+      let nextIndex = cutsceneStepIndex;
       switch (action) {
         case 'back':
           if (cutsceneStepIndex > 0) {
-            cutsceneStepIndex -= 1;
+            nextIndex = cutsceneStepIndex - 1;
           }
           break;
         case 'skip':
           cutsceneStepIndex = totalSteps - 1;
           finishCutsceneMap(true);
-          break;
+          return;
         case 'continue': {
           const isLast = cutsceneStepIndex >= totalSteps - 1;
           if (isLast) {
             finishCutsceneMap(false);
-          } else {
-            cutsceneStepIndex += 1;
+            return;
           }
+          nextIndex = cutsceneStepIndex + 1;
           break;
         }
         default:
           break;
+      }
+      if (nextIndex !== previousIndex) {
+        const steps = cutsceneConfig?.steps ?? [];
+        const currentStep = steps[previousIndex] ?? null;
+        const nextStep = steps[nextIndex] ?? null;
+        const fromImage = currentStep ? resolveCutsceneImage(previousIndex, currentStep, cutsceneConfig) : null;
+        const toImage = nextStep ? resolveCutsceneImage(nextIndex, nextStep, cutsceneConfig) : null;
+        cutsceneImageTransition = {
+          fromImage,
+          toImage,
+          startTime: performance.now(),
+          duration: 700,
+        };
+        cutsceneStepIndex = nextIndex;
       }
     }
 
@@ -1776,10 +1823,20 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         if (cutsceneMapActive) {
           const step = cutsceneConfig?.steps?.[cutsceneStepIndex] ?? null;
           const image = step ? resolveCutsceneImage(cutsceneStepIndex, step, cutsceneConfig) : null;
+          let transition = null;
+          if (cutsceneImageTransition) {
+            const elapsed = performance.now() - cutsceneImageTransition.startTime;
+            const progress = Math.min(elapsed / cutsceneImageTransition.duration, 1);
+            transition = { ...cutsceneImageTransition, progress };
+            if (progress >= 1) {
+              cutsceneImageTransition = null;
+              transition = null;
+            }
+          }
           cutsceneButtonRects = drawCutsceneMap(ctx, canvas, {
             stepIndex: cutsceneStepIndex,
             steps: cutsceneConfig?.steps ?? [],
-            image,
+            image: transition ? { transition } : image,
           });
           return;
         }
