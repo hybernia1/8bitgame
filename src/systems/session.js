@@ -1248,6 +1248,20 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           game,
         }) || null;
 
+      const overlapsEntity = (x1, y1, size1, x2, y2, size2) => {
+        const half1 = size1 / 2;
+        const half2 = size2 / 2;
+        return Math.abs(x1 - x2) < half1 + half2 && Math.abs(y1 - y2) < half1 + half2;
+      };
+
+      const findBlockingEntity = (entities = [], size, nx, ny) =>
+        entities.find((entity) => overlapsEntity(nx, ny, size, entity.x, entity.y, entity.size ?? size));
+
+      const canMoveWithEntities = (size, nx, ny) =>
+        level.canMove(size, nx, ny) &&
+        !findBlockingEntity(pushables, size, nx, ny) &&
+        !findBlockingEntity(safes, size, nx, ny);
+
       updateFrame = (dt) => {
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables, blockers: safes });
         level.updatePressureSwitches(getSwitchOccupants());
@@ -1264,7 +1278,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         }
 
         const { nearestNpc, guardCollision } = updateNpcStates(npcs, player, dt, {
-          canMove: level.canMove.bind(level),
+          canMove: canMoveWithEntities,
         });
 
         if (guardCollision && playerVitals.invulnerableTime === 0) {
