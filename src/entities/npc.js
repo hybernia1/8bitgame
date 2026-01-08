@@ -13,9 +13,36 @@ function toWorldPosition(point = {}) {
   return resolveWorldPosition(point);
 }
 
-function updatePatrol(npc, dt, player) {
+function updatePatrol(npc, dt, player, collision = {}) {
+  const canMove = typeof collision?.canMove === 'function' ? collision.canMove : null;
+  const size = npc.size ?? TILE;
   const wanderSpeed = npc.wanderSpeed ?? npc.speed ?? DEFAULT_WANDER_SPEED;
   const patrolSpeed = npc.speed ?? DEFAULT_PATROL_SPEED;
+
+  const applyMovement = (dx, dy) => {
+    if (!canMove) {
+      npc.x += dx;
+      npc.y += dy;
+      return { dx, dy, moving: dx !== 0 || dy !== 0 };
+    }
+
+    const attemptAxisMove = (axis, delta) => {
+      if (!delta) return 0;
+      const nx = axis === 'x' ? npc.x + delta : npc.x;
+      const ny = axis === 'y' ? npc.y + delta : npc.y;
+      if (!canMove(size, nx, ny)) return 0;
+      if (axis === 'x') {
+        npc.x = nx;
+      } else {
+        npc.y = ny;
+      }
+      return delta;
+    };
+
+    const movedX = attemptAxisMove('x', dx);
+    const movedY = attemptAxisMove('y', dy);
+    return { dx: movedX, dy: movedY, moving: movedX !== 0 || movedY !== 0 };
+  };
 
   if (npc.busyTimer > 0) {
     npc.busyTimer = Math.max(0, npc.busyTimer - dt);
@@ -35,10 +62,11 @@ function updatePatrol(npc, dt, player) {
 
       npc.lastDirection = { x: normalizedX, y: normalizedY };
       npc.facing = facing;
-      npc.x += normalizedX * move;
-      npc.y += normalizedY * move;
-
-      return { dx: normalizedX, dy: normalizedY, moving: move > 0 };
+      const movement = applyMovement(normalizedX * move, normalizedY * move);
+      if (!movement.moving) {
+        return { dx: 0, dy: 0, moving: false };
+      }
+      return movement;
     }
   }
 
@@ -73,10 +101,13 @@ function updatePatrol(npc, dt, player) {
 
       npc.lastDirection = { x: normalizedX, y: normalizedY };
       npc.facing = facing;
-      npc.x += normalizedX * move;
-      npc.y += normalizedY * move;
-
-      return { dx: normalizedX, dy: normalizedY, moving: move > 0 };
+      const movement = applyMovement(normalizedX * move, normalizedY * move);
+      if (!movement.moving) {
+        npc.wanderTarget = null;
+        npc.wanderCooldown = npc.wanderInterval;
+        return { dx: 0, dy: 0, moving: false };
+      }
+      return movement;
     }
   }
 
@@ -100,10 +131,12 @@ function updatePatrol(npc, dt, player) {
 
   npc.lastDirection = { x: normalizedX, y: normalizedY };
   npc.facing = facing;
-  npc.x += normalizedX * move;
-  npc.y += normalizedY * move;
-
-  return { dx: normalizedX, dy: normalizedY, moving: move > 0 };
+  const movement = applyMovement(normalizedX * move, normalizedY * move);
+  if (!movement.moving) {
+    npc.patrolIndex = (npc.patrolIndex + 1) % npc.patrolPoints.length;
+    return { dx: 0, dy: 0, moving: false };
+  }
+  return movement;
 }
 
 function updateNpcAnimation(npc, movement, dt) {
@@ -185,7 +218,7 @@ export function createNpcs(spriteSheet, placements) {
   });
 }
 
-export function updateNpcStates(npcs, player, dt) {
+export function updateNpcStates(npcs, player, dt, collision = {}) {
   let nearestNpc = null;
   let nearestDistance = Infinity;
   let guardCollision = false;
@@ -193,7 +226,7 @@ export function updateNpcStates(npcs, player, dt) {
   npcs.forEach((npc) => {
     if (npc.defeated) return;
 
-    const movement = updatePatrol(npc, dt, player);
+    const movement = updatePatrol(npc, dt, player, collision);
     updateNpcAnimation(npc, movement, dt);
 
     const distance = Math.hypot(npc.x - player.x, npc.y - player.y);
