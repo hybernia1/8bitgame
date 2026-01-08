@@ -951,6 +951,14 @@ export class LevelInstance {
   }
 }
 
+export function getLevelDimensions(level) {
+  const dimensions = level?.getDimensions?.() ?? {};
+  return {
+    width: dimensions.width ?? WORLD.width,
+    height: dimensions.height ?? WORLD.height,
+  };
+}
+
 export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.height } = {}, camera = { x: 0, y: 0 }) {
   ctx.fillStyle = COLORS.gridBackground;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -978,6 +986,11 @@ export function drawGrid(ctx, canvas, { width = WORLD.width, height = WORLD.heig
     ctx.lineTo(canvas.width, py + 0.5);
     ctx.stroke();
   }
+}
+
+export function drawCameraBounds(ctx, { width = WORLD.width, height = WORLD.height } = {}, camera = { x: 0, y: 0 }) {
+  ctx.strokeStyle = COLORS.gridBorder;
+  ctx.strokeRect(1 - camera.x, 1 - camera.y, width * TILE - 2, height * TILE - 2);
 }
 
 function drawTileBase(context, def, x, y) {
