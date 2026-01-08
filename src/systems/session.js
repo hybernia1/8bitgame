@@ -362,6 +362,162 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     return `${normalizedFolder}/step-${stepIndex + 1}.${extension}`;
   }
 
+  const CUTSCENE_RENDER_MODE_MAP = 'map';
+  const CUTSCENE_LABELS = {
+    back: 'Zpět',
+    skip: 'Přeskočit',
+  };
+
+  function resolveCutsceneContinueLabel(step, isLast) {
+    return step?.actionLabel || (isLast ? 'Vyrazit' : 'Další');
+  }
+
+  function wrapTextLines(ctx, text, maxWidth) {
+    if (!text) return [];
+    const words = text.split(/\s+/).filter(Boolean);
+    if (!words.length) return [];
+    const lines = [];
+    let line = words[0];
+    for (let i = 1; i < words.length; i += 1) {
+      const word = words[i];
+      const testLine = `${line} ${word}`;
+      if (ctx.measureText(testLine).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line);
+    return lines;
+  }
+
+  function drawCutsceneMap(ctx, canvas, { stepIndex = 0, steps = [], image = null } = {}) {
+    const step = steps[stepIndex] ?? steps[0];
+    const total = steps.length || 1;
+    const panelPadding = Math.max(16, Math.round(TILE * 0.4));
+    const panelHeight = Math.round(canvas.height * 0.32);
+    const panelY = canvas.height - panelHeight - panelPadding;
+    const panelX = panelPadding;
+    const panelWidth = canvas.width - panelPadding * 2;
+    const panelHeightSafe = Math.max(panelHeight, panelPadding * 3);
+    const imageAreaHeight = Math.max(panelY - panelPadding * 1.5, 0);
+    const headingFontSize = Math.max(16, Math.round(TILE * 0.32));
+    const bodyFontSize = Math.max(14, Math.round(TILE * 0.26));
+    const buttonFontSize = Math.max(12, Math.round(TILE * 0.22));
+    const lineHeight = Math.round(bodyFontSize * 1.3);
+    const buttonHeight = Math.max(28, Math.round(TILE * 0.5));
+    const buttonPaddingX = Math.max(12, Math.round(TILE * 0.3));
+    const buttonGap = Math.max(10, Math.round(TILE * 0.2));
+    const panelColors = {
+      background: '#241610',
+      border: '#4a2f22',
+      heading: '#f3d19a',
+      text: '#f1e2cf',
+      accent: '#c49a5a',
+      button: '#2f1e16',
+      buttonBorder: '#7a5a3b',
+      buttonText: '#f8e7cf',
+      buttonDisabled: 'rgba(248, 231, 207, 0.45)',
+    };
+
+    ctx.save();
+    ctx.fillStyle = COLORS.gridBackground;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (image && imageAreaHeight > 0) {
+      const maxWidth = canvas.width - panelPadding * 2;
+      const maxHeight = imageAreaHeight;
+      const scale = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+      const drawWidth = image.width * scale;
+      const drawHeight = image.height * scale;
+      const drawX = (canvas.width - drawWidth) / 2;
+      const drawY = panelPadding + (maxHeight - drawHeight) / 2;
+      ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+    }
+
+    ctx.fillStyle = panelColors.background;
+    ctx.strokeStyle = panelColors.border;
+    ctx.lineWidth = Math.max(2, Math.round(TILE * 0.06));
+    ctx.beginPath();
+    ctx.rect(panelX, panelY, panelWidth, panelHeightSafe);
+    ctx.fill();
+    ctx.stroke();
+
+    const textX = panelX + panelPadding;
+    let textY = panelY + panelPadding;
+    const textWidth = panelWidth - panelPadding * 2;
+
+    ctx.font = `${headingFontSize}px sans-serif`;
+    ctx.fillStyle = panelColors.heading;
+    const heading = `${step?.kicker ?? 'Příběh'} • Krok ${Math.min(stepIndex + 1, total)}`;
+    ctx.fillText(heading, textX, textY);
+    textY += Math.round(headingFontSize * 1.4);
+
+    if (step?.title) {
+      ctx.fillStyle = panelColors.accent;
+      ctx.fillText(step.title, textX, textY);
+      textY += Math.round(headingFontSize * 1.2);
+    }
+
+    if (step?.speaker) {
+      ctx.fillStyle = panelColors.text;
+      ctx.font = `${Math.round(bodyFontSize * 0.95)}px sans-serif`;
+      ctx.fillText(step.speaker, textX, textY);
+      textY += Math.round(bodyFontSize * 1.4);
+    }
+
+    ctx.font = `${bodyFontSize}px sans-serif`;
+    ctx.fillStyle = panelColors.text;
+    (step?.body ?? []).forEach((paragraph) => {
+      wrapTextLines(ctx, paragraph, textWidth).forEach((line) => {
+        ctx.fillText(line, textX, textY);
+        textY += lineHeight;
+      });
+      textY += Math.round(lineHeight * 0.4);
+    });
+
+    const isLast = stepIndex >= total - 1;
+    const continueLabel = resolveCutsceneContinueLabel(step, isLast);
+    const labels = [
+      { id: 'back', label: CUTSCENE_LABELS.back, disabled: stepIndex === 0 },
+      { id: 'skip', label: CUTSCENE_LABELS.skip, disabled: false },
+      { id: 'continue', label: continueLabel, disabled: false },
+    ];
+
+    ctx.font = `${buttonFontSize}px sans-serif`;
+    let buttonX = panelX + panelWidth - panelPadding;
+    const buttonY = panelY + panelHeightSafe - panelPadding - buttonHeight;
+    const buttonRects = {};
+
+    labels
+      .slice()
+      .reverse()
+      .forEach((button) => {
+        const width = ctx.measureText(button.label).width + buttonPaddingX * 2;
+        buttonX -= width;
+        const rect = { x: buttonX, y: buttonY, width, height: buttonHeight, id: button.id };
+        buttonRects[button.id] = rect;
+        ctx.fillStyle = panelColors.button;
+        ctx.strokeStyle = panelColors.buttonBorder;
+        ctx.lineWidth = Math.max(1, Math.round(TILE * 0.03));
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = button.disabled ? panelColors.buttonDisabled : panelColors.buttonText;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(button.label, rect.x + rect.width / 2, rect.y + rect.height / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        buttonX -= buttonGap;
+      });
+
+    ctx.restore();
+    return buttonRects;
+  }
+
   function renderCutsceneStep(index = 0, steps = [], cutsceneConfig = {}) {
     const step = steps[index] ?? steps[0];
     const total = steps.length;
@@ -433,7 +589,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       const step = steps[stepIndex];
       const isLast = stepIndex >= steps.length - 1;
       if (cutsceneContinueButton) {
-        cutsceneContinueButton.textContent = step?.actionLabel || (isLast ? 'Vyrazit' : 'Další');
+        cutsceneContinueButton.textContent = resolveCutsceneContinueLabel(step, isLast);
       }
       if (cutsceneBackButton) {
         cutsceneBackButton.disabled = stepIndex === 0;
@@ -657,6 +813,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let shootQueued = false;
     let cutscenePlayed = false;
     let cutsceneConfig = null;
+    let cutsceneMapActive = false;
+    let cutsceneStepIndex = 0;
+    let cutsceneButtonRects = {};
+    let cutsceneImages = new Map();
+    let cutsceneCanvasHandler = null;
+    let cutsceneKeyHandler = null;
 
     function getLevelDimensions() {
       return resolveLevelDimensions(level);
@@ -718,12 +880,137 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       });
     }
 
+    function isCutsceneMapMode() {
+      return cutsceneConfig?.renderMode === CUTSCENE_RENDER_MODE_MAP;
+    }
+
+    function cacheCutsceneImage(stepIndex, step, config) {
+      const src = resolveCutsceneImageSource(stepIndex, step, config);
+      if (!src || cutsceneImages.has(src)) return;
+      const image = new Image();
+      image.src = src;
+      cutsceneImages.set(src, image);
+    }
+
+    function preloadCutsceneImages(config) {
+      cutsceneImages.clear();
+      (config?.steps ?? []).forEach((step, index) => {
+        cacheCutsceneImage(index, step, config);
+      });
+    }
+
+    function resolveCutsceneImage(stepIndex, step, config) {
+      const src = resolveCutsceneImageSource(stepIndex, step, config);
+      if (!src) return null;
+      const cached = cutsceneImages.get(src);
+      if (cached) return cached;
+      const image = new Image();
+      image.src = src;
+      cutsceneImages.set(src, image);
+      return image;
+    }
+
+    function handleCutsceneAction(action, totalSteps) {
+      switch (action) {
+        case 'back':
+          if (cutsceneStepIndex > 0) {
+            cutsceneStepIndex -= 1;
+          }
+          break;
+        case 'skip':
+          cutsceneStepIndex = totalSteps - 1;
+          finishCutsceneMap(true);
+          break;
+        case 'continue': {
+          const isLast = cutsceneStepIndex >= totalSteps - 1;
+          if (isLast) {
+            finishCutsceneMap(false);
+          } else {
+            cutsceneStepIndex += 1;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    let resolveCutsceneMap = null;
+
+    function finishCutsceneMap(skipped) {
+      cutsceneMapActive = false;
+      const doc = documentRoot?.ownerDocument ?? document;
+      canvas?.removeEventListener?.('click', cutsceneCanvasHandler);
+      doc?.removeEventListener?.('keydown', cutsceneKeyHandler);
+      cutsceneCanvasHandler = null;
+      cutsceneKeyHandler = null;
+      const resolveFn = resolveCutsceneMap;
+      resolveCutsceneMap = null;
+      if (resolveFn) {
+        resolveFn({ skipped: Boolean(skipped) });
+      }
+    }
+
+    function waitForCutsceneMapContinue({ steps = [], ...config } = {}) {
+      if (!canvas || !steps.length) return Promise.resolve({ skipped: false });
+      cutsceneStepIndex = 0;
+      cutsceneMapActive = true;
+
+      const totalSteps = steps.length;
+      const doc = documentRoot?.ownerDocument ?? document;
+
+      cutsceneCanvasHandler = (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        const hit = Object.entries(cutsceneButtonRects).find(([, button]) => {
+          if (!button) return false;
+          const withinX = x >= button.x && x <= button.x + button.width;
+          const withinY = y >= button.y && y <= button.y + button.height;
+          return withinX && withinY;
+        });
+        if (!hit) return;
+        const [action] = hit;
+        handleCutsceneAction(action, totalSteps);
+      };
+
+      cutsceneKeyHandler = (event) => {
+        switch (event.key) {
+          case 'ArrowLeft':
+            handleCutsceneAction('back', totalSteps);
+            break;
+          case 'Escape':
+            handleCutsceneAction('skip', totalSteps);
+            break;
+          case 'Enter':
+          case ' ':
+            handleCutsceneAction('continue', totalSteps);
+            break;
+          default:
+            break;
+        }
+      };
+
+      canvas.addEventListener('click', cutsceneCanvasHandler);
+      doc?.addEventListener?.('keydown', cutsceneKeyHandler);
+
+      return new Promise((resolve) => {
+        resolveCutsceneMap = resolve;
+      });
+    }
+
     async function runCutsceneSequence() {
       if (cutscenePlayed || !cutsceneConfig?.steps?.length) return false;
       cutscenePlayed = true;
       inputSystem?.stop?.();
       hudSystem?.hideInteraction?.();
-      await waitForCutsceneContinue(cutsceneConfig);
+      if (isCutsceneMapMode()) {
+        await waitForCutsceneMapContinue(cutsceneConfig);
+      } else {
+        await waitForCutsceneContinue(cutsceneConfig);
+      }
       if (cutsceneConfig?.nextLevelId) {
         state.levelAdvanceQueued = true;
         setTimeout(() => {
@@ -780,6 +1067,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       level = await game.loadLevel(levelId);
       savedSnapshot = game.getSavedSnapshot(game.currentLevelId ?? levelId);
       cutsceneConfig = level?.meta?.cutscene ?? null;
+      if (isCutsceneMapMode()) {
+        preloadCutsceneImages(cutsceneConfig);
+      }
       const carryOverVitals = savedSnapshot?.playerVitals ? null : game.consumeCarryOverVitals?.();
       const mapDimensions = level?.getDimensions?.() ?? {};
       const mapBounds =
@@ -1014,6 +1304,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         !findBlockingEntity(safes, size, nx, ny);
 
       updateFrame = (dt) => {
+        if (cutsceneMapActive) {
+          return;
+        }
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables, blockers: safes });
         level.updatePressureSwitches(getSwitchOccupants());
         level.clampCamera(camera, player, canvas);
@@ -1060,6 +1353,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       };
 
       renderFrame = () => {
+        if (cutsceneMapActive) {
+          const step = cutsceneConfig?.steps?.[cutsceneStepIndex] ?? null;
+          const image = step ? resolveCutsceneImage(cutsceneStepIndex, step, cutsceneConfig) : null;
+          cutsceneButtonRects = drawCutsceneMap(ctx, canvas, {
+            stepIndex: cutsceneStepIndex,
+            steps: cutsceneConfig?.steps ?? [],
+            image,
+          });
+          return;
+        }
         drawGrid(ctx, canvas, getLevelDimensions(), camera);
         level.drawLevel(ctx, camera, spriteSheet);
         level.drawPressureSwitches(ctx, camera);
@@ -1199,6 +1502,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       if (deathTimeout) {
         clearTimeout(deathTimeout);
         deathTimeout = null;
+      }
+      if (cutsceneMapActive) {
+        finishCutsceneMap(false);
       }
       levelScript?.destroy?.();
       levelScript = null;
