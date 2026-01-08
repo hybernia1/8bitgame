@@ -717,6 +717,10 @@ export class LevelInstance {
     };
   }
 
+  createSnapshot() {
+    return this.serializeState();
+  }
+
   restoreLighting(lightingState) {
     if (!lightingState?.activatedSwitchIds?.length) return;
     lightingState.activatedSwitchIds.forEach((id) => {
@@ -765,6 +769,10 @@ export class LevelInstance {
     }
     this.restoreLighting(levelState.lighting);
     this.restoreDestructibleState(levelState.destructibles);
+  }
+
+  restoreSnapshot(levelState) {
+    this.restoreState(levelState);
   }
 
   getDimensions() {

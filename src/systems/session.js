@@ -655,6 +655,20 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       };
     }
 
+    function createSnapshot() {
+      return {
+        levelState: level?.createSnapshot?.(),
+        playerState: serializePlayer(player),
+        playerVitals: { ...playerVitals },
+        projectiles: projectilesForSave(),
+        sessionState: serializeSessionState(),
+        persistentState: serializePersistentState(),
+        pickups: serializePickups(pickups),
+        npcs: serializeNpcs(npcs),
+        safes: serializeSafes(safes),
+      };
+    }
+
     function projectilesForSave() {
       const { width, height } = getLevelDimensions();
       const maxX = width * TILE + TILE;
@@ -1032,16 +1046,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         drawCameraBounds(ctx, getLevelDimensions(), camera);
       };
 
-      game.setSnapshotProvider(() => ({
-        playerState: serializePlayer(player),
-        playerVitals: { ...playerVitals },
-        projectiles: projectilesForSave(),
-        sessionState: serializeSessionState(),
-        persistentState: serializePersistentState(),
-        pickups: serializePickups(pickups),
-        npcs: serializeNpcs(npcs),
-        safes: serializeSafes(safes),
-      }));
+      game.setSnapshotProvider(() => createSnapshot());
     }
 
     function applyDamage({ invulnerability = 0, resetPosition = false, note, deathNote }) {
