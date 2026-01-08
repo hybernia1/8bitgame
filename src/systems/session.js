@@ -1,4 +1,4 @@
-import { COLORS, TILE, WORLD } from '../core/constants.js';
+import { COLORS, TILE } from '../core/constants.js';
 import { INPUT_ACTIONS } from '../core/input-actions.js';
 import { formatBinding, formatControlsHint } from '../core/input-bindings.js';
 import { runActions } from '../core/actions.js';
@@ -17,7 +17,7 @@ import {
   loaderRegistry,
   registry,
 } from '../world/level-data.js';
-import { drawGrid } from '../world/level-instance.js';
+import { drawCameraBounds, drawGrid, getLevelDimensions as resolveLevelDimensions } from '../world/level-instance.js';
 import { overlapsEntity } from '../utils/geometry.js';
 import { getItemHandlers } from '../data/items/index.js';
 import {
@@ -515,11 +515,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     setScene('loading', { levelId, slotId: resolveSlotId() });
   }
 
-  function drawCameraBounds({ width, height }, camera) {
-    ctx.strokeStyle = COLORS.gridBorder;
-    ctx.strokeRect(1 - camera.x, 1 - camera.y, width * TILE - 2, height * TILE - 2);
-  }
-
   function createInGameSession(levelId = DEFAULT_LEVEL_ID) {
     let dialogueTime = 0;
     let objectivesCollected = 0;
@@ -679,7 +674,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let cutsceneConfig = null;
 
     function getLevelDimensions() {
-      return level?.getDimensions?.() ?? { width: WORLD.width, height: WORLD.height };
+      return resolveLevelDimensions(level);
     }
 
     function serializePersistentState() {
@@ -1323,7 +1318,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         drawNpcs(ctx, camera, npcs);
         drawPlayer(ctx, camera, player, spriteSheet);
         level.drawLighting(ctx, camera);
-        drawCameraBounds(getLevelDimensions(), camera);
+        drawCameraBounds(ctx, getLevelDimensions(), camera);
       };
 
       game.setSnapshotProvider(() => ({
