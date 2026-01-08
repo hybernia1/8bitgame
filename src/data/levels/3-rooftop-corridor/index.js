@@ -30,6 +30,7 @@ export const rooftopCorridorLevel = {
   tileLayers: {
     collision: [...baseLayout.collision],
     decor: [...baseLayout.decor],
+    destroyedFloors: [...baseLayout.destroyedFloors],
   },
   lighting: {
     litZones: [{ x: 1, y: 1, w: 7, h: 7 }],

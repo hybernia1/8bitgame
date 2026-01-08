@@ -71,6 +71,7 @@ export const prologueLevel = {
   tileLayers: {
     collision: [...layout.collision],
     decor: [...layout.decor],
+    destroyedFloors: [...layout.destroyedFloors],
   },
   lighting: {
     litZones: [
