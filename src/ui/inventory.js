@@ -1,3 +1,4 @@
+import { getItem } from '../data/items/index.js';
 import { format } from './messages.js';
 
 export class Inventory {
@@ -123,16 +124,19 @@ export function renderInventory(inventory) {
     slot.className = 'inventory-slot';
     slot.dataset.index = `${index + 1}`;
     if (item) {
+      const details = getItem(item.id);
       const icon = document.createElement('div');
       icon.className = 'inventory-icon';
-      icon.textContent = item.icon || '◆';
-      if (item.tint) {
-        icon.style.color = item.tint;
+      icon.textContent = details?.icon || '◆';
+      const tint = details?.tint ?? item.tint;
+      if (tint) {
+        icon.style.color = tint;
       }
       const label = document.createElement('div');
       label.className = 'inventory-label';
       const quantity = item.quantity ?? 0;
-      label.textContent = quantity > 1 ? `${item.name} ×${quantity}` : item.name;
+      const name = details?.name ?? item.name ?? item.id;
+      label.textContent = quantity > 1 ? `${name} ×${quantity}` : name;
       slot.append(icon, label);
     } else {
       slot.classList.add('inventory-empty');

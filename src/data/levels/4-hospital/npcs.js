@@ -1,4 +1,4 @@
-import { getPickupPreset } from '../../pickups/index.js';
+import { getItem } from '../../items/index.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
 const npcPackage = buildNpcPackage([
@@ -146,7 +146,7 @@ const npcPackage = buildNpcPackage([
         actions: [
           {
             type: 'giveItem',
-            item: getPickupPreset('apple'),
+            item: getItem('apple'),
           },
         ],
         note: 'note.quiz.reward',

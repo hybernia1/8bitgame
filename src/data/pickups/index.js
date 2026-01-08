@@ -1,39 +1,24 @@
 const pickupPresets = {
   ammo: {
     id: 'ammo',
-    name: 'Náboje',
-    icon: '•',
-    tint: '#f28f5c',
     stackable: true,
     storeInInventory: false,
     objective: false,
   },
   apple: {
     id: 'apple',
-    name: 'Jablko',
-    icon: '🍎',
-    tint: '#f25c5c',
     objective: false,
   },
   'battery-cell': {
     id: 'battery-cell',
-    name: 'Battery Cell',
-    icon: '⚡',
-    tint: '#f2d45c',
     objective: true,
   },
   wrench: {
     id: 'wrench',
-    name: 'Service Wrench',
-    icon: '🔧',
-    tint: '#8ce0ff',
     objective: true,
   },
   keycard: {
     id: 'keycard',
-    name: 'Keycard Fragment',
-    icon: '🗝️',
-    tint: '#c66bff',
     objective: true,
   },
 };

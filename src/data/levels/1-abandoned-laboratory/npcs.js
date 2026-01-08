@@ -1,4 +1,4 @@
-import { getPickupPreset } from '../../pickups/index.js';
+import { getItem } from '../../items/index.js';
 import { buildNpcPackage, placeNpc } from '../../npcs/index.js';
 
 const npcPackage = buildNpcPackage([
@@ -98,7 +98,7 @@ const npcPackage = buildNpcPackage([
         actions: [
           {
             type: 'giveItem',
-            item: getPickupPreset('apple'),
+            item: getItem('apple'),
           },
         ],
         note: 'Správce ti předal jablko. Použij číslo slotu (1-12) nebo klikni na slot pro doplnění jednoho života.',
@@ -179,7 +179,7 @@ const npcPackage = buildNpcPackage([
         actions: [
           {
             type: 'giveItem',
-            item: { id: 'gate-key', name: 'Klíč od dveří', icon: '🔑', tint: '#f2d45c' },
+            item: getItem('gate-key'),
           },
           { type: 'unlock', targetId: 'gate' },
           { type: 'clearObjectives' },
