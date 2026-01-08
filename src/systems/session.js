@@ -349,6 +349,14 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   function renderCutsceneStep(index = 0, steps = []) {
     const step = steps[index] ?? steps[0];
     const total = steps.length;
+    if (cutscenePanel) {
+      const background = step?.background || step?.image || '';
+      if (background) {
+        cutscenePanel.style.setProperty('--cutscene-bg', `url("${background}")`);
+      } else {
+        cutscenePanel.style.removeProperty('--cutscene-bg');
+      }
+    }
     if (cutsceneStepTitle) {
       cutsceneStepTitle.textContent = step?.title ?? 'Příběh';
     }
@@ -393,6 +401,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
 
   function hideCutscenePanel() {
     toggleVisibility(cutscenePanel, false);
+    cutscenePanel?.style.removeProperty('--cutscene-bg');
   }
 
   function waitForCutsceneContinue({ steps = [] } = {}) {

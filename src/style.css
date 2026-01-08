@@ -393,6 +393,11 @@ input[type='text']:focus {
   align-content: center;
   gap: 18px;
   text-align: left;
+  position: relative;
+  background: linear-gradient(180deg, rgba(12, 8, 6, 0.72), rgba(12, 8, 6, 0.88)), var(--cutscene-bg, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .cutscene-step {
