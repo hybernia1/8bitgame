@@ -16,6 +16,7 @@ export function createPickups(templates = []) {
 
 export function drawPickups(ctx, camera, pickups, spriteSheet) {
   const pickupSprite = spriteSheet?.animations?.pickup;
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
   pickups.forEach((pickup) => {
     if (pickup.collected) return;
     const item = getItem(pickup.id);
@@ -23,23 +24,29 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
     const tint = item?.tint ?? pickup.tint;
     const px = pickup.x - camera.x;
     const py = pickup.y - camera.y;
+    const waveSeed = (pickup.x + pickup.y) * 0.05;
+    const floatOffset = Math.sin(now / 420 + waveSeed) * 3;
+    const scale = 1 + Math.sin(now / 380 + waveSeed) * 0.08;
     ctx.save();
-    ctx.translate(px, py);
+    ctx.translate(px, py + floatOffset);
+    ctx.scale(scale, scale);
     if (pickupSprite) {
-      pickupSprite.render({ context: ctx, x: -TILE / 2 + 2, y: -TILE / 2 + 2, width: TILE - 4, height: TILE - 4 });
+      pickupSprite.render({ context: ctx, x: -TILE / 2, y: -TILE / 2, width: TILE, height: TILE });
     }
-    ctx.fillStyle = tint || '#f2d45c';
-    ctx.beginPath();
-    ctx.moveTo(0, -10);
-    ctx.lineTo(10, 0);
-    ctx.lineTo(0, 10);
-    ctx.lineTo(-10, 0);
-    ctx.closePath();
-    ctx.fill();
+    const iconSize = Math.max(14, Math.round(TILE * 0.55));
     ctx.fillStyle = '#0b0b10';
-    ctx.font = '12px "Press Start 2P", monospace';
+    ctx.font = `${iconSize}px "Press Start 2P", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    if (tint) {
+      ctx.save();
+      ctx.shadowColor = tint;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = tint;
+      ctx.fillText(icon || '◆', 0, 1);
+      ctx.restore();
+      ctx.fillStyle = '#0b0b10';
+    }
     ctx.fillText(icon || '◆', 0, 1);
     ctx.restore();
   });
