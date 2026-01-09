@@ -182,12 +182,14 @@ function ensureDecorGifHost() {
   host.id = 'decor-gif-cache';
   host.setAttribute('aria-hidden', 'true');
   host.style.position = 'absolute';
-  host.style.width = '0';
-  host.style.height = '0';
-  host.style.overflow = 'hidden';
+  host.style.left = '-10000px';
+  host.style.top = '0';
+  host.style.width = 'auto';
+  host.style.height = 'auto';
+  host.style.overflow = 'visible';
   host.style.opacity = '0';
   host.style.pointerEvents = 'none';
-  document.body?.appendChild(host);
+  (document.body ?? document.documentElement)?.appendChild(host);
   return host;
 }
 
