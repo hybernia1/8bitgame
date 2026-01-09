@@ -6,7 +6,7 @@ import { createHudSystem } from './hud.js';
 import { createInputSystem } from './input.js';
 import { createInteractionSystem } from './interactions.js';
 import { registerScene, resume, setScene, showMenu } from '../core/scenes.js';
-import { applyAvatarSprite, resolveAvatarPathFromId } from '../ui/avatar-utils.js';
+import { applyAvatarSprite, loadAvatarImage, resolveAvatarPathFromId } from '../ui/avatar-utils.js';
 import { format } from '../ui/messages.js';
 import { renderInventory, useInventorySlot } from '../ui/inventory.js';
 import { createQuizPanel } from '../ui/quiz-panel.js';
@@ -172,6 +172,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   let menuMapLevel = null;
   let menuMapSpriteSheet = null;
   const menuMapCamera = { x: 0, y: 0 };
+  const cutsceneAvatarCache = new Map();
 
   const {
     documentRoot,
@@ -917,9 +918,50 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.fill();
     ctx.stroke();
 
-    const textX = panelX + panelPadding;
+    let textX = panelX + panelPadding;
     let textY = panelY + panelPadding;
-    const textWidth = panelWidth - panelPadding * 2;
+    let textWidth = panelWidth - panelPadding * 2;
+    const avatarId = step?.avatar || step?.speakerType || '';
+    const avatarPath = avatarId ? resolveAvatarPathFromId(avatarId) : null;
+    const avatarSize = Math.min(Math.round(TILE * 3), panelHeightSafe - panelPadding * 2);
+    const avatarGap = Math.round(panelPadding * 0.8);
+
+    if (avatarPath) {
+      const entry = cutsceneAvatarCache.get(avatarPath);
+      const avatarX = textX;
+      const avatarY = panelY + panelPadding;
+      ctx.save();
+      ctx.fillStyle = '#1d110a';
+      ctx.strokeStyle = '#3a271b';
+      ctx.lineWidth = Math.max(1, Math.round(TILE * 0.04));
+      ctx.beginPath();
+      ctx.rect(avatarX, avatarY, avatarSize, avatarSize);
+      ctx.fill();
+      ctx.stroke();
+      if (entry?.image && entry?.layout) {
+        const { image: avatarImage, layout } = entry;
+        const frameWidth = avatarImage.width / layout.cols;
+        const frameHeight = avatarImage.height / layout.rows;
+        const totalFrames = layout.cols * layout.rows;
+        const safeIndex = Math.min(1, Math.max(0, totalFrames - 1));
+        const col = safeIndex % layout.cols;
+        const row = Math.floor(safeIndex / layout.cols);
+        ctx.drawImage(
+          avatarImage,
+          col * frameWidth,
+          row * frameHeight,
+          frameWidth,
+          frameHeight,
+          avatarX,
+          avatarY,
+          avatarSize,
+          avatarSize,
+        );
+      }
+      ctx.restore();
+      textX += avatarSize + avatarGap;
+      textWidth -= avatarSize + avatarGap;
+    }
 
     if (step?.title) {
       ctx.font = `${headingFontSize}px sans-serif`;
@@ -1391,6 +1433,30 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       return image;
     }
 
+    function cacheCutsceneAvatar(avatarId) {
+      if (!avatarId) return;
+      const avatarPath = resolveAvatarPathFromId(avatarId);
+      if (!avatarPath || cutsceneAvatarCache.has(avatarPath)) return;
+      const entry = { image: null, layout: null };
+      cutsceneAvatarCache.set(avatarPath, entry);
+      loadAvatarImage(avatarPath).then((result) => {
+        if (!result) {
+          cutsceneAvatarCache.delete(avatarPath);
+          return;
+        }
+        entry.image = result.image;
+        entry.layout = result.layout;
+      });
+    }
+
+    function preloadCutsceneAvatars(config) {
+      cutsceneAvatarCache.clear();
+      (config?.steps ?? []).forEach((step) => {
+        const avatarId = step?.avatar || step?.speakerType || '';
+        cacheCutsceneAvatar(avatarId);
+      });
+    }
+
     function handleCutsceneAction(action, totalSteps) {
       const previousIndex = cutsceneStepIndex;
       let nextIndex = cutsceneStepIndex;
@@ -1588,6 +1654,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       cutsceneConfig = level?.meta?.cutscene ?? null;
       if (isCutsceneMapMode()) {
         preloadCutsceneImages(cutsceneConfig);
+        preloadCutsceneAvatars(cutsceneConfig);
       }
       const carryOverVitals = savedSnapshot?.playerVitals ? null : game.consumeCarryOverVitals?.();
       const mapDimensions = level?.getDimensions?.() ?? {};

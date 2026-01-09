@@ -11,6 +11,7 @@ const AVATAR_PATHS = {
 };
 
 const avatarLayoutCache = new Map();
+const avatarImageCache = new Map();
 let avatarRequestId = 0;
 
 function resolveAvatarUrl(path) {
@@ -67,6 +68,22 @@ async function loadAvatarLayout(path) {
     image.src = resolvedPath;
   });
   avatarLayoutCache.set(resolvedPath, promise);
+  return promise;
+}
+
+export async function loadAvatarImage(avatarPath) {
+  if (!avatarPath) return null;
+  const resolvedPath = resolveAvatarUrl(avatarPath);
+  if (avatarImageCache.has(resolvedPath)) {
+    return avatarImageCache.get(resolvedPath);
+  }
+  const promise = new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve({ image, layout: resolveAvatarLayout(image) });
+    image.onerror = () => resolve(null);
+    image.src = resolvedPath;
+  });
+  avatarImageCache.set(resolvedPath, promise);
   return promise;
 }
 
