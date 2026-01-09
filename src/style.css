@@ -1031,38 +1031,6 @@ input[type='text']:focus {
   margin-top: auto;
 }
 
-.interaction-bubble {
-  position: absolute;
-  left: 0;
-  top: 0;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid #3a271b;
-  background: linear-gradient(150deg, rgba(240, 194, 75, 0.2), rgba(26, 16, 10, 0.9));
-  color: #f5e7c2;
-  font-size: 10px;
-  line-height: 1.4;
-  letter-spacing: 0.3px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, calc(-100% - 10px));
-  pointer-events: none;
-  z-index: 5;
-  max-width: 240px;
-  text-align: center;
-}
-
-.interaction-bubble::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  transform: translateX(-50%);
-  border-width: 8px 8px 0 8px;
-  border-style: solid;
-  border-color: rgba(26, 16, 10, 0.95) transparent transparent transparent;
-  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
-}
-
 .interaction-banner {
   position: absolute;
   left: 50%;

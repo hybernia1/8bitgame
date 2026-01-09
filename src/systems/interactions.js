@@ -314,15 +314,10 @@ export function createInteractionSystem({
     const { nearestNpc, nearestSafe, nearSafe, activeSwitch, switchDistance, nearGate } = context;
     let hasActiveDialogue = Boolean(state.activeLine);
     const npcDialogueActive = hasActiveDialogue && state.dialogueMeta?.speakerType === 'npc';
-    let promptType = null;
-    let promptTextId = null;
-    let promptWorldX = null;
-    let promptWorldY = null;
-    let promptParams = null;
 
     if (sessionState.activeQuiz) {
       hud.hideInteraction();
-      return { promptType, promptTextId, promptWorldX, promptWorldY };
+      return;
     }
 
     if (npcDialogueActive && !nearestNpc?.nearby) {
@@ -336,37 +331,24 @@ export function createInteractionSystem({
     if (hasActiveDialogue) {
       hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
     } else if (nearSafe && nearestSafe) {
-      promptType = 'safe';
-      promptTextId = nearestSafe.opened ? 'prompt.safeOpened' : 'prompt.safeLocked';
-      promptWorldX = nearestSafe.x;
-      promptWorldY = nearestSafe.y;
+      if (nearestSafe.opened) {
+        hud.showPrompt('prompt.safeOpened');
+      } else {
+        hud.showPrompt('prompt.safeLocked');
+      }
     } else if (nearestNpc?.nearby) {
-      promptType = 'npc';
-      promptTextId = 'prompt.talk';
-      promptParams = { name: nearestNpc.name };
-      promptWorldX = nearestNpc.x;
-      promptWorldY = nearestNpc.y - (nearestNpc.size ?? TILE) / 2;
+      hud.showPrompt('prompt.talk', { name: nearestNpc.name });
     } else if (activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
-      promptType = 'switch';
-      promptTextId = activeSwitch.activated ? 'prompt.switchOff' : 'prompt.switchOn';
-      promptWorldX = activeSwitch.tx * TILE + TILE / 2;
-      promptWorldY = activeSwitch.ty * TILE + TILE / 2;
+      hud.showPrompt(activeSwitch.activated ? 'prompt.switchOff' : 'prompt.switchOn');
     } else if (nearGate) {
-      promptType = 'gate';
-      promptTextId = context.gateState?.locked
-        ? context.gateState.promptLocked || 'prompt.gateLocked'
-        : context.gateState?.promptUnlocked || 'prompt.gateUnlocked';
-      promptWorldX = context.gateState?.x ?? null;
-      promptWorldY = context.gateState?.y ?? null;
-    }
-
-    if (!hasActiveDialogue && promptTextId) {
-      hud.showWorldPrompt(promptTextId, promptWorldX, promptWorldY, promptParams);
-    } else if (!hasActiveDialogue) {
+      if (context.gateState?.locked) {
+        hud.showPrompt(context.gateState.promptLocked || 'prompt.gateLocked');
+      } else {
+        hud.showPrompt(context.gateState?.promptUnlocked || 'prompt.gateUnlocked');
+      }
+    } else {
       hud.hideInteraction();
     }
-
-    return { promptType, promptTextId, promptWorldX, promptWorldY };
   }
 
   evaluateQuestCompletion({ silent: true });
