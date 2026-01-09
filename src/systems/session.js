@@ -6,6 +6,7 @@ import { createHudSystem } from './hud.js';
 import { createInputSystem } from './input.js';
 import { createInteractionSystem } from './interactions.js';
 import { registerScene, resume, setScene, showMenu } from '../core/scenes.js';
+import { applyAvatarSprite, resolveAvatarPathFromId } from '../ui/avatar-utils.js';
 import { format } from '../ui/messages.js';
 import { renderInventory, useInventorySlot } from '../ui/inventory.js';
 import { createQuizPanel } from '../ui/quiz-panel.js';
@@ -1008,9 +1009,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       if (avatarId) {
         cutsceneAvatar.dataset.avatar = avatarId;
         cutsceneAvatar.classList.remove('hidden');
+        const avatarPath = resolveAvatarPathFromId(avatarId);
+        applyAvatarSprite(cutsceneAvatar, avatarPath);
       } else {
         cutsceneAvatar.dataset.avatar = '';
         cutsceneAvatar.classList.add('hidden');
+        applyAvatarSprite(cutsceneAvatar, null);
       }
     }
     if (cutsceneStepBody) {
