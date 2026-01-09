@@ -136,7 +136,7 @@ canvas {
 .hud-button {
   padding: 8px 10px;
   border: 1px solid #3a271b;
-  background: rgba(255, 245, 224, 0.06);
+  background: #2a1b12;
   color: var(--text);
   font-family: inherit;
   font-size: 12px;
@@ -157,7 +157,7 @@ canvas {
 }
 
 .hud-button[aria-pressed='true'] {
-  background: rgba(240, 194, 75, 0.14);
+  background: #3a2a16;
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -171,7 +171,7 @@ canvas {
 .hud-pill {
   padding: 8px 10px;
   border: 1px solid #3a271b;
-  background: radial-gradient(circle at 20% 20%, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.72));
+  background: radial-gradient(circle at 20% 20%, #4a3619, #20150e);
   font-size: 10px;
   letter-spacing: 0.5px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
@@ -213,7 +213,7 @@ canvas {
   padding: 6px 8px;
   margin-left: 4px;
   border: 1px solid #302722;
-  background: radial-gradient(circle at 20% 20%, rgba(240, 194, 75, 0.2), rgba(26, 18, 12, 0.68));
+  background: radial-gradient(circle at 20% 20%, #4a3619, #22150d);
   color: #f6e2b8;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
@@ -244,7 +244,7 @@ canvas {
   padding: 6px 8px;
   margin-left: 4px;
   border: 1px solid #2e2432;
-  background: radial-gradient(circle at 20% 20%, rgba(169, 92, 255, 0.2), rgba(26, 18, 32, 0.68));
+  background: radial-gradient(circle at 20% 20%, #3f255f, #1f1328);
   color: #f0e2ff;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
@@ -320,7 +320,7 @@ canvas {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(26, 16, 10, 0.92);
+  background: #1a120c;
   border: 1px solid #3a271b;
   padding: 16px;
   display: grid;
@@ -354,7 +354,7 @@ canvas {
 input[type='text'] {
   padding: 10px 12px;
   border: 1px solid #3a271b;
-  background: rgba(255, 245, 224, 0.06);
+  background: #2a1b12;
   color: var(--text);
   font-family: inherit;
 }
@@ -498,7 +498,7 @@ input[type='text']:focus {
   align-items: center;
   padding: 12px 14px;
   border: 1px solid #3a271b;
-  background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
+  background: linear-gradient(135deg, #3a2a16, #20150e);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
@@ -676,7 +676,7 @@ input[type='text']:focus {
   gap: 10px;
   padding: 12px;
   border: 1px dashed rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  background: #251c16;
 }
 
 .fullscreen-callout-body {
@@ -701,7 +701,7 @@ input[type='text']:focus {
   gap: 10px;
   padding: 12px;
   border: 1px solid #3a271b;
-  background: linear-gradient(130deg, rgba(240, 194, 75, 0.06), rgba(26, 16, 10, 0.86));
+  background: linear-gradient(130deg, #3a2a16, #20150e);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
@@ -722,7 +722,7 @@ input[type='text']:focus {
 .save-panel {
   padding: 12px;
   border: 1px solid #3a271b;
-  background: rgba(255, 245, 224, 0.03);
+  background: #21160f;
   display: grid;
   gap: 10px;
 }
@@ -734,7 +734,7 @@ input[type='text']:focus {
 }
 
 .menu-button {
-  background: linear-gradient(120deg, rgba(240, 194, 75, 0.18), rgba(240, 194, 75, 0.1));
+  background: linear-gradient(120deg, #4a3619, #2b1c13);
   border: 1px solid #3a271b;
   color: var(--text);
   font-family: inherit;
@@ -756,7 +756,7 @@ input[type='text']:focus {
 }
 
 .menu-button.ghost {
-  background: rgba(255, 255, 255, 0.02);
+  background: #21160f;
 }
 
 .menu-button.subtle {
@@ -782,7 +782,7 @@ input[type='text']:focus {
   border: 1px solid #3a271b;
   display: grid;
   gap: 6px;
-  background: linear-gradient(130deg, rgba(240, 194, 75, 0.07), rgba(26, 16, 10, 0.82));
+  background: linear-gradient(130deg, #3a2a16, #21160f);
 }
 
 .save-slot-header {
@@ -814,7 +814,7 @@ input[type='text']:focus {
 }
 
 .interaction-banner {
-  background: linear-gradient(135deg, rgba(240, 194, 75, 0.14), rgba(22, 14, 10, 0.82));
+  background: linear-gradient(135deg, #3a2a16, #21160f);
   border: 1px solid #3a271b;
   padding: 10px 12px;
   display: grid;
@@ -871,7 +871,7 @@ input[type='text']:focus {
 }
 
 .quest-log {
-  background: rgba(0, 0, 0, 0.4);
+  background: #1a120c;
   border: 1px solid #3a271b;
   padding: 10px 12px;
   display: grid;
@@ -881,7 +881,6 @@ input[type='text']:focus {
   margin-left: auto;
   margin-top: 4px;
   align-self: flex-end;
-  backdrop-filter: blur(2px);
   position: relative;
   right: 0;
 }
@@ -934,7 +933,7 @@ input[type='text']:focus {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: radial-gradient(circle at 0% 0%, rgba(240, 194, 75, 0.1), rgba(24, 14, 10, 0.7));
+  background: radial-gradient(circle at 0% 0%, #3a2a16, #1a120c);
   transition: border-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   aspect-ratio: 1 / 1;
   text-align: center;
@@ -971,7 +970,7 @@ input[type='text']:focus {
 }
 
 .inventory {
-  background: rgba(0, 0, 0, 0.58);
+  background: #1a120c;
   border: 1px solid #3a271b;
   padding: 12px 14px;
   display: grid;
@@ -1008,7 +1007,7 @@ input[type='text']:focus {
 .inventory-status {
   padding: 8px 10px;
   border: 1px solid #3a271b;
-  background: rgba(26, 16, 10, 0.78);
+  background: #21160f;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   font-size: 11px;
   color: var(--accent);
@@ -1018,7 +1017,7 @@ input[type='text']:focus {
 .hud-toast {
   padding: 10px 12px;
   border: 1px solid #3a271b;
-  background: linear-gradient(160deg, rgba(240, 194, 75, 0.16), rgba(26, 16, 10, 0.82));
+  background: linear-gradient(160deg, #3a2a16, #21160f);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   font-size: 12px;
 }
@@ -1037,8 +1036,8 @@ input[type='text']:focus {
   top: 0;
   padding: 6px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(240, 194, 75, 0.4);
-  background: rgba(18, 12, 8, 0.92);
+  border: 1px solid #5a4424;
+  background: #1a120c;
   color: #f5e7c2;
   font-size: 11px;
   line-height: 1.2;
@@ -1061,7 +1060,7 @@ input[type='text']:focus {
   transform: translateX(-50%);
   border-width: 6px 6px 0 6px;
   border-style: solid;
-  border-color: rgba(18, 12, 8, 0.92) transparent transparent transparent;
+  border-color: #1a120c transparent transparent transparent;
   filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
 }
 

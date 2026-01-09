@@ -158,11 +158,19 @@ export function createHudSystem(passedElements = {}) {
     }
     const canvasRect = canvas.getBoundingClientRect();
     const hudRect = hudLayer.getBoundingClientRect();
+    const hudStyle = window.getComputedStyle?.(hudLayer);
+    const paddingLeft = Number.parseFloat(hudStyle?.paddingLeft ?? '0') || 0;
+    const paddingTop = Number.parseFloat(hudStyle?.paddingTop ?? '0') || 0;
+    const scaleX = hudLayer.offsetWidth ? hudRect.width / hudLayer.offsetWidth : 1;
+    const scaleY = hudLayer.offsetHeight ? hudRect.height / hudLayer.offsetHeight : 1;
     const canvasWidth = canvas.width || 1;
     const canvasHeight = canvas.height || 1;
     const relativeX = (screenX / canvasWidth) * canvasRect.width + (canvasRect.left - hudRect.left);
     const relativeY = (screenY / canvasHeight) * canvasRect.height + (canvasRect.top - hudRect.top);
-    return { x: relativeX, y: relativeY };
+    return {
+      x: relativeX / scaleX - paddingLeft,
+      y: relativeY / scaleY - paddingTop,
+    };
   }
 
   function showWorldPrompt(messageId, worldX, worldY, params) {
