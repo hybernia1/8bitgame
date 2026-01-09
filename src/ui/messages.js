@@ -34,6 +34,9 @@ export const messages = {
   'note.combat.npcHit': '{name} - zásah! Zbývá {hp} HP.',
   'note.apple.fullHealth': 'Máš plné zdraví, jablko si nech na horší chvíli.',
   'note.apple.healed': 'Jablko ti doplnilo jeden život.',
+  'note.cigar.fullStress': 'Stres máš na maximu, doutník zatím nepotřebuješ.',
+  'note.cigar.used': 'Doutník tě uklidnil, stres se zvedl o 2 body.',
+  'note.stress.empty': 'Stres je na nule. Pohyb je zpomalený.',
   'note.videotape.found': 'Vytáhl jsi videokazetu, ale poblíž není žádný přehrávač.',
   'note.videotape.played':
     'Kazeta byla prázdná a přehrávání skončilo šumem. Technik Jára tě sem poslal zbytečně.',

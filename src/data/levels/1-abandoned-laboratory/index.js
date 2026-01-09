@@ -191,6 +191,9 @@ export const abandonedLaboratoryLevel = {
       description: 'Munice pro tvoji pistoli.',
       quantity: 6,
     }),
+    placePickup('cigar', 7, 4, {
+      description: 'Povzbuzující doutník, který snižuje stres.',
+    }),
     placePickup('ammo', 16, 8, {
       description: 'Munice pro tvoji pistoli.',
       quantity: 6,
