@@ -1,14 +1,5 @@
+import { applyAvatarSprite, resolveAvatarPath } from '../ui/avatar-utils.js';
 import { format } from '../ui/messages.js';
-
-const AVATAR_PATHS = {
-  player: 'assets/hero/hero.png',
-  npc: 'assets/npc/npc.png',
-  hana: 'assets/npc/hana.png',
-  jara: 'assets/npc/jara.png',
-  caretaker: 'assets/npc/caretaker.png',
-  cat: 'assets/npc/cat.png',
-  monster: 'assets/npc/monster.png',
-};
 
 function applyText(node, text) {
   if (!node) return;
@@ -23,27 +14,18 @@ export function createHudSystem(passedElements = {}) {
   let questBindingLabel = 'I';
   let questVisible = false;
 
-  function resolveAvatarPath(meta = {}) {
-    if (!meta || !elements.bannerAvatar) return null;
-    const { speakerType, spriteName } = meta;
-    if (speakerType === 'player') return AVATAR_PATHS.player;
-    if (spriteName && AVATAR_PATHS[spriteName]) return AVATAR_PATHS[spriteName];
-    if (speakerType === 'npc') return AVATAR_PATHS.npc;
-    return null;
-  }
-
   function setDialogueAvatar(meta) {
     if (!elements.banner) return;
     const avatarPath = resolveAvatarPath(meta);
     if (avatarPath) {
       elements.banner.classList.add('has-avatar');
       if (elements.bannerAvatar) {
-        elements.bannerAvatar.style.backgroundImage = `url(${avatarPath})`;
+        applyAvatarSprite(elements.bannerAvatar, avatarPath);
       }
     } else {
       elements.banner.classList.remove('has-avatar');
       if (elements.bannerAvatar) {
-        elements.bannerAvatar.style.backgroundImage = '';
+        applyAvatarSprite(elements.bannerAvatar, null);
       }
     }
   }
