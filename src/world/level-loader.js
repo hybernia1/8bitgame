@@ -270,6 +270,7 @@ function parseLightingLayer(layer) {
         id: props.id ?? obj.name ?? `${obj.id}`,
         name: props.name ?? obj.name ?? 'Switch',
         ...toTileCoords(obj),
+        timerSeconds: props.timerSeconds ?? props.timer,
         lights: props.lights ?? [zone],
       });
       return;

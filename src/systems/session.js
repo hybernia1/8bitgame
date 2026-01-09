@@ -1776,6 +1776,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         }
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables, blockers: safes });
         level.updatePressureSwitches(getSwitchOccupants());
+        level.updateLightSwitchTimers(dt);
         level.clampCamera(camera, player, canvas);
 
         if (playerVitals.invulnerableTime > 0) {
