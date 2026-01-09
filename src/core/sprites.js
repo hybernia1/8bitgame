@@ -174,6 +174,23 @@ function loadTextureImage(path) {
   });
 }
 
+function ensureDecorGifHost() {
+  if (typeof document === 'undefined') return null;
+  const existing = document.getElementById('decor-gif-cache');
+  if (existing) return existing;
+  const host = document.createElement('div');
+  host.id = 'decor-gif-cache';
+  host.setAttribute('aria-hidden', 'true');
+  host.style.position = 'absolute';
+  host.style.width = '0';
+  host.style.height = '0';
+  host.style.overflow = 'hidden';
+  host.style.opacity = '0';
+  host.style.pointerEvents = 'none';
+  document.body?.appendChild(host);
+  return host;
+}
+
 async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
   const variantList = Array.isArray(limit)
     ? Array.from(new Set(limit)).filter((value) => Number.isInteger(value) && value > 0)
@@ -182,6 +199,12 @@ async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
   const entries = await Promise.all(
     variantList.map(async (variant) => {
       const image = await loadTextureImage(`assets/decor/${variant}.gif`);
+      if (image) {
+        const host = ensureDecorGifHost();
+        if (host && !image.parentNode) {
+          host.appendChild(image);
+        }
+      }
       return [variant, image];
     }),
   );
@@ -213,7 +236,7 @@ async function loadTextureMap(decorVariants) {
     loadDecorTextures(decorVariants),
   ]);
 
-  const textures = [...staticEntries, ...(decorResult?.entries ?? [])].reduce((acc, [name, image]) => {
+  const textures = [...staticEntries].reduce((acc, [name, image]) => {
     if (image) acc[name] = image;
     return acc;
   }, {});
