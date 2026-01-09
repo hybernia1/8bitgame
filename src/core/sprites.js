@@ -174,6 +174,44 @@ function loadTextureImage(path) {
   });
 }
 
+async function loadAnimatedGif(path) {
+  if (!path || typeof ImageDecoder === 'undefined') return null;
+  const resolvedPath = resolveTexturePath(path);
+
+  try {
+    const response = await fetch(resolvedPath);
+    if (!response.ok) return null;
+    const data = await response.arrayBuffer();
+    const decoder = new ImageDecoder({ data, type: 'image/gif' });
+    const frameCount = decoder.tracks?.selectedTrack?.frameCount ?? 0;
+    if (!frameCount) {
+      decoder.close?.();
+      return null;
+    }
+    const frames = [];
+    const durations = [];
+    for (let index = 0; index < frameCount; index += 1) {
+      const { image, duration } = await decoder.decode({ frameIndex: index });
+      frames.push(image);
+      durations.push(duration ?? 100);
+    }
+    decoder.close?.();
+    const frameEnds = durations.reduce((acc, duration) => {
+      const next = (acc.length ? acc[acc.length - 1] : 0) + duration;
+      acc.push(next);
+      return acc;
+    }, []);
+    return {
+      frames,
+      frameEnds,
+      totalDuration: frameEnds[frameEnds.length - 1],
+      startTime: performance.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function ensureDecorGifHost() {
   if (typeof document === 'undefined') return null;
   const existing = document.getElementById('decor-gif-cache');
@@ -198,7 +236,11 @@ async function loadDecorTextures(limit = DECOR_VARIANT_LIMIT) {
 
   const entries = await Promise.all(
     variantList.map(async (variant) => {
-      const image = await loadTextureImage(`assets/decor/${variant}.gif`);
+      const path = `assets/decor/${variant}.gif`;
+      const animated = await loadAnimatedGif(path);
+      if (animated) return [variant, animated];
+
+      const image = await loadTextureImage(path);
       if (image) {
         const host = ensureDecorGifHost();
         if (host && !image.parentNode) {

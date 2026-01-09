@@ -468,10 +468,20 @@ export class LevelInstance {
 
   drawDynamicDecor(ctx, camera) {
     if (!this.dynamicDecor.length) return;
+    const now = performance.now();
     this.dynamicDecor.forEach(({ image, x, y }) => {
       const dx = x - camera.x;
       const dy = y - camera.y;
       if (dx > ctx.canvas.width || dy > ctx.canvas.height || dx + TILE < 0 || dy + TILE < 0) return;
+      if (image?.frames && image.frameEnds?.length) {
+        const elapsed = (now - image.startTime) % image.totalDuration;
+        const frameIndex = image.frameEnds.findIndex((end) => elapsed < end);
+        const frame = image.frames[frameIndex === -1 ? 0 : frameIndex];
+        if (frame) {
+          ctx.drawImage(frame, dx, dy, TILE, TILE);
+        }
+        return;
+      }
       ctx.drawImage(image, dx, dy, TILE, TILE);
     });
   }
