@@ -213,7 +213,7 @@ async function loadTextureMap(decorVariants) {
     loadDecorTextures(decorVariants),
   ]);
 
-  const textures = [...staticEntries, ...(decorResult?.entries ?? [])].reduce((acc, [name, image]) => {
+  const textures = [...staticEntries].reduce((acc, [name, image]) => {
     if (image) acc[name] = image;
     return acc;
   }, {});
