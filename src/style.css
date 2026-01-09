@@ -15,6 +15,7 @@
   --canvas-height: 640px;
   --shell-chrome: 96px;
   --game-scale: 1.5;
+  --ui-scale: 1;
   --page-padding: clamp(10px, 1.4vw, 20px);
   --font-family: 'Gamefont', 'Courier New', monospace;
 }
@@ -317,7 +318,8 @@ canvas {
 
 .overlay {
   position: absolute;
-  inset: 8px;
+  top: 8px;
+  left: 8px;
   background: rgba(26, 16, 10, 0.92);
   border: 1px solid #3a271b;
   padding: 16px;
@@ -326,6 +328,10 @@ canvas {
   align-content: start;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 14px 40px rgba(0, 0, 0, 0.45);
   z-index: 5;
+  width: calc((100% - 16px) / var(--ui-scale));
+  height: calc((100% - 16px) / var(--ui-scale));
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
 }
 
 .safe-panel {
@@ -396,12 +402,18 @@ input[type='text']:focus {
 
 .hud-layer {
   position: absolute;
-  inset: 8px;
+  top: 8px;
+  left: 8px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   pointer-events: none;
   z-index: 3;
+  width: calc((100% - 16px) / var(--ui-scale));
+  height: calc((100% - 16px) / var(--ui-scale));
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
 }
 
 .game-shell.ui-hidden .hud-layer,
@@ -417,6 +429,8 @@ input[type='text']:focus {
   z-index: 4;
   pointer-events: auto;
   display: none;
+  transform: scale(var(--ui-scale));
+  transform-origin: top right;
 }
 
 .game-shell.ui-hidden .menu-fullscreen {
@@ -964,6 +978,8 @@ input[type='text']:focus {
   gap: 12px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+  transform: scale(var(--ui-scale));
+  transform-origin: top right;
 }
 
 .inventory-modal {
@@ -980,7 +996,7 @@ input[type='text']:focus {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(8px) scale(0.98);
+  transform: translateY(8px) scale(calc(0.98 * var(--ui-scale)));
 }
 
 .inventory-grid {
@@ -1019,7 +1035,8 @@ input[type='text']:focus {
   position: absolute;
   left: 50%;
   bottom: 16px;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(var(--ui-scale));
+  transform-origin: bottom center;
   min-width: min(540px, calc(100% - 24px));
   max-width: min(880px, calc(100% - 24px));
   pointer-events: none;

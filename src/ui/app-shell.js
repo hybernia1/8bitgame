@@ -1,4 +1,5 @@
 const DEFAULT_SCALE_LIMITS = { min: 0.6, max: 5 };
+const DEFAULT_UI_SCALE_LIMITS = { min: 0.85, max: 1.8 };
 const VIEWPORT_BUFFER = 0;
 
 const defaultDocument = typeof document !== 'undefined' ? document : null;
@@ -26,6 +27,11 @@ export function setScale(value) {
   shellState.documentRoot.documentElement.style.setProperty('--game-scale', value.toString());
 }
 
+export function setUiScale(value) {
+  if (!shellState.documentRoot) return;
+  shellState.documentRoot.documentElement.style.setProperty('--ui-scale', value.toString());
+}
+
 function syncCanvasCssDimensions() {
   if (!shellState.documentRoot) return;
   shellState.documentRoot.documentElement.style.setProperty('--canvas-width', `${shellState.baseCanvas.width}px`);
@@ -46,7 +52,10 @@ function updateScale() {
     shellState.scaleLimits.max,
     Math.max(shellState.scaleLimits.min, Math.min(widthScale, heightScale)),
   );
-  setScale(Number.isFinite(nextScale) ? Number(nextScale.toFixed(3)) : shellState.scaleLimits.min);
+  const resolvedScale = Number.isFinite(nextScale) ? Number(nextScale.toFixed(3)) : shellState.scaleLimits.min;
+  setScale(resolvedScale);
+  const uiScale = Math.min(DEFAULT_UI_SCALE_LIMITS.max, Math.max(DEFAULT_UI_SCALE_LIMITS.min, resolvedScale));
+  setUiScale(Number(uiScale.toFixed(3)));
 }
 
 function getFullscreenElement(root = shellState.documentRoot) {
