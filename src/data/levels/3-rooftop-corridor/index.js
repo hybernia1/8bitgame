@@ -33,7 +33,7 @@ export const rooftopCorridorLevel = {
     destroyedFloors: [...baseLayout.destroyedFloors],
   },
   lighting: {
-    litZones: [{ x: 1, y: 1, w: 7, h: 7 }],
+    sources: [{ tx: 4, ty: 4 }],
     switches: [],
   },
   interactables: {},
