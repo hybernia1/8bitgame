@@ -82,9 +82,6 @@ function getHudDomRefs(root) {
     bannerTitle: root.querySelector('.interaction-title'),
     bannerBody: root.querySelector('.interaction-text'),
     bannerAvatar: root.querySelector('[data-dialogue-avatar]'),
-    hudLayer: root.querySelector('.hud-layer'),
-    interactionBubble: root.querySelector('.interaction-bubble'),
-    interactionBubbleText: root.querySelector('.interaction-bubble-text'),
     pauseBindings: root.querySelector('[data-pause-bindings]'),
   };
 }
@@ -160,7 +157,7 @@ const MENU_SUBTITLES = {
 };
 
 export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetPromise, shell }) {
-  const baseHudDomRefs = getHudDomRefs(shell.documentRoot);
+  const hudDomRefs = getHudDomRefs(shell.documentRoot);
   const safePanelController = createSafePanel({ documentRoot: shell.documentRoot });
   const quizPanelController = createQuizPanel({ documentRoot: shell.documentRoot });
   let inventoryToggleButton = null;
@@ -1645,13 +1642,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       objectivesCollected = state.objectivesCollected;
       restoreProjectiles(savedSnapshot?.projectiles);
 
-      hudSystem = createHudSystem({
-        ...baseHudDomRefs,
-        hudLayer: shell.hudLayer ?? baseHudDomRefs.hudLayer,
-        interactionBubble: shell.interactionBubble ?? baseHudDomRefs.interactionBubble,
-        canvas,
-        camera,
-      });
+      hudSystem = createHudSystem(hudDomRefs);
       game.setHud(hudSystem);
       hudSystem.setObjectives(objectivesCollected, level.getObjectiveTotal());
       hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);

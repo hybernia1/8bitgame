@@ -147,40 +147,6 @@ export function createHudSystem(passedElements = {}) {
     showBanner('prompt', format(messageId, params));
   }
 
-  function resolveWorldPromptPosition(worldX, worldY) {
-    const camera = elements.camera ?? { x: 0, y: 0 };
-    const canvas = elements.canvas;
-    const hudLayer = elements.hudLayer;
-    const screenX = (Number.isFinite(worldX) ? worldX : 0) - (camera?.x ?? 0);
-    const screenY = (Number.isFinite(worldY) ? worldY : 0) - (camera?.y ?? 0);
-    if (!canvas || !hudLayer || !canvas.getBoundingClientRect || !hudLayer.getBoundingClientRect) {
-      return { x: screenX, y: screenY };
-    }
-    const canvasRect = canvas.getBoundingClientRect();
-    const hudRect = hudLayer.getBoundingClientRect();
-    const canvasWidth = canvas.width || 1;
-    const canvasHeight = canvas.height || 1;
-    const relativeX = (screenX / canvasWidth) * canvasRect.width + (canvasRect.left - hudRect.left);
-    const relativeY = (screenY / canvasHeight) * canvasRect.height + (canvasRect.top - hudRect.top);
-    return { x: relativeX, y: relativeY };
-  }
-
-  function showWorldPrompt(messageId, worldX, worldY, params) {
-    if (!elements.interactionBubble || !elements.interactionBubbleText) return;
-    const bubble = elements.interactionBubble;
-    applyText(elements.interactionBubbleText, format(messageId, params));
-    bubble.classList.remove('hidden');
-    hideBanner();
-    const { x, y } = resolveWorldPromptPosition(worldX, worldY);
-    bubble.style.left = `${x}px`;
-    bubble.style.top = `${y}px`;
-  }
-
-  function hideWorldPrompt() {
-    if (!elements.interactionBubble) return;
-    elements.interactionBubble.classList.add('hidden');
-  }
-
   function showDialogue(speakerId, lineId, params, meta) {
     const speaker = format(speakerId, params);
     const line = format(lineId, params);
@@ -190,13 +156,11 @@ export function createHudSystem(passedElements = {}) {
     applyText(elements.bannerTitle, speaker);
     applyText(elements.bannerBody, line);
     setDialogueAvatar(meta);
-    hideWorldPrompt();
   }
 
   function hideInteraction() {
     setDialogueAvatar(null);
     hideBanner();
-    hideWorldPrompt();
   }
 
   function setQuestLog(questLog) {
@@ -260,9 +224,7 @@ export function createHudSystem(passedElements = {}) {
     showSaveToast,
     hideToast,
     showPrompt,
-    showWorldPrompt,
     showDialogue,
-    hideWorldPrompt,
     hideInteraction,
     setInventoryBindingHint,
   };

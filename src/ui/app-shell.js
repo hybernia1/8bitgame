@@ -200,7 +200,6 @@ export function initShell({
     gameShell: shellState.gameShell,
     hudLayer: root?.querySelector('.hud-layer') ?? null,
     interactionBanner: root?.querySelector('.interaction-banner') ?? null,
-    interactionBubble: root?.querySelector('.interaction-bubble') ?? null,
     inventoryPanel: root?.querySelector('.inventory-modal') ?? null,
     alertLayer: root?.querySelector('[data-alert-layer]') ?? null,
     pausePanel: root?.querySelector('.pause-panel') ?? null,
