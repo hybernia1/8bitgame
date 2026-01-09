@@ -12,9 +12,17 @@ const FLOOR_TILE = TILE_IDS.FLOOR_PLAIN;
 const DEFAULT_COLLISION_TILE = TILE_IDS.WALL_SOLID;
 const DEFAULT_DESTRUCTIBLE_HP = 1;
 const LIGHTING_SHADOW_COLOR = 'rgba(4, 6, 14, 0.78)';
-const LIGHTING_TINT_COLOR = 'rgba(255, 221, 164, 0.12)';
+const LIGHTING_TINT_RGB = '255, 221, 164';
+const LIGHTING_TINT_ALPHA = 0.12;
+const LIGHTING_TINT_COLOR = `rgba(${LIGHTING_TINT_RGB}, ${LIGHTING_TINT_ALPHA})`;
 const DEFAULT_LIGHT_COLOR = 'rgba(255, 214, 153, 0.32)';
-const LIGHTING_RADIUS = 12;
+const LIGHTING_RADIUS = 5;
+const LIGHTING_SOFT_EDGES = true;
+
+function getLightingTint(intensity) {
+  const scaledAlpha = LIGHTING_TINT_ALPHA * Math.max(0, Math.min(1, intensity));
+  return `rgba(${LIGHTING_TINT_RGB}, ${scaledAlpha})`;
+}
 
 function toIndex(entry, width) {
   if (Number.isInteger(entry?.index)) return entry.index;
@@ -255,6 +263,7 @@ export class LevelInstance {
       this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.getUnlockedTileValue(index, 'decor'));
 
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
+    this.lightDistances = new Array(this.mapWidth * this.mapHeight).fill(null);
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({
       ...sw,
       timerSeconds: Number.isFinite(sw.timerSeconds) ? sw.timerSeconds : sw.timer,
@@ -346,24 +355,52 @@ export class LevelInstance {
 
   rebuildLighting() {
     const nextTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
+    const nextDistances = new Array(this.mapWidth * this.mapHeight).fill(null);
     const sources = this.getLightingSources();
     if (!sources.length) {
-      this.updateLightingTiles(nextTiles);
+      this.updateLightingTiles(nextTiles, nextDistances);
       return;
     }
 
     const maxDistance = LIGHTING_RADIUS;
     const queue = [];
-    sources.forEach(({ tx, ty }) => {
+    const markTile = (tx, ty, distance) => {
+      const index = ty * this.mapWidth + tx;
+      if (!Number.isInteger(index) || index < 0 || index >= nextTiles.length) return;
+      if (!nextTiles[index]) {
+        nextTiles[index] = true;
+      }
+      if (nextDistances[index] == null || distance < nextDistances[index]) {
+        nextDistances[index] = distance;
+      }
+      const tileId = this.collisionTiles[index];
+      if (!this.isOpenDoorTile(tileId) && distance < maxDistance) {
+        queue.push({ tx, ty, distance });
+      }
+    };
+    const addSourceTile = (tx, ty) => {
       if (!Number.isInteger(tx) || !Number.isInteger(ty)) return;
       if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) return;
       const index = ty * this.mapWidth + tx;
       const tileId = this.collisionTiles[index];
       if (this.isLightBlockingTile(tileId)) return;
-      nextTiles[index] = true;
-      if (!this.isOpenDoorTile(tileId) && maxDistance > 0) {
-        queue.push({ tx, ty, distance: 0 });
+      markTile(tx, ty, 0);
+    };
+    sources.forEach(({ tx, ty }) => {
+      if (!Number.isInteger(tx) || !Number.isInteger(ty)) return;
+      if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) return;
+      const index = ty * this.mapWidth + tx;
+      const tileId = this.collisionTiles[index];
+      if (this.isLightBlockingTile(tileId)) {
+        [
+          { dx: 1, dy: 0 },
+          { dx: -1, dy: 0 },
+          { dx: 0, dy: 1 },
+          { dx: 0, dy: -1 },
+        ].forEach(({ dx, dy }) => addSourceTile(tx + dx, ty + dy));
+        return;
       }
+      markTile(tx, ty, 0);
     });
 
     const directions = [
@@ -387,6 +424,9 @@ export class LevelInstance {
 
         if (this.isOpenDoorTile(nTile)) {
           nextTiles[nIndex] = true;
+          if (nextDistances[nIndex] == null || nextDistance < nextDistances[nIndex]) {
+            nextDistances[nIndex] = nextDistance;
+          }
           const beyondDistance = nextDistance + 1;
           if (beyondDistance > maxDistance) return;
           const bx = nx + dx;
@@ -396,28 +436,36 @@ export class LevelInstance {
           const bTile = this.collisionTiles[bIndex];
           if (this.isLightBlockingTile(bTile)) return;
           nextTiles[bIndex] = true;
+          if (nextDistances[bIndex] == null || beyondDistance < nextDistances[bIndex]) {
+            nextDistances[bIndex] = beyondDistance;
+          }
           return;
         }
 
-        if (nextTiles[nIndex]) return;
+        if (nextDistances[nIndex] != null && nextDistance >= nextDistances[nIndex]) return;
         nextTiles[nIndex] = true;
+        nextDistances[nIndex] = nextDistance;
         if (nextDistance < maxDistance) {
           queue.push({ tx: nx, ty: ny, distance: nextDistance });
         }
       });
     }
 
-    this.updateLightingTiles(nextTiles);
+    this.updateLightingTiles(nextTiles, nextDistances);
   }
 
-  updateLightingTiles(nextTiles) {
+  updateLightingTiles(nextTiles, nextDistances = null) {
     const dirty = [];
     nextTiles.forEach((value, index) => {
-      if (this.lightTiles[index] !== value) {
+      const nextDistance = nextDistances ? nextDistances[index] : this.lightDistances[index];
+      if (this.lightTiles[index] !== value || this.lightDistances[index] !== nextDistance) {
         dirty.push(index);
       }
     });
     this.lightTiles = nextTiles;
+    if (nextDistances) {
+      this.lightDistances = nextDistances;
+    }
     if (dirty.length) {
       this.invalidateLighting(dirty);
     }
@@ -1101,6 +1149,7 @@ export class LevelInstance {
       renderLightingToContext(
         context,
         this.lightTiles,
+        this.lightDistances,
         this.mapWidth,
         this.mapHeight,
         this.tileEffects,
@@ -1118,6 +1167,7 @@ export class LevelInstance {
       renderLightingToContext(
         this.lightingLayer.context,
         this.lightTiles,
+        this.lightDistances,
         this.mapWidth,
         this.mapHeight,
         this.tileEffects,
@@ -1297,9 +1347,25 @@ function renderTilesToContext(context, tiles, width, spriteSheet, indices, baseT
   });
 }
 
-function renderLightingToContext(context, lightTiles, width, height, tileEffects = null, indices, hasTileEffects = false) {
+function renderLightingToContext(
+  context,
+  lightTiles,
+  lightDistances,
+  width,
+  height,
+  tileEffects = null,
+  indices,
+  hasTileEffects = false,
+) {
   if (!context) return;
-  const fullRedraw = !indices || !indices.length || hasTileEffects;
+  const fullRedraw = !indices || !indices.length || hasTileEffects || LIGHTING_SOFT_EDGES;
+  const maxDistance = Math.max(1, LIGHTING_RADIUS);
+  const falloff = (distance) => {
+    if (!Number.isFinite(distance)) return 0;
+    const normalized = Math.max(0, 1 - distance / (maxDistance + 1));
+    return normalized * normalized;
+  };
+  const softRadius = TILE * 1.4;
 
   if (fullRedraw) {
     context.clearRect(0, 0, width * TILE, height * TILE);
@@ -1312,21 +1378,53 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
       }
     }
 
-    context.fillStyle = LIGHTING_TINT_COLOR;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
         if (!lightTiles[index]) continue;
+        const intensity = falloff(lightDistances?.[index] ?? 0);
+        context.fillStyle = getLightingTint(intensity);
         context.fillRect(x * TILE, y * TILE, TILE, TILE);
       }
     }
+
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        if (!lightTiles[index]) continue;
+        const intensity = falloff(lightDistances?.[index] ?? 0);
+        if (intensity <= 0) continue;
+        const centerX = x * TILE + TILE / 2;
+        const centerY = y * TILE + TILE / 2;
+        const gradient = context.createRadialGradient(
+          centerX,
+          centerY,
+          TILE * 0.2,
+          centerX,
+          centerY,
+          softRadius,
+        );
+        gradient.addColorStop(0, getLightingTint(intensity * 0.9));
+        gradient.addColorStop(1, 'rgba(255, 221, 164, 0)');
+        context.fillStyle = gradient;
+        context.fillRect(centerX - softRadius, centerY - softRadius, softRadius * 2, softRadius * 2);
+      }
+    }
+    context.restore();
   } else {
     indices.forEach((index) => {
       if (!Number.isInteger(index) || index < 0 || index >= lightTiles.length) return;
       const x = index % width;
       const y = Math.floor(index / width);
       context.clearRect(x * TILE, y * TILE, TILE, TILE);
-      context.fillStyle = lightTiles[index] ? LIGHTING_TINT_COLOR : LIGHTING_SHADOW_COLOR;
+      if (lightTiles[index]) {
+        const intensity = falloff(lightDistances?.[index] ?? 0);
+        context.fillStyle = getLightingTint(intensity);
+      } else {
+        context.fillStyle = LIGHTING_SHADOW_COLOR;
+      }
       context.fillRect(x * TILE, y * TILE, TILE, TILE);
     });
   }
