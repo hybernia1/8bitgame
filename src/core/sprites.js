@@ -407,9 +407,7 @@ function drawPlayer(ctx, random) {
 }
 
 function drawPickup(ctx, random) {
-  drawNoise(ctx, 0, 0, TILE, TILE, '#0e0e12', '#131925', 0.03, random);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(8, TILE - 10, TILE - 16, 8);
+  // Intentionally left blank so pickups render only their emoji/icon.
 }
 
 function drawNpc(ctx, random) {
