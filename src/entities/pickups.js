@@ -16,6 +16,9 @@ export function createPickups(templates = []) {
 
 export function drawPickups(ctx, camera, pickups, spriteSheet) {
   const pickupSprite = spriteSheet?.animations?.pickup;
+  const now = performance.now() / 1000;
+  const pickupSize = Math.max(16, Math.round(TILE * 0.55));
+  const spriteSize = Math.max(20, Math.round(TILE * 0.9));
   pickups.forEach((pickup) => {
     if (pickup.collected) return;
     const item = getItem(pickup.id);
@@ -23,21 +26,29 @@ export function drawPickups(ctx, camera, pickups, spriteSheet) {
     const tint = item?.tint ?? pickup.tint;
     const px = pickup.x - camera.x;
     const py = pickup.y - camera.y;
+    const rotation = now * Math.PI * 0.7 + (pickup.x + pickup.y) * 0.01;
     ctx.save();
     ctx.translate(px, py);
+    ctx.rotate(rotation);
     if (pickupSprite) {
-      pickupSprite.render({ context: ctx, x: -TILE / 2 + 2, y: -TILE / 2 + 2, width: TILE - 4, height: TILE - 4 });
+      pickupSprite.render({
+        context: ctx,
+        x: -spriteSize / 2,
+        y: -spriteSize / 2,
+        width: spriteSize,
+        height: spriteSize,
+      });
     }
     ctx.fillStyle = tint || '#f2d45c';
     ctx.beginPath();
-    ctx.moveTo(0, -10);
-    ctx.lineTo(10, 0);
-    ctx.lineTo(0, 10);
-    ctx.lineTo(-10, 0);
+    ctx.moveTo(0, -pickupSize);
+    ctx.lineTo(pickupSize, 0);
+    ctx.lineTo(0, pickupSize);
+    ctx.lineTo(-pickupSize, 0);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#0b0b10';
-    ctx.font = '12px "Press Start 2P", monospace';
+    ctx.font = `${Math.max(12, Math.round(pickupSize * 0.8))}px "Press Start 2P", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(icon || '◆', 0, 1);
