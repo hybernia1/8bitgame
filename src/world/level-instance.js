@@ -14,6 +14,7 @@ const DEFAULT_DESTRUCTIBLE_HP = 1;
 const LIGHTING_SHADOW_COLOR = 'rgba(4, 6, 14, 0.78)';
 const LIGHTING_TINT_COLOR = 'rgba(255, 221, 164, 0.12)';
 const DEFAULT_LIGHT_COLOR = 'rgba(255, 214, 153, 0.32)';
+const LIGHTING_RADIUS = 12;
 
 function toIndex(entry, width) {
   if (Number.isInteger(entry?.index)) return entry.index;
@@ -351,6 +352,7 @@ export class LevelInstance {
       return;
     }
 
+    const maxDistance = LIGHTING_RADIUS;
     const queue = [];
     sources.forEach(({ tx, ty }) => {
       if (!Number.isInteger(tx) || !Number.isInteger(ty)) return;
@@ -359,8 +361,8 @@ export class LevelInstance {
       const tileId = this.collisionTiles[index];
       if (this.isLightBlockingTile(tileId)) return;
       nextTiles[index] = true;
-      if (!this.isOpenDoorTile(tileId)) {
-        queue.push({ tx, ty });
+      if (!this.isOpenDoorTile(tileId) && maxDistance > 0) {
+        queue.push({ tx, ty, distance: 0 });
       }
     });
 
@@ -377,12 +379,16 @@ export class LevelInstance {
         const nx = current.tx + dx;
         const ny = current.ty + dy;
         if (nx < 0 || ny < 0 || nx >= this.mapWidth || ny >= this.mapHeight) return;
+        const nextDistance = current.distance + 1;
+        if (nextDistance > maxDistance) return;
         const nIndex = ny * this.mapWidth + nx;
         const nTile = this.collisionTiles[nIndex];
         if (this.isLightBlockingTile(nTile)) return;
 
         if (this.isOpenDoorTile(nTile)) {
           nextTiles[nIndex] = true;
+          const beyondDistance = nextDistance + 1;
+          if (beyondDistance > maxDistance) return;
           const bx = nx + dx;
           const by = ny + dy;
           if (bx < 0 || by < 0 || bx >= this.mapWidth || by >= this.mapHeight) return;
@@ -395,7 +401,9 @@ export class LevelInstance {
 
         if (nextTiles[nIndex]) return;
         nextTiles[nIndex] = true;
-        queue.push({ tx: nx, ty: ny });
+        if (nextDistance < maxDistance) {
+          queue.push({ tx: nx, ty: ny, distance: nextDistance });
+        }
       });
     }
 
