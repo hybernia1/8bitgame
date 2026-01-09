@@ -1035,7 +1035,6 @@ input[type='text']:focus {
   left: 0;
   top: 0;
   padding: 6px 12px;
-  border-radius: 12px;
   border: 1px solid #5a4424;
   background: #1a120c;
   color: #f5e7c2;
@@ -1050,18 +1049,6 @@ input[type='text']:focus {
   max-width: 200px;
   text-align: center;
   white-space: nowrap;
-}
-
-.interaction-bubble::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  transform: translateX(-50%);
-  border-width: 6px 6px 0 6px;
-  border-style: solid;
-  border-color: #1a120c transparent transparent transparent;
-  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
 }
 
 .interaction-banner {
