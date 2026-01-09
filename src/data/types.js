@@ -120,7 +120,7 @@
 /**
  * @typedef {Object} Interactables
  * @property {InteractableGate} [gate]
- * @property {Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }>} [switches]
+ * @property {Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }>, mode?: 'on'|'toggle'|'timer', duration?: number, activated?: boolean }>} [switches]
  * @property {InteractablePressureSwitch[]} [pressureSwitches]
  * @property {InteractableSafe[]} [safes]
  */
@@ -163,7 +163,7 @@
  * @property {number} [width]
  * @property {number} [height]
  * @property {TileLayers} [tileLayers]
- * @property {{ litZones?: Array<{ x: number, y: number, w: number, h: number }>, switches?: Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }> }} [lighting]
+ * @property {{ litZones?: Array<{ x: number, y: number, w: number, h: number }>, switches?: Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }>, mode?: 'on'|'toggle'|'timer', duration?: number, activated?: boolean }>, switchMode?: 'on'|'toggle'|'timer', switchDuration?: number, flashlight?: { enabled?: boolean, color?: string, intensity?: number, glowRadius?: number, coneLength?: number, coneAngle?: number, protectsFromDarkness?: boolean, darknessInterval?: number } }} [lighting]
  * @property {{ playerStart?: { x: number, y: number }, props?: any[], npcs?: any[] }} actors
  * @property {Array<{ id: string, name: string, icon: string, x?: number, y?: number, tx?: number, ty?: number, tint?: string, description?: string, objective?: boolean, stackable?: boolean, quantity?: number }>} pickups
  * @property {LevelQuest[]} [quests]

@@ -11,9 +11,26 @@ const DOOR_TILE = TILE_IDS.DOOR_CLOSED;
 const FLOOR_TILE = TILE_IDS.FLOOR_PLAIN;
 const DEFAULT_COLLISION_TILE = TILE_IDS.WALL_SOLID;
 const DEFAULT_DESTRUCTIBLE_HP = 1;
-const LIGHTING_SHADOW_COLOR = 'rgba(4, 6, 14, 0.78)';
-const LIGHTING_TINT_COLOR = 'rgba(255, 221, 164, 0.12)';
+const LIGHTING_SHADOW_RGB = '4, 6, 14';
+const LIGHTING_TINT_RGB = '255, 221, 164';
+const LIGHTING_SHADOW_ALPHA = 0.78;
+const LIGHTING_TINT_ALPHA = 0.12;
+const LIGHTING_EDGE_GLOW_ALPHA = 0.08;
 const DEFAULT_LIGHT_COLOR = 'rgba(255, 214, 153, 0.32)';
+const DEFAULT_FLASHLIGHT_CONFIG = {
+  enabled: false,
+  color: 'rgba(255, 235, 200, 0.65)',
+  intensity: 0.9,
+  glowRadius: 1.2,
+  coneLength: 5.5,
+  coneAngle: 90,
+  protectsFromDarkness: false,
+  darknessInterval: 1.6,
+};
+
+function withAlpha(rgb, alpha) {
+  return `rgba(${rgb}, ${alpha})`;
+}
 
 function toIndex(entry, width) {
   if (Number.isInteger(entry?.index)) return entry.index;
@@ -222,6 +239,16 @@ export class LevelInstance {
       ...(levelConfig.lighting ?? {}),
       switches: this.interactables.switches ?? levelConfig.lighting?.switches ?? [],
     };
+    this.flashlightConfig = {
+      ...DEFAULT_FLASHLIGHT_CONFIG,
+      ...(levelConfig.lighting?.flashlight ?? {}),
+    };
+    this.flashlightState = {
+      active: false,
+      x: 0,
+      y: 0,
+      direction: { x: 0, y: 1 },
+    };
 
     this.resetState();
   }
@@ -254,12 +281,26 @@ export class LevelInstance {
       this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.getUnlockedTileValue(index, 'decor'));
 
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
-    this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
+    this.lightTileCounts = new Array(this.mapWidth * this.mapHeight).fill(0);
+    this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({
+      ...sw,
+      mode: sw.mode ?? this.lightingConfig.switchMode ?? 'on',
+      duration: sw.duration ?? this.lightingConfig.switchDuration ?? 0,
+      activated: Boolean(sw.activated ?? false),
+      remaining: 0,
+    }));
     this.pressureSwitches = [];
     this.tileEffects = new Array(this.mapWidth * this.mapHeight).fill(null);
     this.tileEffectsCount = 0;
 
     this.applyLightingZones(this.lightingConfig.litZones ?? []);
+    this.lightSwitches.forEach((sw) => {
+      if (!sw.activated) return;
+      this.applyLightingZones(sw.lights ?? []);
+      if (sw.mode === 'timer') {
+        sw.remaining = Math.max(0, Number(sw.duration) || 0);
+      }
+    });
     this.invalidateAllLayers();
 
     if (this.gateIndex !== null) {
@@ -349,8 +390,38 @@ export class LevelInstance {
       for (let y = startY; y < endY; y += 1) {
         for (let x = startX; x < endX; x += 1) {
           const index = y * this.mapWidth + x;
-          this.lightTiles[index] = true;
-          dirty.push(index);
+          const nextCount = (this.lightTileCounts[index] ?? 0) + 1;
+          this.lightTileCounts[index] = nextCount;
+          if (nextCount === 1) {
+            this.lightTiles[index] = true;
+            dirty.push(index);
+          }
+        }
+      }
+    });
+
+    if (dirty.length) {
+      this.invalidateLighting(dirty);
+    }
+  }
+
+  removeLightingZones(zones = []) {
+    const dirty = [];
+    zones.forEach((zone) => {
+      const startX = Math.max(0, zone.x);
+      const startY = Math.max(0, zone.y);
+      const endX = Math.min(this.mapWidth, zone.x + zone.w);
+      const endY = Math.min(this.mapHeight, zone.y + zone.h);
+
+      for (let y = startY; y < endY; y += 1) {
+        for (let x = startX; x < endX; x += 1) {
+          const index = y * this.mapWidth + x;
+          const nextCount = Math.max(0, (this.lightTileCounts[index] ?? 0) - 1);
+          this.lightTileCounts[index] = nextCount;
+          if (nextCount === 0 && this.lightTiles[index]) {
+            this.lightTiles[index] = false;
+            dirty.push(index);
+          }
         }
       }
     });
@@ -531,6 +602,7 @@ export class LevelInstance {
       sourceWidth,
       sourceHeight,
     );
+    this.drawFlashlight(ctx, camera);
   }
 
   clampCamera(camera, player, canvas) {
@@ -570,11 +642,23 @@ export class LevelInstance {
     }
   }
 
-  isLitAt(x, y) {
+  isLitAt(x, y, { includeFlashlight = true } = {}) {
     const tx = Math.floor(x / TILE);
     const ty = Math.floor(y / TILE);
     if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) return false;
-    return this.lightTiles[ty * this.mapWidth + tx] === true;
+    if (this.lightTiles[ty * this.mapWidth + tx] === true) return true;
+    if (!includeFlashlight) return false;
+    return this.isPointLitByFlashlight(x, y);
+  }
+
+  getLightStatusAt(x, y) {
+    if (this.isLitAt(x, y, { includeFlashlight: false })) {
+      return 'lit';
+    }
+    if (this.isPointLitByFlashlight(x, y)) {
+      return 'flashlight';
+    }
+    return 'dark';
   }
 
   findNearestLitPosition(x, y) {
@@ -603,12 +687,107 @@ export class LevelInstance {
     return this.lightSwitches;
   }
 
-  activateLightSwitch(id) {
+  activateLightSwitch(id, { force = false } = {}) {
     const found = this.lightSwitches.find((sw) => sw.id === id);
-    if (!found || found.activated) return false;
+    if (!found) return { changed: false, activated: false, mode: null };
+
+    if (force) {
+      const wasActive = found.activated;
+      if (!found.activated) {
+        found.activated = true;
+        this.applyLightingZones(found.lights ?? []);
+      }
+      if (found.mode === 'timer') {
+        found.remaining = Math.max(0, Number(found.duration) || 0);
+      }
+      return { changed: !wasActive, activated: found.activated, mode: found.mode, forced: true };
+    }
+
+    if (found.mode === 'toggle') {
+      found.activated = !found.activated;
+      if (found.activated) {
+        this.applyLightingZones(found.lights ?? []);
+      } else {
+        this.removeLightingZones(found.lights ?? []);
+      }
+      return { changed: true, activated: found.activated, mode: found.mode };
+    }
+
+    if (found.mode === 'timer') {
+      const wasActive = found.activated;
+      if (!found.activated) {
+        found.activated = true;
+        this.applyLightingZones(found.lights ?? []);
+      }
+      found.remaining = Math.max(0, Number(found.duration) || 0);
+      return { changed: true, activated: true, mode: found.mode, refreshed: wasActive };
+    }
+
+    if (found.activated) {
+      return { changed: false, activated: true, mode: found.mode };
+    }
     found.activated = true;
-    this.applyLightingZones(found.lights);
-    return true;
+    this.applyLightingZones(found.lights ?? []);
+    return { changed: true, activated: true, mode: found.mode };
+  }
+
+  updateLightingTimers(dt) {
+    if (!this.lightSwitches.length) return;
+    this.lightSwitches.forEach((sw) => {
+      if (!sw.activated || sw.mode !== 'timer') return;
+      if (!Number.isFinite(sw.remaining)) {
+        sw.remaining = Math.max(0, Number(sw.duration) || 0);
+      }
+      sw.remaining = Math.max(0, sw.remaining - dt);
+      if (sw.remaining > 0) return;
+      sw.activated = false;
+      this.removeLightingZones(sw.lights ?? []);
+    });
+  }
+
+  setFlashlightState({ x, y, direction, active } = {}) {
+    if (!this.flashlightConfig.enabled) return;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    const dir = direction ?? this.flashlightState.direction ?? { x: 0, y: 1 };
+    const len = Math.hypot(dir.x, dir.y) || 1;
+    this.flashlightState = {
+      active: active ?? true,
+      x,
+      y,
+      direction: { x: dir.x / len, y: dir.y / len },
+    };
+  }
+
+  updateFlashlightFromPlayer(player) {
+    if (!this.flashlightConfig.enabled || !player) return;
+    const last = player.lastDirection ?? { x: 0, y: 1 };
+    const fallback = {
+      up: { x: 0, y: -1 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+      right: { x: 1, y: 0 },
+    };
+    const useLast = Math.hypot(last.x ?? 0, last.y ?? 0) > 0.01;
+    const direction = useLast ? last : fallback[player.facing] ?? { x: 0, y: 1 };
+    this.setFlashlightState({ x: player.x, y: player.y, direction, active: true });
+  }
+
+  isPointLitByFlashlight(x, y) {
+    if (!this.flashlightConfig.enabled || !this.flashlightState.active) return false;
+    const dx = x - this.flashlightState.x;
+    const dy = y - this.flashlightState.y;
+    const distance = Math.hypot(dx, dy);
+    const glowRadius = Math.max(0, (this.flashlightConfig.glowRadius ?? 0) * TILE);
+    if (distance <= glowRadius) return true;
+
+    const coneLength = Math.max(0, (this.flashlightConfig.coneLength ?? 0) * TILE);
+    if (!coneLength || distance > coneLength) return false;
+
+    const dir = this.flashlightState.direction ?? { x: 0, y: 1 };
+    const dot = (dx * dir.x + dy * dir.y) / (distance || 1);
+    const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+    const coneAngle = ((this.flashlightConfig.coneAngle ?? 0) * Math.PI) / 180;
+    return angle <= coneAngle / 2;
   }
 
   getActorPlacements() {
@@ -681,6 +860,51 @@ export class LevelInstance {
     return changed;
   }
 
+  drawFlashlight(ctx, camera) {
+    if (!this.flashlightConfig.enabled || !this.flashlightState.active) return;
+    const { x, y, direction } = this.flashlightState;
+    const px = x - camera.x;
+    const py = y - camera.y;
+    const coneLength = Math.max(0, (this.flashlightConfig.coneLength ?? 0) * TILE);
+    const glowRadius = Math.max(0, (this.flashlightConfig.glowRadius ?? 0) * TILE);
+    const intensity = Math.min(1, Math.max(0, this.flashlightConfig.intensity ?? 1));
+    const coneAngle = ((this.flashlightConfig.coneAngle ?? 0) * Math.PI) / 180;
+    const color = this.flashlightConfig.color ?? 'rgba(255, 235, 200, 0.65)';
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = intensity;
+
+    if (glowRadius > 0) {
+      const glow = ctx.createRadialGradient(px, py, 0, px, py, glowRadius);
+      glow.addColorStop(0, color);
+      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(px, py, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (coneLength > 0 && coneAngle > 0) {
+      const angle = Math.atan2(direction.y, direction.x);
+      const startAngle = angle - coneAngle / 2;
+      const endAngle = angle + coneAngle / 2;
+      const endX = px + Math.cos(angle) * coneLength;
+      const endY = py + Math.sin(angle) * coneLength;
+      const gradient = ctx.createLinearGradient(px, py, endX, endY);
+      gradient.addColorStop(0, color);
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.arc(px, py, coneLength, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
   getPickupTemplates() {
     return this.config.pickups ?? [];
   }
@@ -724,7 +948,7 @@ export class LevelInstance {
   restoreLighting(lightingState) {
     if (!lightingState?.activatedSwitchIds?.length) return;
     lightingState.activatedSwitchIds.forEach((id) => {
-      this.activateLightSwitch(id);
+      this.activateLightSwitch(id, { force: true });
     });
   }
 
@@ -798,7 +1022,16 @@ export class LevelInstance {
     indices.forEach((index) => {
       if (!Number.isInteger(index)) return;
       if (index < 0 || index >= this.lightTiles.length) return;
-      this.dirtyLightingIndices.add(index);
+      const x = index % this.mapWidth;
+      const y = Math.floor(index / this.mapWidth);
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= this.mapWidth || ny >= this.mapHeight) continue;
+          this.dirtyLightingIndices.add(ny * this.mapWidth + nx);
+        }
+      }
     });
   }
 
@@ -1130,10 +1363,26 @@ function renderTilesToContext(context, tiles, width, spriteSheet, indices, baseT
 function renderLightingToContext(context, lightTiles, width, height, tileEffects = null, indices, hasTileEffects = false) {
   if (!context) return;
   const fullRedraw = !indices || !indices.length || hasTileEffects;
+  const hasLitNeighbor = (index) => {
+    const x = index % width;
+    const y = Math.floor(index / width);
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        if (lightTiles[ny * width + nx]) return true;
+      }
+    }
+    return false;
+  };
+  const shadowFill = withAlpha(LIGHTING_SHADOW_RGB, LIGHTING_SHADOW_ALPHA);
+  const tintFill = withAlpha(LIGHTING_TINT_RGB, LIGHTING_TINT_ALPHA);
 
   if (fullRedraw) {
     context.clearRect(0, 0, width * TILE, height * TILE);
-    context.fillStyle = LIGHTING_SHADOW_COLOR;
+    context.fillStyle = shadowFill;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
@@ -1142,7 +1391,7 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
       }
     }
 
-    context.fillStyle = LIGHTING_TINT_COLOR;
+    context.fillStyle = tintFill;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
@@ -1150,14 +1399,34 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
         context.fillRect(x * TILE, y * TILE, TILE, TILE);
       }
     }
+
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+    context.fillStyle = withAlpha(LIGHTING_TINT_RGB, LIGHTING_EDGE_GLOW_ALPHA);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        if (lightTiles[index]) continue;
+        if (!hasLitNeighbor(index)) continue;
+        context.fillRect(x * TILE, y * TILE, TILE, TILE);
+      }
+    }
+    context.restore();
   } else {
     indices.forEach((index) => {
       if (!Number.isInteger(index) || index < 0 || index >= lightTiles.length) return;
       const x = index % width;
       const y = Math.floor(index / width);
       context.clearRect(x * TILE, y * TILE, TILE, TILE);
-      context.fillStyle = lightTiles[index] ? LIGHTING_TINT_COLOR : LIGHTING_SHADOW_COLOR;
+      context.fillStyle = lightTiles[index] ? tintFill : shadowFill;
       context.fillRect(x * TILE, y * TILE, TILE, TILE);
+      if (!lightTiles[index] && hasLitNeighbor(index)) {
+        context.save();
+        context.globalCompositeOperation = 'lighter';
+        context.fillStyle = withAlpha(LIGHTING_TINT_RGB, LIGHTING_EDGE_GLOW_ALPHA);
+        context.fillRect(x * TILE, y * TILE, TILE, TILE);
+        context.restore();
+      }
     });
   }
 
