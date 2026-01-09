@@ -1776,8 +1776,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         }
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables, blockers: safes });
         level.updatePressureSwitches(getSwitchOccupants());
-        level.updateLightingTimers(dt);
-        level.updateFlashlightFromPlayer(player);
         level.clampCamera(camera, player, canvas);
 
         if (playerVitals.invulnerableTime > 0) {
@@ -1933,23 +1931,13 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     }
 
     function applyDarknessDamage(dt) {
-      const lightStatus = level.getLightStatusAt(player.x, player.y);
-      if (lightStatus === 'lit') {
+      if (level.isLitAt(player.x, player.y)) {
         darknessTimer = 0;
         return;
       }
 
-      if (lightStatus === 'flashlight' && level.flashlightConfig?.protectsFromDarkness) {
-        darknessTimer = 0;
-        return;
-      }
-
-      const interval =
-        lightStatus === 'flashlight'
-          ? Math.max(0.6, level.flashlightConfig?.darknessInterval ?? 1.6)
-          : 1;
       darknessTimer += dt;
-      if (darknessTimer >= interval && playerVitals.invulnerableTime <= 0) {
+      if (darknessTimer >= 1 && playerVitals.invulnerableTime <= 0) {
         darknessTimer = 0;
         applyDamage({
           invulnerability: 1,
