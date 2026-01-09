@@ -120,7 +120,7 @@
 /**
  * @typedef {Object} Interactables
  * @property {InteractableGate} [gate]
- * @property {Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }>} [switches]
+ * @property {Array<{ id: string, name: string, tx: number, ty: number, timerSeconds?: number, lights: Array<{ x: number, y: number, w: number, h: number }> }>} [switches]
  * @property {InteractablePressureSwitch[]} [pressureSwitches]
  * @property {InteractableSafe[]} [safes]
  */
@@ -163,7 +163,7 @@
  * @property {number} [width]
  * @property {number} [height]
  * @property {TileLayers} [tileLayers]
- * @property {{ litZones?: Array<{ x: number, y: number, w: number, h: number }>, switches?: Array<{ id: string, name: string, tx: number, ty: number, lights: Array<{ x: number, y: number, w: number, h: number }> }> }} [lighting]
+ * @property {{ litZones?: Array<{ x: number, y: number, w: number, h: number }>, switches?: Array<{ id: string, name: string, tx: number, ty: number, timerSeconds?: number, lights: Array<{ x: number, y: number, w: number, h: number }> }> }} [lighting]
  * @property {{ playerStart?: { x: number, y: number }, props?: any[], npcs?: any[] }} actors
  * @property {Array<{ id: string, name: string, icon: string, x?: number, y?: number, tx?: number, ty?: number, tint?: string, description?: string, objective?: boolean, stackable?: boolean, quantity?: number }>} pickups
  * @property {LevelQuest[]} [quests]

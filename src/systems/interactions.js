@@ -168,22 +168,20 @@ export function createInteractionSystem({
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
     const quizActive = Boolean(sessionState.activeQuiz);
 
-    if (
-      !quizActive &&
-      context.interactRequested &&
-      activeSwitch &&
-      !activeSwitch.activated &&
-      switchDistance <= SWITCH_INTERACT_DISTANCE
-    ) {
-      const toggled = level.activateLightSwitch(activeSwitch.id);
-      if (toggled) {
+    if (!quizActive && context.interactRequested && activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
+      const result = level.toggleLightSwitch(activeSwitch.id);
+      if (result?.activated) {
         if (activeSwitch.id === 'technician-switch') {
           persistentState.flags.technicianLightOn = true;
         }
-        showNote('note.switch.activated', { name: activeSwitch.name });
+        if (Number.isFinite(activeSwitch.timerSeconds) && activeSwitch.timerSeconds > 0) {
+          showNote('note.switch.activatedTimed', { name: activeSwitch.name, seconds: activeSwitch.timerSeconds });
+        } else {
+          showNote('note.switch.activated', { name: activeSwitch.name });
+        }
         game?.saveProgress?.({ auto: true });
-      } else {
-        showNote('note.switch.alreadyOn');
+      } else if (result) {
+        showNote('note.switch.deactivated', { name: activeSwitch.name });
       }
     } else if (!quizActive && context.interactRequested && nearSafe) {
       onSafeInteract?.(nearestSafe);
@@ -340,8 +338,8 @@ export function createInteractionSystem({
       }
     } else if (nearestNpc?.nearby) {
       hud.showPrompt('prompt.talk', { name: nearestNpc.name });
-    } else if (activeSwitch && !activeSwitch.activated && switchDistance <= SWITCH_INTERACT_DISTANCE) {
-      hud.showPrompt('prompt.switch');
+    } else if (activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
+      hud.showPrompt(activeSwitch.activated ? 'prompt.switchOff' : 'prompt.switchOn');
     } else if (nearGate) {
       if (context.gateState?.locked) {
         hud.showPrompt(context.gateState.promptLocked || 'prompt.gateLocked');

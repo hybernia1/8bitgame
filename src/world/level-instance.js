@@ -254,7 +254,12 @@ export class LevelInstance {
       this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.getUnlockedTileValue(index, 'decor'));
 
     this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
-    this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({ ...sw, activated: false }));
+    this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({
+      ...sw,
+      timerSeconds: Number.isFinite(sw.timerSeconds) ? sw.timerSeconds : sw.timer,
+      activated: false,
+      timerRemaining: null,
+    }));
     this.pressureSwitches = [];
     this.tileEffects = new Array(this.mapWidth * this.mapHeight).fill(null);
     this.tileEffectsCount = 0;
@@ -355,6 +360,43 @@ export class LevelInstance {
       }
     });
 
+    if (dirty.length) {
+      this.invalidateLighting(dirty);
+    }
+  }
+
+  rebuildLightingFromSwitches() {
+    const nextTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
+    const applyZones = (zones = []) => {
+      zones.forEach((zone) => {
+        const startX = Math.max(0, zone.x);
+        const startY = Math.max(0, zone.y);
+        const endX = Math.min(this.mapWidth, zone.x + zone.w);
+        const endY = Math.min(this.mapHeight, zone.y + zone.h);
+
+        for (let y = startY; y < endY; y += 1) {
+          for (let x = startX; x < endX; x += 1) {
+            const index = y * this.mapWidth + x;
+            nextTiles[index] = true;
+          }
+        }
+      });
+    };
+
+    applyZones(this.lightingConfig.litZones ?? []);
+    this.lightSwitches.forEach((sw) => {
+      if (sw.activated) {
+        applyZones(sw.lights);
+      }
+    });
+
+    const dirty = [];
+    nextTiles.forEach((value, index) => {
+      if (this.lightTiles[index] !== value) {
+        dirty.push(index);
+      }
+    });
+    this.lightTiles = nextTiles;
     if (dirty.length) {
       this.invalidateLighting(dirty);
     }
@@ -520,6 +562,9 @@ export class LevelInstance {
     const sourceY = Math.max(0, Math.floor(camera.y));
     const sourceWidth = Math.min(ctx.canvas.width, lightingCanvas.width - sourceX);
     const sourceHeight = Math.min(ctx.canvas.height, lightingCanvas.height - sourceY);
+    ctx.save();
+    ctx.filter = 'blur(6px)';
+    ctx.globalAlpha = 0.75;
     ctx.drawImage(
       lightingCanvas,
       sourceX,
@@ -531,6 +576,22 @@ export class LevelInstance {
       sourceWidth,
       sourceHeight,
     );
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(
+      lightingCanvas,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      sourceWidth,
+      sourceHeight,
+    );
+    ctx.restore();
   }
 
   clampCamera(camera, player, canvas) {
@@ -603,12 +664,50 @@ export class LevelInstance {
     return this.lightSwitches;
   }
 
-  activateLightSwitch(id) {
+  toggleLightSwitch(id) {
     const found = this.lightSwitches.find((sw) => sw.id === id);
-    if (!found || found.activated) return false;
-    found.activated = true;
-    this.applyLightingZones(found.lights);
-    return true;
+    if (!found) return null;
+    return this.setLightSwitchState(found.id, !found.activated);
+  }
+
+  setLightSwitchState(id, active, { resetTimer = true } = {}) {
+    const found = this.lightSwitches.find((sw) => sw.id === id);
+    if (!found) return null;
+    const nextActive = Boolean(active);
+    const changed = found.activated !== nextActive;
+    found.activated = nextActive;
+    if (nextActive) {
+      if (resetTimer && Number.isFinite(found.timerSeconds) && found.timerSeconds > 0) {
+        found.timerRemaining = found.timerSeconds;
+      } else if (!Number.isFinite(found.timerSeconds) || found.timerSeconds <= 0) {
+        found.timerRemaining = null;
+      }
+    } else {
+      found.timerRemaining = null;
+    }
+    if (changed) {
+      this.rebuildLightingFromSwitches();
+    }
+    return { activated: found.activated, changed };
+  }
+
+  updateLightSwitchTimers(dt) {
+    if (!this.lightSwitches.length) return false;
+    let changed = false;
+    this.lightSwitches.forEach((sw) => {
+      if (!sw.activated) return;
+      if (!Number.isFinite(sw.timerRemaining)) return;
+      sw.timerRemaining = Math.max(0, sw.timerRemaining - dt);
+      if (sw.timerRemaining === 0) {
+        sw.activated = false;
+        sw.timerRemaining = null;
+        changed = true;
+      }
+    });
+    if (changed) {
+      this.rebuildLightingFromSwitches();
+    }
+    return changed;
   }
 
   getActorPlacements() {
@@ -724,7 +823,7 @@ export class LevelInstance {
   restoreLighting(lightingState) {
     if (!lightingState?.activatedSwitchIds?.length) return;
     lightingState.activatedSwitchIds.forEach((id) => {
-      this.activateLightSwitch(id);
+      this.setLightSwitchState(id, true);
     });
   }
 

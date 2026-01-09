@@ -12,6 +12,7 @@ const baseSwitches = [
     name: 'Vstupní vypínač',
     tx: 5,
     ty: 2,
+    timerSeconds: 20,
     lights: [
       {
         x: 0,
@@ -26,6 +27,7 @@ const baseSwitches = [
     name: 'Skladový vypínač',
     tx: 13,
     ty: 5,
+    timerSeconds: 25,
     lights: [
       {
         x: 9,
@@ -40,6 +42,7 @@ const baseSwitches = [
     name: 'Laboratorní vypínač',
     tx: 17,
     ty: 9,
+    timerSeconds: 30,
     lights: [
       {
         x: 13,
@@ -54,6 +57,7 @@ const baseSwitches = [
     name: 'Servisní vypínač',
     tx: 7,
     ty: 9,
+    timerSeconds: 18,
     lights: [
       {
         x: 5,
