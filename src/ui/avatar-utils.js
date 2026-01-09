@@ -41,9 +41,8 @@ function resolveAvatarLayout(image) {
 
 function applyAvatarFrame(node, layout, frameIndex = 1) {
   if (!node || !layout) return;
-  const rect = node.getBoundingClientRect();
-  const frameWidth = rect.width || node.clientWidth || node.offsetWidth;
-  const frameHeight = rect.height || node.clientHeight || node.offsetHeight;
+  const frameWidth = node.offsetWidth || node.clientWidth || node.getBoundingClientRect().width;
+  const frameHeight = node.offsetHeight || node.clientHeight || node.getBoundingClientRect().height;
   if (!frameWidth || !frameHeight) return;
 
   const totalFrames = layout.cols * layout.rows;
