@@ -15,6 +15,9 @@ const LIGHTING_SHADOW_COLOR = 'rgba(4, 6, 14, 0.78)';
 const LIGHTING_TINT_COLOR = 'rgba(255, 221, 164, 0.12)';
 const DEFAULT_LIGHT_COLOR = 'rgba(255, 214, 153, 0.32)';
 const LIGHTING_RADIUS = 12;
+const SWITCH_LIGHTING_RADIUS = 5;
+const LIGHTING_INTENSITY_EPSILON = 0.02;
+const LIGHTING_FALLOFF_POWER = 1.25;
 
 function toIndex(entry, width) {
   if (Number.isInteger(entry?.index)) return entry.index;
@@ -254,7 +257,7 @@ export class LevelInstance {
     this.sealedDecorOriginals =
       this.gateIndex === null ? [] : this.sealedTileIndices.map((index) => this.getUnlockedTileValue(index, 'decor'));
 
-    this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
+    this.lightTiles = new Array(this.mapWidth * this.mapHeight).fill(0);
     this.lightSwitches = (this.lightingConfig.switches ?? []).map((sw) => ({
       ...sw,
       timerSeconds: Number.isFinite(sw.timerSeconds) ? sw.timerSeconds : sw.timer,
@@ -345,24 +348,27 @@ export class LevelInstance {
   }
 
   rebuildLighting() {
-    const nextTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
+    const nextTiles = new Array(this.mapWidth * this.mapHeight).fill(0);
     const sources = this.getLightingSources();
     if (!sources.length) {
       this.updateLightingTiles(nextTiles);
       return;
     }
 
-    const maxDistance = LIGHTING_RADIUS;
     const queue = [];
-    sources.forEach(({ tx, ty }) => {
+    sources.forEach(({ tx, ty, radius }) => {
       if (!Number.isInteger(tx) || !Number.isInteger(ty)) return;
       if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) return;
       const index = ty * this.mapWidth + tx;
       const tileId = this.collisionTiles[index];
       if (this.isLightBlockingTile(tileId)) return;
-      nextTiles[index] = true;
-      if (!this.isOpenDoorTile(tileId) && maxDistance > 0) {
-        queue.push({ tx, ty, distance: 0 });
+      const sourceRadius = Number.isFinite(radius) ? Math.max(0, radius) : LIGHTING_RADIUS;
+      const intensity = this.computeLightIntensity(0, sourceRadius);
+      if (intensity > nextTiles[index]) {
+        nextTiles[index] = intensity;
+      }
+      if (sourceRadius > 0) {
+        queue.push({ tx, ty, distance: 0, radius: sourceRadius });
       }
     });
 
@@ -380,29 +386,17 @@ export class LevelInstance {
         const ny = current.ty + dy;
         if (nx < 0 || ny < 0 || nx >= this.mapWidth || ny >= this.mapHeight) return;
         const nextDistance = current.distance + 1;
-        if (nextDistance > maxDistance) return;
+        if (nextDistance > current.radius) return;
         const nIndex = ny * this.mapWidth + nx;
         const nTile = this.collisionTiles[nIndex];
         if (this.isLightBlockingTile(nTile)) return;
 
-        if (this.isOpenDoorTile(nTile)) {
-          nextTiles[nIndex] = true;
-          const beyondDistance = nextDistance + 1;
-          if (beyondDistance > maxDistance) return;
-          const bx = nx + dx;
-          const by = ny + dy;
-          if (bx < 0 || by < 0 || bx >= this.mapWidth || by >= this.mapHeight) return;
-          const bIndex = by * this.mapWidth + bx;
-          const bTile = this.collisionTiles[bIndex];
-          if (this.isLightBlockingTile(bTile)) return;
-          nextTiles[bIndex] = true;
-          return;
+        const intensity = this.computeLightIntensity(nextDistance, current.radius);
+        if (intensity > nextTiles[nIndex]) {
+          nextTiles[nIndex] = intensity;
         }
-
-        if (nextTiles[nIndex]) return;
-        nextTiles[nIndex] = true;
-        if (nextDistance < maxDistance) {
-          queue.push({ tx: nx, ty: ny, distance: nextDistance });
+        if (nextDistance < current.radius) {
+          queue.push({ tx: nx, ty: ny, distance: nextDistance, radius: current.radius });
         }
       });
     }
@@ -413,7 +407,7 @@ export class LevelInstance {
   updateLightingTiles(nextTiles) {
     const dirty = [];
     nextTiles.forEach((value, index) => {
-      if (this.lightTiles[index] !== value) {
+      if (Math.abs(this.lightTiles[index] - value) > LIGHTING_INTENSITY_EPSILON) {
         dirty.push(index);
       }
     });
@@ -425,7 +419,7 @@ export class LevelInstance {
 
   getLightingSources() {
     const sources = [];
-    const addSource = ({ tx, ty, x, y }) => {
+    const addSource = ({ tx, ty, x, y, radius }) => {
       let resolvedTx = tx;
       let resolvedTy = ty;
       if (!Number.isInteger(resolvedTx) || !Number.isInteger(resolvedTy)) {
@@ -435,24 +429,25 @@ export class LevelInstance {
         }
       }
       if (!Number.isInteger(resolvedTx) || !Number.isInteger(resolvedTy)) return;
-      sources.push({ tx: resolvedTx, ty: resolvedTy });
+      sources.push({ tx: resolvedTx, ty: resolvedTy, radius });
     };
 
     const baseSources = this.lightingConfig.sources ?? [];
-    baseSources.forEach((entry) => addSource(entry));
+    baseSources.forEach((entry) => addSource({ ...entry, radius: entry.radius ?? LIGHTING_RADIUS }));
 
     if (!baseSources.length && this.lightingConfig.litZones?.length) {
       this.lightingConfig.litZones.forEach((zone) => {
         addSource({
           tx: Math.floor(zone.x + zone.w / 2),
           ty: Math.floor(zone.y + zone.h / 2),
+          radius: LIGHTING_RADIUS,
         });
       });
     }
 
     this.lightSwitches.forEach((sw) => {
       if (!sw.activated) return;
-      addSource(sw);
+      addSource({ ...sw, radius: SWITCH_LIGHTING_RADIUS });
     });
 
     return sources;
@@ -468,6 +463,14 @@ export class LevelInstance {
   isOpenDoorTile(tileId) {
     const def = getTileDefinition(tileId);
     return def.category === 'door' && def.blocksMovement === false;
+  }
+
+  computeLightIntensity(distance, radius) {
+    if (!Number.isFinite(radius) || radius <= 0) {
+      return distance === 0 ? 1 : 0;
+    }
+    const normalized = Math.min(1, Math.max(0, 1 - distance / radius));
+    return Math.pow(normalized, LIGHTING_FALLOFF_POWER);
   }
 
   initializeDestructibleTiles() {
@@ -705,7 +708,7 @@ export class LevelInstance {
     const tx = Math.floor(x / TILE);
     const ty = Math.floor(y / TILE);
     if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) return false;
-    return this.lightTiles[ty * this.mapWidth + tx] === true;
+    return this.lightTiles[ty * this.mapWidth + tx] > LIGHTING_INTENSITY_EPSILON;
   }
 
   findNearestLitPosition(x, y) {
@@ -715,7 +718,7 @@ export class LevelInstance {
     for (let ty = 0; ty < this.mapHeight; ty += 1) {
       for (let tx = 0; tx < this.mapWidth; tx += 1) {
         const index = ty * this.mapWidth + tx;
-        if (!this.lightTiles[index]) continue;
+        if (this.lightTiles[index] <= LIGHTING_INTENSITY_EPSILON) continue;
         const centerX = tx * TILE + TILE / 2;
         const centerY = ty * TILE + TILE / 2;
         if (isBlockingTileId(this.collisionTiles[index])) continue;
@@ -1304,30 +1307,57 @@ function renderLightingToContext(context, lightTiles, width, height, tileEffects
   if (fullRedraw) {
     context.clearRect(0, 0, width * TILE, height * TILE);
     context.fillStyle = LIGHTING_SHADOW_COLOR;
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const index = y * width + x;
-        if (lightTiles[index]) continue;
-        context.fillRect(x * TILE, y * TILE, TILE, TILE);
-      }
-    }
+    context.fillRect(0, 0, width * TILE, height * TILE);
 
-    context.fillStyle = LIGHTING_TINT_COLOR;
+    context.save();
+    context.globalCompositeOperation = 'destination-out';
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
-        if (!lightTiles[index]) continue;
+        const intensity = lightTiles[index];
+        if (intensity <= LIGHTING_INTENSITY_EPSILON) continue;
+        context.globalAlpha = Math.min(1, intensity);
         context.fillRect(x * TILE, y * TILE, TILE, TILE);
       }
     }
+    context.restore();
+
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        const intensity = lightTiles[index];
+        if (intensity <= LIGHTING_INTENSITY_EPSILON) continue;
+        context.globalAlpha = Math.min(1, 0.2 + intensity * 0.6);
+        context.fillStyle = LIGHTING_TINT_COLOR;
+        context.fillRect(x * TILE, y * TILE, TILE, TILE);
+      }
+    }
+    context.restore();
   } else {
     indices.forEach((index) => {
       if (!Number.isInteger(index) || index < 0 || index >= lightTiles.length) return;
       const x = index % width;
       const y = Math.floor(index / width);
+      const intensity = lightTiles[index];
       context.clearRect(x * TILE, y * TILE, TILE, TILE);
-      context.fillStyle = lightTiles[index] ? LIGHTING_TINT_COLOR : LIGHTING_SHADOW_COLOR;
+      context.fillStyle = LIGHTING_SHADOW_COLOR;
       context.fillRect(x * TILE, y * TILE, TILE, TILE);
+      if (intensity > LIGHTING_INTENSITY_EPSILON) {
+        context.save();
+        context.globalCompositeOperation = 'destination-out';
+        context.globalAlpha = Math.min(1, intensity);
+        context.fillRect(x * TILE, y * TILE, TILE, TILE);
+        context.restore();
+
+        context.save();
+        context.globalCompositeOperation = 'lighter';
+        context.globalAlpha = Math.min(1, 0.2 + intensity * 0.6);
+        context.fillStyle = LIGHTING_TINT_COLOR;
+        context.fillRect(x * TILE, y * TILE, TILE, TILE);
+        context.restore();
+      }
     });
   }
 
