@@ -410,16 +410,6 @@ function drawPickup(ctx, random) {
   drawNoise(ctx, 0, 0, TILE, TILE, '#0e0e12', '#131925', 0.03, random);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
   ctx.fillRect(8, TILE - 10, TILE - 16, 8);
-  ctx.fillStyle = jitterColor('#f2d45c', 20, random);
-  ctx.beginPath();
-  ctx.moveTo(TILE / 2, 4);
-  ctx.lineTo(TILE - 6, TILE / 2);
-  ctx.lineTo(TILE / 2, TILE - 6);
-  ctx.lineTo(6, TILE / 2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(34, 24, 5, 0.7)';
-  ctx.stroke();
 }
 
 function drawNpc(ctx, random) {
