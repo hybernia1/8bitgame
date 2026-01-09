@@ -172,15 +172,20 @@ export function createInteractionSystem({
       !quizActive &&
       context.interactRequested &&
       activeSwitch &&
-      !activeSwitch.activated &&
       switchDistance <= SWITCH_INTERACT_DISTANCE
     ) {
-      const toggled = level.activateLightSwitch(activeSwitch.id);
-      if (toggled) {
+      const result = level.activateLightSwitch(activeSwitch.id);
+      if (result.changed) {
         if (activeSwitch.id === 'technician-switch') {
           persistentState.flags.technicianLightOn = true;
         }
-        showNote('note.switch.activated', { name: activeSwitch.name });
+        if (result.mode === 'toggle' && !result.activated) {
+          showNote('note.switch.deactivated', { name: activeSwitch.name });
+        } else if (result.mode === 'timer' && result.refreshed) {
+          showNote('note.switch.refreshed', { name: activeSwitch.name });
+        } else {
+          showNote('note.switch.activated', { name: activeSwitch.name });
+        }
         game?.saveProgress?.({ auto: true });
       } else {
         showNote('note.switch.alreadyOn');

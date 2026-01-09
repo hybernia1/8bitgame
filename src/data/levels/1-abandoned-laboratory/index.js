@@ -12,6 +12,7 @@ const baseSwitches = [
     name: 'Vstupní vypínač',
     tx: 5,
     ty: 2,
+    mode: 'toggle',
     lights: [
       {
         x: 0,
@@ -26,6 +27,8 @@ const baseSwitches = [
     name: 'Skladový vypínač',
     tx: 13,
     ty: 5,
+    mode: 'timer',
+    duration: 18,
     lights: [
       {
         x: 9,
@@ -40,6 +43,8 @@ const baseSwitches = [
     name: 'Laboratorní vypínač',
     tx: 17,
     ty: 9,
+    mode: 'timer',
+    duration: 22,
     lights: [
       {
         x: 13,
@@ -54,6 +59,7 @@ const baseSwitches = [
     name: 'Servisní vypínač',
     tx: 7,
     ty: 9,
+    mode: 'toggle',
     lights: [
       {
         x: 5,
@@ -115,6 +121,14 @@ export const abandonedLaboratoryLevel = {
         h: 6,
       },
     ],
+    flashlight: {
+      enabled: true,
+      glowRadius: 1.4,
+      coneLength: 6,
+      coneAngle: 80,
+      intensity: 0.9,
+      darknessInterval: 2,
+    },
     switches: baseSwitches,
   },
   interactables: {

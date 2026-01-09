@@ -24,6 +24,8 @@ export const messages = {
   'note.inventory.unusable': 'Tenhle předmět teď nemůžeš použít.',
   'note.switch.activated': 'Vypínač {name} rozsvítil další část místnosti.',
   'note.switch.alreadyOn': 'Vypínač už je aktivovaný.',
+  'note.switch.deactivated': 'Vypínač {name} zhasl a místnost potemněla.',
+  'note.switch.refreshed': 'Vypínač {name} prodloužil osvětlení.',
   'note.pickup.collected': 'Sebráno: {items}',
   'note.quest.completed': 'Mise splněna: všechny komponenty jsou připravené. Vrať se za Technikem Járou.',
   'note.gate.consumeKey': 'Klíč se zasunul do zámku a zmizel z inventáře.',
