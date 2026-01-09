@@ -264,7 +264,7 @@ export class LevelInstance {
     this.tileEffects = new Array(this.mapWidth * this.mapHeight).fill(null);
     this.tileEffectsCount = 0;
 
-    this.applyLightingZones(this.lightingConfig.litZones ?? []);
+    this.rebuildLighting();
     this.invalidateAllLayers();
 
     if (this.gateIndex !== null) {
@@ -343,53 +343,66 @@ export class LevelInstance {
     this.rebuildTileEffects();
   }
 
-  applyLightingZones(zones = []) {
-    const dirty = [];
-    zones.forEach((zone) => {
-      const startX = Math.max(0, zone.x);
-      const startY = Math.max(0, zone.y);
-      const endX = Math.min(this.mapWidth, zone.x + zone.w);
-      const endY = Math.min(this.mapHeight, zone.y + zone.h);
+  rebuildLighting() {
+    const nextTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
+    const sources = this.getLightingSources();
+    if (!sources.length) {
+      this.updateLightingTiles(nextTiles);
+      return;
+    }
 
-      for (let y = startY; y < endY; y += 1) {
-        for (let x = startX; x < endX; x += 1) {
-          const index = y * this.mapWidth + x;
-          this.lightTiles[index] = true;
-          dirty.push(index);
-        }
+    const queue = [];
+    sources.forEach(({ tx, ty }) => {
+      if (!Number.isInteger(tx) || !Number.isInteger(ty)) return;
+      if (tx < 0 || ty < 0 || tx >= this.mapWidth || ty >= this.mapHeight) return;
+      const index = ty * this.mapWidth + tx;
+      const tileId = this.collisionTiles[index];
+      if (this.isLightBlockingTile(tileId)) return;
+      nextTiles[index] = true;
+      if (!this.isOpenDoorTile(tileId)) {
+        queue.push({ tx, ty });
       }
     });
 
-    if (dirty.length) {
-      this.invalidateLighting(dirty);
+    const directions = [
+      { dx: 1, dy: 0 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 0, dy: -1 },
+    ];
+
+    while (queue.length) {
+      const current = queue.shift();
+      directions.forEach(({ dx, dy }) => {
+        const nx = current.tx + dx;
+        const ny = current.ty + dy;
+        if (nx < 0 || ny < 0 || nx >= this.mapWidth || ny >= this.mapHeight) return;
+        const nIndex = ny * this.mapWidth + nx;
+        const nTile = this.collisionTiles[nIndex];
+        if (this.isLightBlockingTile(nTile)) return;
+
+        if (this.isOpenDoorTile(nTile)) {
+          nextTiles[nIndex] = true;
+          const bx = nx + dx;
+          const by = ny + dy;
+          if (bx < 0 || by < 0 || bx >= this.mapWidth || by >= this.mapHeight) return;
+          const bIndex = by * this.mapWidth + bx;
+          const bTile = this.collisionTiles[bIndex];
+          if (this.isLightBlockingTile(bTile)) return;
+          nextTiles[bIndex] = true;
+          return;
+        }
+
+        if (nextTiles[nIndex]) return;
+        nextTiles[nIndex] = true;
+        queue.push({ tx: nx, ty: ny });
+      });
     }
+
+    this.updateLightingTiles(nextTiles);
   }
 
-  rebuildLightingFromSwitches() {
-    const nextTiles = new Array(this.mapWidth * this.mapHeight).fill(false);
-    const applyZones = (zones = []) => {
-      zones.forEach((zone) => {
-        const startX = Math.max(0, zone.x);
-        const startY = Math.max(0, zone.y);
-        const endX = Math.min(this.mapWidth, zone.x + zone.w);
-        const endY = Math.min(this.mapHeight, zone.y + zone.h);
-
-        for (let y = startY; y < endY; y += 1) {
-          for (let x = startX; x < endX; x += 1) {
-            const index = y * this.mapWidth + x;
-            nextTiles[index] = true;
-          }
-        }
-      });
-    };
-
-    applyZones(this.lightingConfig.litZones ?? []);
-    this.lightSwitches.forEach((sw) => {
-      if (sw.activated) {
-        applyZones(sw.lights);
-      }
-    });
-
+  updateLightingTiles(nextTiles) {
     const dirty = [];
     nextTiles.forEach((value, index) => {
       if (this.lightTiles[index] !== value) {
@@ -400,6 +413,53 @@ export class LevelInstance {
     if (dirty.length) {
       this.invalidateLighting(dirty);
     }
+  }
+
+  getLightingSources() {
+    const sources = [];
+    const addSource = ({ tx, ty, x, y }) => {
+      let resolvedTx = tx;
+      let resolvedTy = ty;
+      if (!Number.isInteger(resolvedTx) || !Number.isInteger(resolvedTy)) {
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          resolvedTx = Math.floor(x / TILE);
+          resolvedTy = Math.floor(y / TILE);
+        }
+      }
+      if (!Number.isInteger(resolvedTx) || !Number.isInteger(resolvedTy)) return;
+      sources.push({ tx: resolvedTx, ty: resolvedTy });
+    };
+
+    const baseSources = this.lightingConfig.sources ?? [];
+    baseSources.forEach((entry) => addSource(entry));
+
+    if (!baseSources.length && this.lightingConfig.litZones?.length) {
+      this.lightingConfig.litZones.forEach((zone) => {
+        addSource({
+          tx: Math.floor(zone.x + zone.w / 2),
+          ty: Math.floor(zone.y + zone.h / 2),
+        });
+      });
+    }
+
+    this.lightSwitches.forEach((sw) => {
+      if (!sw.activated) return;
+      addSource(sw);
+    });
+
+    return sources;
+  }
+
+  isLightBlockingTile(tileId) {
+    const def = getTileDefinition(tileId);
+    if (def.category === 'wall') return true;
+    if (def.category === 'door' && def.blocksMovement !== false) return true;
+    return false;
+  }
+
+  isOpenDoorTile(tileId) {
+    const def = getTileDefinition(tileId);
+    return def.category === 'door' && def.blocksMovement === false;
   }
 
   initializeDestructibleTiles() {
@@ -452,6 +512,7 @@ export class LevelInstance {
     this.collisionTiles[index] = destroyedFloor;
     this.decorTiles[index] = destroyedFloor;
     this.invalidateTiles([index]);
+    this.rebuildLighting();
     return true;
   }
 
@@ -622,6 +683,7 @@ export class LevelInstance {
     const changedArray = Array.from(changed).filter((idx) => Number.isInteger(idx));
     if (changedArray.length) {
       this.invalidateTiles(changedArray);
+      this.rebuildLighting();
     }
   }
 
@@ -686,7 +748,7 @@ export class LevelInstance {
       found.timerRemaining = null;
     }
     if (changed) {
-      this.rebuildLightingFromSwitches();
+      this.rebuildLighting();
     }
     return { activated: found.activated, changed };
   }
@@ -705,7 +767,7 @@ export class LevelInstance {
       }
     });
     if (changed) {
-      this.rebuildLightingFromSwitches();
+      this.rebuildLighting();
     }
     return changed;
   }
@@ -759,6 +821,7 @@ export class LevelInstance {
     });
     if (plate.targetIndices?.length) {
       this.invalidateTiles(plate.targetIndices);
+      this.rebuildLighting();
     }
   }
 

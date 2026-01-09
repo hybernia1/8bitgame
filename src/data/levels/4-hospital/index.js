@@ -34,7 +34,12 @@ export const hospitalLevel = {
     destroyedFloors: [...baseLayout.destroyedFloors],
   },
   lighting: {
-    litZones: [{ x: 1, y: 1, w: BASE_WIDTH - 2, h: BASE_HEIGHT - 2 }],
+    sources: [
+      {
+        tx: Math.floor(BASE_WIDTH / 2),
+        ty: Math.floor(BASE_HEIGHT / 2),
+      },
+    ],
     switches: [],
   },
   interactables: {

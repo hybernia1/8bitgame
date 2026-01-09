@@ -84,12 +84,10 @@ export const facilitySample = {
     ]
   },
   "lighting": {
-    "litZones": [
+    "sources": [
       {
-        "x": 0,
-        "y": 0,
-        "w": 6,
-        "h": 5
+        "tx": 2,
+        "ty": 2
       }
     ],
     "switches": []

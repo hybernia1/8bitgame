@@ -253,32 +253,25 @@ function toTileCoords(object) {
 }
 
 function parseLightingLayer(layer) {
-  if (!layer || layer.type !== 'objectgroup') return { litZones: [], switches: [] };
-  const litZones = [];
+  if (!layer || layer.type !== 'objectgroup') return { sources: [], switches: [] };
+  const sources = [];
   const switches = [];
 
   layer.objects?.forEach((obj) => {
     const props = readProperties(obj.properties);
-    const zone = {
-      x: Math.round((obj.x ?? 0) / TILE),
-      y: Math.round((obj.y ?? 0) / TILE),
-      w: Math.round((obj.width ?? 0) / TILE),
-      h: Math.round((obj.height ?? 0) / TILE),
-    };
     if (obj.type === 'switch' || props.switch) {
       switches.push({
         id: props.id ?? obj.name ?? `${obj.id}`,
         name: props.name ?? obj.name ?? 'Switch',
         ...toTileCoords(obj),
         timerSeconds: props.timerSeconds ?? props.timer,
-        lights: props.lights ?? [zone],
       });
       return;
     }
-    litZones.push(zone);
+    sources.push(toTileCoords(obj));
   });
 
-  return { litZones, switches };
+  return { sources, switches };
 }
 
 function parseSpawnLayer(layer) {

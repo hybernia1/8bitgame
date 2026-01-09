@@ -70,12 +70,10 @@ export const prologueLevel = {
     unlockMask: [],
   },
   lighting: {
-    litZones: [
+    sources: [
       {
-        x: 0,
-        y: 0,
-        w: BASE_WIDTH,
-        h: BASE_HEIGHT,
+        tx: Math.floor(BASE_WIDTH / 2),
+        ty: Math.floor(BASE_HEIGHT / 2),
       },
     ],
   },

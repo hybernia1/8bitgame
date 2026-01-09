@@ -13,14 +13,6 @@ const baseSwitches = [
     tx: 5,
     ty: 2,
     timerSeconds: 20,
-    lights: [
-      {
-        x: 0,
-        y: 0,
-        w: 10,
-        h: 3,
-      },
-    ],
   },
   {
     id: 'storage-switch',
@@ -28,14 +20,6 @@ const baseSwitches = [
     tx: 13,
     ty: 5,
     timerSeconds: 25,
-    lights: [
-      {
-        x: 9,
-        y: 3,
-        w: 7,
-        h: 7,
-      },
-    ],
   },
   {
     id: 'lab-switch',
@@ -43,14 +27,6 @@ const baseSwitches = [
     tx: 17,
     ty: 9,
     timerSeconds: 30,
-    lights: [
-      {
-        x: 13,
-        y: 7,
-        w: 6,
-        h: 6,
-      },
-    ],
   },
   {
     id: 'technician-switch',
@@ -58,14 +34,6 @@ const baseSwitches = [
     tx: 7,
     ty: 9,
     timerSeconds: 18,
-    lights: [
-      {
-        x: 5,
-        y: 8,
-        w: 5,
-        h: 4,
-      },
-    ],
   },
 ];
 
@@ -111,12 +79,10 @@ export const abandonedLaboratoryLevel = {
     unlockMask: baseUnlockMask,
   },
   lighting: {
-    litZones: [
+    sources: [
       {
-        x: 0,
-        y: 0,
-        w: 6,
-        h: 6,
+        tx: 2,
+        ty: 2,
       },
     ],
     switches: baseSwitches,

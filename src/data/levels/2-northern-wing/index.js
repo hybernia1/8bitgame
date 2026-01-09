@@ -81,9 +81,9 @@ export const northernWingLevel = {
     },
   },
   lighting: {
-    litZones: [
-      { x: 1, y: 1, w: 5, h: 4 },
-      { x: 8, y: 6, w: 4, h: 3 },
+    sources: [
+      { tx: 3, ty: 3 },
+      { tx: 10, ty: 7 },
     ],
     switches: [
       {
@@ -91,44 +91,30 @@ export const northernWingLevel = {
         name: 'Chodba',
         tx: 4,
         ty: 1,
-        lights: [{ x: 1, y: 1, w: 7, h: 5 }],
       },
       {
         id: 'storage-switch',
         name: 'Sklad',
         tx: 12,
         ty: 5,
-        lights: [
-          { x: 9, y: 4, w: 5, h: 4 },
-          { x: 12, y: 8, w: 3, h: 2 },
-        ],
       },
       {
         id: 'lab-switch',
         name: 'Laboratoř',
         tx: 10,
         ty: 9,
-        lights: [{ x: 6, y: 8, w: 6, h: 3 }],
       },
       {
         id: 'atrium-switch',
         name: 'Chodba ke skladu',
         tx: 2,
         ty: 7,
-        lights: [
-          { x: 1, y: 6, w: 6, h: 4 },
-          { x: 0, y: 9, w: 8, h: 2 },
-        ],
       },
       {
         id: 'north-exit-switch',
         name: 'Severní východ',
         tx: 13,
         ty: 1,
-        lights: [
-          { x: 6, y: 0, w: 5, h: 3 },
-          { x: 9, y: 1, w: 6, h: 3 },
-        ],
       },
     ],
   },
