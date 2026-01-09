@@ -41,6 +41,7 @@ export function createPlayer(spriteSheet, placements = {}) {
   return {
     x,
     y,
+    baseSpeed: PLAYER_SPEED,
     speed: PLAYER_SPEED,
     size: PLAYER_SIZE,
     color: '#5cf2cc',

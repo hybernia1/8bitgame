@@ -72,6 +72,9 @@ function getHudDomRefs(root) {
     healthTotalEl: root.querySelector('.hud-health-total'),
     ammoEl: root.querySelector('[data-ammo]'),
     ammoCurrentEl: root.querySelector('[data-ammo-count]'),
+    stressEl: root.querySelector('[data-stress]'),
+    stressCurrentEl: root.querySelector('[data-stress-count]'),
+    stressTotalEl: root.querySelector('[data-stress-max]'),
     inventoryNote: root.querySelector('[data-inventory-note]'),
     inventoryBinding: root.querySelector('[data-inventory-binding]'),
     toast: root.querySelector('.hud-toast'),
@@ -101,6 +104,26 @@ function renderMapOnly(ctx, canvas, level, camera, spriteSheet) {
   level.drawLightSwitches(ctx, camera);
   level.drawLighting(ctx, camera);
   drawCameraBounds(ctx, levelDimensions, camera);
+}
+
+function drawStressAura(ctx, camera, player) {
+  if (!ctx || !player) return;
+  const px = player.x - camera.x;
+  const py = player.y - camera.y;
+  const baseRadius = player.size * 1.8;
+  const pulse = (Math.sin(performance.now() / 220) + 1) / 2;
+  const radius = baseRadius + pulse * player.size * 0.6;
+  const gradient = ctx.createRadialGradient(px, py, player.size * 0.4, px, py, radius);
+  gradient.addColorStop(0, 'rgba(255, 120, 80, 0.55)');
+  gradient.addColorStop(0.6, 'rgba(255, 80, 80, 0.25)');
+  gradient.addColorStop(1, 'rgba(255, 80, 80, 0)');
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(px, py, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 function formatSaveDate(timestamp) {
@@ -1125,7 +1148,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     let dialogueTime = 0;
     let objectivesCollected = 0;
     let deathTimeout = null;
-    let darknessTimer = 0;
+    let stressTimer = 0;
     let levelScript = null;
 
     const camera = { x: 0, y: 0 };
@@ -1133,6 +1156,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     const playerVitals = {
       health: 3,
       maxHealth: 3,
+      stress: 7,
+      maxStress: 7,
       invulnerableTime: 0,
       ammo: 0,
       maxAmmo: 0,
@@ -1491,6 +1516,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hudSystem?.setAmmo?.(playerVitals.ammo ?? 0, playerVitals.maxAmmo ?? 0);
     }
 
+    function syncStressHud() {
+      hudSystem?.setStress?.(playerVitals.stress ?? 0, playerVitals.maxStress ?? 0);
+    }
+
     function setAmmoCount(amount = 0) {
       const safeAmount = Math.max(0, Number.isFinite(amount) ? Math.floor(amount) : 0);
       const safeMax = Number.isFinite(playerVitals.maxAmmo)
@@ -1511,6 +1540,22 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       if ((playerVitals.ammo ?? 0) < cost) return false;
       setAmmoCount((playerVitals.ammo ?? 0) - cost);
       return true;
+    }
+
+    function setStressLevel(amount = 0, { showEmptyNote = true } = {}) {
+      const maxStress = Number.isFinite(playerVitals.maxStress) ? Math.floor(playerVitals.maxStress) : 0;
+      const safeAmount = Math.max(0, Math.min(maxStress, Number.isFinite(amount) ? Math.floor(amount) : 0));
+      const previous = playerVitals.stress ?? 0;
+      playerVitals.stress = safeAmount;
+      syncStressHud();
+      if (showEmptyNote && previous > 0 && safeAmount === 0) {
+        hudSystem?.showNote?.('note.stress.empty');
+      }
+    }
+
+    function addStress(amount = 0) {
+      if (!Number.isFinite(amount)) return;
+      setStressLevel((playerVitals.stress ?? 0) + Math.floor(amount), { showEmptyNote: false });
     }
 
     function getSwitchOccupants() {
@@ -1573,6 +1618,15 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       playerVitals.maxAmmo = normalizedMaxAmmo;
       setAmmoCount(playerVitals.ammo ?? 0);
 
+      const normalizedMaxStress = Number.isFinite(playerVitals.maxStress)
+        ? Math.max(1, Math.floor(playerVitals.maxStress))
+        : 7;
+      playerVitals.maxStress = normalizedMaxStress;
+      setStressLevel(
+        Number.isFinite(playerVitals.stress) ? playerVitals.stress : playerVitals.maxStress,
+        { showEmptyNote: false }
+      );
+
       resetSessionState();
       if (savedSnapshot?.persistentState) {
         Object.assign(persistentState.flags, savedSnapshot.persistentState.flags ?? {});
@@ -1593,6 +1647,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       hudSystem.setObjectives(objectivesCollected, level.getObjectiveTotal());
       hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
       syncAmmoHud();
+      syncStressHud();
       setLevelMeta(level.meta);
 
       renderInventory(inventory);
@@ -1638,6 +1693,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           slotIndex,
           playerVitals,
           updateHealthHud: () => hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth),
+          updateStressHud: () => hudSystem.setStress(playerVitals.stress, playerVitals.maxStress),
           renderInventory,
           showNote: hudSystem.showNote,
           handlers: itemHandlers,
@@ -1774,6 +1830,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         if (cutsceneMapActive) {
           return;
         }
+        const stressPenalty = playerVitals.stress <= 0 ? 0.5 : 1;
+        player.speed = (player.baseSpeed ?? player.speed) * stressPenalty;
         updatePlayer(player, dt, { canMove: level.canMove.bind(level), pushables, blockers: safes });
         level.updatePressureSwitches(getSwitchOccupants());
         level.updateLightSwitchTimers(dt);
@@ -1811,7 +1869,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         shootQueued = false;
 
         combatSystem.updateProjectiles(dt, npcs);
-        applyDarknessDamage(dt);
+        applyDarknessStress(dt);
         levelScript?.update?.(dt);
 
         interactionSystem.updateInteractions(player, {
@@ -1850,6 +1908,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         drawSafes(ctx, camera, safes, spriteSheet);
         combatSystem.drawProjectiles(ctx, camera);
         drawNpcs(ctx, camera, npcs);
+        if (playerVitals.stress <= 0) {
+          drawStressAura(ctx, camera, player);
+        }
         drawPlayer(ctx, camera, player, spriteSheet);
         level.drawLighting(ctx, camera);
         drawCameraBounds(ctx, getLevelDimensions(), camera);
@@ -1906,23 +1967,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       if (deathTimeout) return;
       hudSystem.hideInteraction();
       clearDialogueState();
-      const darknessDeath = deathNote === 'note.death.darkness';
-
-      if (darknessDeath) {
-        const safeSpot = level.findNearestLitPosition?.(player.x, player.y);
-        if (safeSpot) {
-          player.x = safeSpot.x;
-          player.y = safeSpot.y;
-          darknessTimer = 0;
-          playerVitals.health = Math.max(1, Math.min(playerVitals.maxHealth || 1, playerVitals.health || 0));
-          playerVitals.invulnerableTime = Math.max(playerVitals.invulnerableTime, 1.5);
-          player.flashTimer = Math.max(player.flashTimer ?? 0, 1.5);
-          player.flashVisible = true;
-          hudSystem.setHealth(playerVitals.health, playerVitals.maxHealth);
-          hudSystem.showNote('note.death.darknessTeleport');
-          return;
-        }
-      }
 
       hudSystem.showNote(deathNote || 'note.death.darkness');
       const currentLevelId = game.currentLevelId ?? levelId ?? DEFAULT_LEVEL_ID;
@@ -1931,20 +1975,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       }, 900);
     }
 
-    function applyDarknessDamage(dt) {
+    function applyDarknessStress(dt) {
       if (level.isLitAt(player.x, player.y)) {
-        darknessTimer = 0;
+        stressTimer = 0;
         return;
       }
 
-      darknessTimer += dt;
-      if (darknessTimer >= 1 && playerVitals.invulnerableTime <= 0) {
-        darknessTimer = 0;
-        applyDamage({
-          invulnerability: 1,
-          note: 'note.damage.darkness',
-          deathNote: 'note.death.darkness',
-        });
+      stressTimer += dt;
+      if (stressTimer >= 1) {
+        stressTimer = 0;
+        setStressLevel((playerVitals.stress ?? 0) - 1);
       }
     }
 

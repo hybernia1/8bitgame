@@ -89,6 +89,16 @@ export function createHudSystem(passedElements = {}) {
     }
   }
 
+  function setStress(stress, max) {
+    const safeStress = Math.max(0, Number.isFinite(stress) ? Math.floor(stress) : 0);
+    const safeMax = Math.max(safeStress, Number.isFinite(max) ? Math.floor(max) : safeStress);
+    applyText(elements.stressCurrentEl, `${safeStress}`);
+    applyText(elements.stressTotalEl, `/${safeMax}`);
+    if (elements.stressEl) {
+      elements.stressEl.setAttribute('aria-label', `Stav stresu: ${safeStress} z ${safeMax}`);
+    }
+  }
+
   function showNote(messageId, params) {
     applyText(elements.inventoryNote, format(messageId, params));
   }
@@ -203,6 +213,7 @@ export function createHudSystem(passedElements = {}) {
     setObjectives,
     setHealth,
     setAmmo,
+    setStress,
     setSubtitle,
     setControlsHint,
     setQuestLog,

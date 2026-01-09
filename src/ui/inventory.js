@@ -89,6 +89,7 @@ export function useInventorySlot({
   slotIndex,
   playerVitals,
   updateHealthHud,
+  updateStressHud,
   renderInventory,
   showNote,
   handlers,
@@ -106,6 +107,7 @@ export function useInventorySlot({
       slotIndex,
       playerVitals,
       updateHealthHud,
+      updateStressHud,
       renderInventory,
       showNote,
     });

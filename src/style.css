@@ -236,6 +236,38 @@ canvas {
   letter-spacing: 1px;
 }
 
+.hud-stress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-left: 4px;
+  border: 1px solid #2e2432;
+  background: radial-gradient(circle at 20% 20%, rgba(169, 92, 255, 0.2), rgba(26, 18, 32, 0.68));
+  color: #f0e2ff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.hud-stress-icon {
+  color: #c07bff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.hud-stress-label {
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 1px;
+  opacity: 0.88;
+}
+
+.hud-stress-count,
+.hud-stress-max {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
 .game-frame {
   position: relative;
   padding: 8px;

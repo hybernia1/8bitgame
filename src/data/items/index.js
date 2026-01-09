@@ -20,6 +20,27 @@ const items = {
       showNote?.('note.apple.healed');
     },
   },
+  cigar: {
+    id: 'cigar',
+    name: 'Doutník',
+    icon: '🚬',
+    tint: '#c0a07c',
+    objective: false,
+    useHandler({ inventory, slotIndex, playerVitals, updateStressHud, renderInventory, showNote }) {
+      if (playerVitals.stress >= playerVitals.maxStress) {
+        showNote?.('note.cigar.fullStress');
+        return;
+      }
+
+      const consumed = inventory.consumeSlot(slotIndex, 1);
+      if (!consumed) return;
+
+      playerVitals.stress = Math.min(playerVitals.maxStress, (playerVitals.stress ?? 0) + 2);
+      updateStressHud?.();
+      renderInventory?.(inventory);
+      showNote?.('note.cigar.used');
+    },
+  },
   videotape: {
     id: 'videotape',
     name: 'Videokazeta',
