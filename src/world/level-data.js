@@ -213,13 +213,15 @@ async function importBundledLevel(id) {
   return null;
 }
 
-export async function loadLevelConfig(id = DEFAULT_LEVEL_ID) {
-  let base = registry.get(id);
-  if (!base) {
-    const loader = loaderRegistry.get(id);
-    if (loader) {
-      base = await loadLevelFromLoader(loader, id);
-    }
+export async function loadLevelConfig(id = DEFAULT_LEVEL_ID, { forceReload = false } = {}) {
+  let base = forceReload ? null : registry.get(id);
+  const loader = loaderRegistry.get(id);
+  if (!base && loader) {
+    base = await loadLevelFromLoader(loader, id);
+  }
+
+  if (!base && forceReload) {
+    base = registry.get(id);
   }
 
   if (!base) {
