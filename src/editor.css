@@ -152,6 +152,9 @@ body {
   border-radius: 16px;
   border: 1px solid #1d1f2b;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .grid-toolbar {
@@ -206,6 +209,33 @@ body {
 .grid button.token-custom {
   background: #2c2841;
   color: #e6e6ef;
+}
+
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview-canvas-wrap {
+  background: #0b0b10;
+  border-radius: 12px;
+  border: 1px solid #1d1f2b;
+  padding: 8px;
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.preview-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.preview-status {
+  font-size: 11px;
+  color: #7bf6e6;
 }
 
 .side-panel {
