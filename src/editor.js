@@ -2,12 +2,15 @@ import {
   buildTileLayersFromTokens,
   resolveTileToken,
 } from './data/levels/map-utils.js';
+import { TILE } from './core/constants.js';
+import { loadSpriteSheet } from './core/sprites.js';
 import {
   DEFAULT_LEVEL_ID,
   loadLevelConfig,
   registry,
   loaderRegistry,
 } from './world/level-data.js';
+import { LevelInstance } from './world/level-instance.js';
 import {
   TILE_IDS,
   getDecorVariantIndex,
@@ -55,6 +58,8 @@ const elements = {
   copyExport: document.querySelector('[data-copy-export]'),
   downloadExport: document.querySelector('[data-download-export]'),
   exportStatus: document.querySelector('[data-export-status]'),
+  previewCanvas: document.querySelector('[data-preview-canvas]'),
+  previewStatus: document.querySelector('[data-preview-status]'),
 };
 
 const state = {
@@ -64,9 +69,126 @@ const state = {
   tokens: Array.from({ length: DEFAULT_WIDTH * DEFAULT_HEIGHT }, () => DEFAULT_TOKEN),
   selectedToken: DEFAULT_TOKEN,
   unlockMask: [],
+  baseConfig: null,
 };
 
 let isPainting = false;
+let spriteSheetPromise = null;
+let spriteSheet = null;
+let previewFrame = null;
+
+function setPreviewStatus(message) {
+  if (!elements.previewStatus) return;
+  elements.previewStatus.textContent = message ?? '';
+}
+
+async function ensureSpriteSheet() {
+  if (spriteSheet) return spriteSheet;
+  if (!spriteSheetPromise) {
+    setPreviewStatus('Načítám textury...');
+    spriteSheetPromise = loadSpriteSheet().then((loaded) => {
+      spriteSheet = loaded;
+      setPreviewStatus('');
+      return loaded;
+    });
+  }
+
+  try {
+    return await spriteSheetPromise;
+  } catch (error) {
+    console.error(error);
+    setPreviewStatus('Nepodařilo se načíst textury.');
+    return null;
+  }
+}
+
+function buildPreviewConfig() {
+  const baseConfig = state.baseConfig ?? {
+    meta: { id: state.levelId, name: state.levelId },
+    actors: { npcs: [] },
+    interactables: {},
+    lighting: { sources: [] },
+    pickups: [],
+    quests: [],
+    npcScripts: {},
+    rewards: {},
+  };
+  const tileLayers = buildTileLayersFromTokens(state.tokens, {
+    defaultBase: resolveTileToken(DEFAULT_TOKEN),
+  });
+
+  return {
+    ...baseConfig,
+    meta: {
+      ...baseConfig.meta,
+      id: state.levelId,
+    },
+    dimensions: { width: state.width, height: state.height },
+    tileLayers: {
+      ...tileLayers,
+      unlockMask: state.unlockMask.map((entry) => ({ ...entry })),
+    },
+  };
+}
+
+function getNpcSpriteKey(npc) {
+  return npc?.sprite ?? npc?.animationBase ?? 'npc';
+}
+
+function drawNpcPlacements(ctx, config, activeSpriteSheet) {
+  const npcs = config.actors?.npcs ?? [];
+  if (!npcs.length) return;
+
+  npcs.forEach((npc) => {
+    const tx = Number.isInteger(npc.tx) ? npc.tx : Number.isFinite(npc.x) ? Math.floor(npc.x / TILE) : null;
+    const ty = Number.isInteger(npc.ty) ? npc.ty : Number.isFinite(npc.y) ? Math.floor(npc.y / TILE) : null;
+    if (!Number.isInteger(tx) || !Number.isInteger(ty)) return;
+
+    const spriteKey = getNpcSpriteKey(npc);
+    const sprite =
+      activeSpriteSheet.animations?.[spriteKey] ?? activeSpriteSheet.animations?.npc ?? null;
+    if (!sprite) return;
+    sprite.render({
+      context: ctx,
+      x: tx * TILE,
+      y: ty * TILE,
+      width: TILE,
+      height: TILE,
+    });
+  });
+}
+
+async function renderPreview() {
+  previewFrame = null;
+  if (!elements.previewCanvas) return;
+  const activeSpriteSheet = await ensureSpriteSheet();
+  if (!activeSpriteSheet) return;
+
+  const config = buildPreviewConfig();
+  const levelInstance = new LevelInstance(config);
+
+  elements.previewCanvas.width = config.dimensions.width * TILE;
+  elements.previewCanvas.height = config.dimensions.height * TILE;
+  const ctx = elements.previewCanvas.getContext('2d');
+  if (!ctx) return;
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, elements.previewCanvas.width, elements.previewCanvas.height);
+
+  const camera = { x: 0, y: 0 };
+  levelInstance.drawLevel(ctx, camera, activeSpriteSheet);
+  levelInstance.drawLightSwitches(ctx, camera);
+  levelInstance.drawPressureSwitches(ctx, camera);
+  drawNpcPlacements(ctx, config, activeSpriteSheet);
+  levelInstance.drawLighting(ctx, camera);
+}
+
+function schedulePreview() {
+  if (!elements.previewCanvas) return;
+  if (previewFrame) return;
+  previewFrame = requestAnimationFrame(() => {
+    renderPreview();
+  });
+}
 
 function getAvailableLevelIds() {
   return [...new Set([DEFAULT_LEVEL_ID, ...registry.keys(), ...loaderRegistry.keys()])].sort();
@@ -286,6 +408,7 @@ function updateExport() {
   ].join('\n');
 
   elements.exportArea.value = output;
+  schedulePreview();
 }
 
 function updateDimensions(width, height) {
@@ -316,6 +439,7 @@ async function loadLevel(id) {
   const config = await loadLevelConfig(id);
   const { width, height, tokens } = buildTokensFromLevel(config);
   state.levelId = id;
+  state.baseConfig = config;
   state.tokens = tokens;
   state.unlockMask = (config.tileLayers?.unlockMask ?? []).map((entry) => ({
     tx: entry.tx ?? 0,
@@ -327,15 +451,27 @@ async function loadLevel(id) {
   renderGrid();
   updateUnlockList();
   updateExport();
+  schedulePreview();
 }
 
 function createBlankLevel() {
   state.levelId = 'new-level';
+  state.baseConfig = {
+    meta: { id: state.levelId, name: state.levelId },
+    actors: { npcs: [] },
+    interactables: {},
+    lighting: { sources: [] },
+    pickups: [],
+    quests: [],
+    npcScripts: {},
+    rewards: {},
+  };
   state.tokens = Array.from({ length: state.width * state.height }, () => DEFAULT_TOKEN);
   state.unlockMask = [];
   renderGrid();
   updateUnlockList();
   updateExport();
+  schedulePreview();
 }
 
 async function handleCopyExport() {
@@ -436,6 +572,7 @@ function init() {
   updateExport();
   bindEvents();
   loadLevel(DEFAULT_LEVEL_ID);
+  schedulePreview();
 }
 
 init();
