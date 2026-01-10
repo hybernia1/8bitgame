@@ -54,6 +54,42 @@ import { createRooftopCorridorScript } from '../data/levels/3-rooftop-corridor/s
 
 const itemHandlers = getItemHandlers();
 const INTRO_LEVEL_ID = 'level-0-prologue';
+const BOOT_TEXT = 'TILED';
+const BOOT_TEXT_PATTERNS = {
+  T: ['###', '.#.', '.#.', '.#.', '.#.'],
+  I: ['###', '.#.', '.#.', '.#.', '###'],
+  L: ['#..', '#..', '#..', '#..', '###'],
+  E: ['###', '#..', '##.', '#..', '###'],
+  D: ['##.', '#.#', '#.#', '#.#', '##.'],
+};
+
+function buildBootTextIndices(mapWidth, mapHeight) {
+  const letters = BOOT_TEXT.split('');
+  const patterns = letters.map((letter) => BOOT_TEXT_PATTERNS[letter]).filter(Boolean);
+  if (!patterns.length) return [];
+  const letterWidth = patterns[0][0]?.length ?? 0;
+  const letterHeight = patterns[0]?.length ?? 0;
+  const spacing = 1;
+  const totalWidth = patterns.length * letterWidth + (patterns.length - 1) * spacing;
+  const startX = Math.max(0, Math.floor((mapWidth - totalWidth) / 2));
+  const startY = Math.max(0, Math.floor((mapHeight - letterHeight) / 2));
+  const indices = [];
+
+  patterns.forEach((pattern, letterIndex) => {
+    const offsetX = startX + letterIndex * (letterWidth + spacing);
+    pattern.forEach((row, rowIndex) => {
+      row.split('').forEach((cell, colIndex) => {
+        if (cell !== '#') return;
+        const tx = offsetX + colIndex;
+        const ty = startY + rowIndex;
+        if (tx < 0 || ty < 0 || tx >= mapWidth || ty >= mapHeight) return;
+        indices.push(ty * mapWidth + tx);
+      });
+    });
+  });
+
+  return indices;
+}
 
 function getHudDomRefs(root) {
   if (!root) return {};
@@ -169,8 +205,11 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   let questToggleButton = null;
   let handleQuestToggleClick = null;
   let questLogCollapsed = true;
+  let bootLevel = null;
+  let bootSpriteSheet = null;
   let menuMapLevel = null;
   let menuMapSpriteSheet = null;
+  const bootCamera = { x: 0, y: 0 };
   const menuMapCamera = { x: 0, y: 0 };
   const cutsceneAvatarCache = new Map();
 
@@ -200,6 +239,15 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   } = shell;
 
   const isFullscreenSupported = Boolean(fullscreenSupported);
+  const bootState = {
+    startTime: 0,
+    durationMs: 2200,
+    sequence: [],
+    litCount: 0,
+    lightTiles: [],
+    lightDistances: [],
+    completed: false,
+  };
   const menuState = {
     screen: MENU_SCREENS.MAIN,
     selectionIndex: 0,
@@ -241,6 +289,33 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       y: (levelDimensions.height * TILE) / 2,
     };
     menuMapLevel.clampCamera(menuMapCamera, center, canvas);
+  }
+
+  async function ensureBootLevel() {
+    if (bootLevel && bootSpriteSheet) return;
+    bootSpriteSheet = await spriteSheetPromise;
+    const baseConfig = getLevelConfig(DEFAULT_LEVEL_ID);
+    const bootConfig = {
+      ...baseConfig,
+      lighting: { sources: [], switches: [] },
+      interactables: {
+        ...(baseConfig.interactables ?? {}),
+        switches: [],
+      },
+    };
+    bootLevel = new LevelInstance(bootConfig);
+    const levelDimensions = resolveLevelDimensions(bootLevel);
+    const center = {
+      x: (levelDimensions.width * TILE) / 2,
+      y: (levelDimensions.height * TILE) / 2,
+    };
+    bootLevel.clampCamera(bootCamera, center, canvas);
+    bootState.sequence = buildBootTextIndices(bootLevel.mapWidth, bootLevel.mapHeight);
+    bootState.lightTiles = new Array(bootLevel.mapWidth * bootLevel.mapHeight).fill(false);
+    bootState.lightDistances = new Array(bootLevel.mapWidth * bootLevel.mapHeight).fill(null);
+    bootState.litCount = 0;
+    bootState.completed = false;
+    bootLevel.updateLightingTiles(bootState.lightTiles, bootState.lightDistances);
   }
 
   async function showMenuScreen(screenName) {
@@ -2165,6 +2240,52 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     },
   });
 
+  registerScene('boot', {
+    async onEnter() {
+      setFullscreenAvailability(true);
+      hideAllPanels();
+      setGameUiVisible(gameShell, false);
+      await ensureBootLevel();
+      bootState.startTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      bootState.litCount = 0;
+      bootState.completed = false;
+      bootState.lightTiles.fill(false);
+      bootState.lightDistances.fill(null);
+      bootLevel?.updateLightingTiles(bootState.lightTiles, bootState.lightDistances);
+    },
+    onUpdate() {
+      if (!bootLevel || bootState.completed) return;
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const elapsed = now - bootState.startTime;
+      const totalTiles = bootState.sequence.length;
+      const targetCount = totalTiles
+        ? Math.min(totalTiles, Math.floor((elapsed / bootState.durationMs) * totalTiles))
+        : 0;
+      if (targetCount > bootState.litCount) {
+        for (let i = bootState.litCount; i < targetCount; i += 1) {
+          const index = bootState.sequence[i];
+          if (!Number.isInteger(index)) continue;
+          bootState.lightTiles[index] = true;
+          bootState.lightDistances[index] = 0;
+        }
+        bootState.litCount = targetCount;
+        bootLevel.updateLightingTiles(bootState.lightTiles, bootState.lightDistances);
+      }
+      if (elapsed >= bootState.durationMs) {
+        bootState.completed = true;
+        setScene('menu');
+      }
+    },
+    onRender() {
+      if (bootLevel && bootSpriteSheet) {
+        renderMapOnly(ctx, canvas, bootLevel, bootCamera, bootSpriteSheet);
+      } else {
+        ctx.fillStyle = COLORS.gridBackground;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    },
+  });
+
   registerScene('loading', {
     async onEnter({ params }) {
       setFullscreenAvailability(true);
@@ -2290,6 +2411,6 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   });
 
   return {
-    start: () => setScene('menu'),
+    start: () => setScene('boot'),
   };
 }
