@@ -2,6 +2,8 @@
   "type": "map",
   "tiledversion": "1.11.0",
   "compressionlevel": 0,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
   "width": 6,
   "height": 5,
   "tilewidth": 32,
