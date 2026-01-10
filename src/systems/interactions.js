@@ -168,22 +168,7 @@ export function createInteractionSystem({
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
     const quizActive = Boolean(sessionState.activeQuiz);
 
-    if (!quizActive && context.interactRequested && activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
-      const result = level.toggleLightSwitch(activeSwitch.id);
-      if (result?.activated) {
-        if (activeSwitch.id === 'technician-switch') {
-          persistentState.flags.technicianLightOn = true;
-        }
-        if (Number.isFinite(activeSwitch.timerSeconds) && activeSwitch.timerSeconds > 0) {
-          showNote('note.switch.activatedTimed', { name: activeSwitch.name, seconds: activeSwitch.timerSeconds });
-        } else {
-          showNote('note.switch.activated', { name: activeSwitch.name });
-        }
-        game?.saveProgress?.({ auto: true });
-      } else if (result) {
-        showNote('note.switch.deactivated', { name: activeSwitch.name });
-      }
-    } else if (!quizActive && context.interactRequested && nearSafe) {
+    if (!quizActive && context.interactRequested && nearSafe) {
       onSafeInteract?.(nearestSafe);
     } else if (!quizActive && context.interactRequested && nearestNpc?.nearby) {
       state.activeSpeaker = nearestNpc.name;
@@ -249,6 +234,21 @@ export function createInteractionSystem({
         state.dialogueMeta = { speakerType: 'npc', spriteName: nearestNpc.sprite };
         state.dialogueTime = Number.POSITIVE_INFINITY;
         hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
+      }
+    } else if (!quizActive && context.interactRequested && activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
+      const result = level.toggleLightSwitch(activeSwitch.id);
+      if (result?.activated) {
+        if (activeSwitch.id === 'technician-switch') {
+          persistentState.flags.technicianLightOn = true;
+        }
+        if (Number.isFinite(activeSwitch.timerSeconds) && activeSwitch.timerSeconds > 0) {
+          showNote('note.switch.activatedTimed', { name: activeSwitch.name, seconds: activeSwitch.timerSeconds });
+        } else {
+          showNote('note.switch.activated', { name: activeSwitch.name });
+        }
+        game?.saveProgress?.({ auto: true });
+      } else if (result) {
+        showNote('note.switch.deactivated', { name: activeSwitch.name });
       }
     } else if (!quizActive && context.interactRequested && nearGate && gateState && !gateState.locked) {
       state.activeSpeaker = gateState.speaker || 'speaker.gateSystem';
