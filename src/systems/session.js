@@ -887,7 +887,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       'G: mřížka',
       'L: světla',
       'O: objekty',
-      '[ ]: level',
+      'Q/E nebo [ ]: level',
       'R: znovu načíst',
       'Esc: zpět',
     ];
@@ -911,10 +911,18 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.restore();
   }
 
-  async function loadViewerLevel(levelId, { keepCamera = false, levelIndex } = {}) {
+  async function loadViewerLevel(levelId, { keepCamera = false, levelIndex, forceReload = false } = {}) {
     viewerState.spriteSheet = await spriteSheetPromise;
-    const config = await loadLevelConfig(levelId);
+    const config = await loadLevelConfig(levelId, { forceReload });
     viewerState.level = new LevelInstance(config);
+    const lightSwitches = viewerState.level.getLightSwitches?.() ?? [];
+    if (lightSwitches.length) {
+      lightSwitches.forEach((sw) => {
+        sw.activated = true;
+        sw.timerRemaining = null;
+      });
+      viewerState.level.rebuildLighting?.();
+    }
     viewerState.mapMetrics = getViewerMapMetrics(viewerState.level);
     viewerState.fitScale = Math.min(
       canvas.width / viewerState.mapMetrics.widthPx,
@@ -1101,6 +1109,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         break;
       case '[':
       case 'PageUp':
+      case 'q':
+      case 'Q':
         if (pressed) {
           selectViewerLevel(-1);
         }
@@ -1108,6 +1118,8 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         break;
       case ']':
       case 'PageDown':
+      case 'e':
+      case 'E':
         if (pressed) {
           selectViewerLevel(1);
         }
@@ -1116,7 +1128,11 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       case 'r':
       case 'R':
         if (pressed && viewerState.levelId) {
-          loadViewerLevel(viewerState.levelId, { keepCamera: true, levelIndex: viewerState.levelIndex });
+          loadViewerLevel(viewerState.levelId, {
+            keepCamera: true,
+            levelIndex: viewerState.levelIndex,
+            forceReload: true,
+          });
         }
         event.preventDefault();
         break;
