@@ -165,7 +165,14 @@ export function registerLevelConfig(id, config, extras = {}) {
 }
 
 export function registerLevelModule(id, modulePath) {
-  registerLevelLoader(id, () => import(modulePath));
+  registerLevelLoader(id, ({ forceReload } = {}) => {
+    if (!forceReload) {
+      return import(modulePath);
+    }
+    const reloadUrl = new URL(modulePath, import.meta.url);
+    reloadUrl.searchParams.set('v', Date.now().toString());
+    return import(reloadUrl.href);
+  });
 }
 
 const defaultPackage = registerLevelPackage(defaultLevelModule, 'level-1') ?? {
@@ -190,8 +197,8 @@ export function getLevelConfigSync(id = DEFAULT_LEVEL_ID) {
   return getLevelConfigSyncInternal(id);
 }
 
-async function loadLevelFromLoader(loader, fallbackId) {
-  const loaded = await loader();
+async function loadLevelFromLoader(loader, fallbackId, { forceReload = false } = {}) {
+  const loaded = await loader({ forceReload });
   const registered = registerLevelPackage(loaded, fallbackId);
   return registered?.config ?? null;
 }
@@ -206,7 +213,14 @@ async function importBundledLevel(id) {
 
     const registered = registerLevelPackage(moduleValue, moduleId);
     if (registered?.levelId && !loaderRegistry.has(registered.levelId)) {
-      registerLevelLoader(registered.levelId, () => loader());
+      registerLevelLoader(registered.levelId, ({ forceReload } = {}) => {
+        if (!forceReload) {
+          return loader();
+        }
+        const reloadUrl = new URL(path, import.meta.url);
+        reloadUrl.searchParams.set('v', Date.now().toString());
+        return import(reloadUrl.href);
+      });
     }
     if (registered?.levelId === id) return registered.config;
   }
@@ -217,7 +231,7 @@ export async function loadLevelConfig(id = DEFAULT_LEVEL_ID, { forceReload = fal
   let base = forceReload ? null : registry.get(id);
   const loader = loaderRegistry.get(id);
   if (!base && loader) {
-    base = await loadLevelFromLoader(loader, id);
+    base = await loadLevelFromLoader(loader, id, { forceReload });
   }
 
   if (!base && forceReload) {
