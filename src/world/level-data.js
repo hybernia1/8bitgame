@@ -183,6 +183,7 @@ export const DEFAULT_LEVEL_ID = defaultPackage.levelId;
 const defaultLevelConfig = defaultPackage.config;
 
 registerLevelConfig(facilitySample.meta?.id ?? 'tiled-facility', facilitySample);
+registerLevelModule('tiled-facility', '../data/maps/facility-sample.js');
 registerLevelModule('level-0-prologue', '../data/levels/0-prologue/index.js');
 registerLevelModule('level-2', '../data/levels/2-northern-wing/index.js');
 registerLevelModule('level-3', '../data/levels/3-rooftop-corridor/index.js');
