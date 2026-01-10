@@ -15,6 +15,7 @@ export function createInteractionSystem({
   setObjectives,
   collectNearbyPickups,
   onPickupCollected,
+  ammo,
   safes = [],
   onSafeInteract,
   onQuizStart,
@@ -151,7 +152,7 @@ export function createInteractionSystem({
 
     const result = runActions(
       actions,
-      { inventory, renderInventory, level, game, hud, flags, persistentState, sessionState, state },
+      { inventory, renderInventory, ammo, level, game, hud, flags, persistentState, sessionState, state },
       reward,
     );
     if (result.success !== false && reward?.note && !result.note) {

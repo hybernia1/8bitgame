@@ -35,8 +35,13 @@ export function runActions(actions, context = {}, rewardContext = {}) {
 }
 
 function registerDefaults() {
-  registerActionType('giveItem', (action, { inventory, renderInventory }) => {
+  registerActionType('giveItem', (action, { inventory, renderInventory, ammo }) => {
     if (!action?.item) return { success: true };
+    if (action.item.storeInInventory === false) {
+      const amount = Number.isFinite(action.item.quantity) ? Math.floor(action.item.quantity) : 1;
+      ammo?.add?.(amount);
+      return { success: true, note: action.note };
+    }
     const stored = inventory?.addItem?.({ ...action.item });
     if (!stored) {
       const itemName = action.item?.name ?? 'předmět';
