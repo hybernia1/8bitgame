@@ -8,7 +8,6 @@ import { normalizeLevelConfig } from './level-loader.js';
 
 const processedModuleIds = new Set(['1-abandoned-laboratory']);
 let cachedLevelModuleEntriesPromise = null;
-const modulePathRegistry = new Map();
 
 export const registry = new Map();
 export const loaderRegistry = new Map();
@@ -166,7 +165,6 @@ export function registerLevelConfig(id, config, extras = {}) {
 }
 
 export function registerLevelModule(id, modulePath) {
-  modulePathRegistry.set(id, modulePath);
   registerLevelLoader(id, () => import(modulePath));
 }
 
@@ -198,47 +196,25 @@ async function loadLevelFromLoader(loader, fallbackId) {
   return registered?.config ?? null;
 }
 
-async function loadLevelModuleFromPath(modulePath, fallbackId, { cacheBust = false } = {}) {
-  const url = new URL(modulePath, import.meta.url);
-  if (cacheBust) {
-    url.searchParams.set('t', Date.now().toString());
-  }
-  const loaded = await import(url.href);
-  const registered = registerLevelPackage(loaded, fallbackId);
-  return registered?.config ?? null;
-}
-
-async function importBundledLevel(id, { forceReload = false } = {}) {
+async function importBundledLevel(id) {
   const entries = await getLevelModuleEntries();
   for (const [path, loader] of entries) {
     const moduleId = deriveIdFromPath(path);
-    if (processedModuleIds.has(moduleId) && !(forceReload && moduleId === id)) continue;
-    if (forceReload && moduleId === id) {
-      const config = await loadLevelModuleFromPath(path, moduleId, { cacheBust: true });
-      processedModuleIds.add(moduleId);
-      if (config) return config;
-    } else {
-      const moduleValue = await loader();
-      processedModuleIds.add(moduleId);
+    if (processedModuleIds.has(moduleId)) continue;
+    const moduleValue = await loader();
+    processedModuleIds.add(moduleId);
 
-      const registered = registerLevelPackage(moduleValue, moduleId);
-      if (registered?.levelId && !loaderRegistry.has(registered.levelId)) {
-        registerLevelLoader(registered.levelId, () => loader());
-      }
-      if (registered?.levelId === id) return registered.config;
+    const registered = registerLevelPackage(moduleValue, moduleId);
+    if (registered?.levelId && !loaderRegistry.has(registered.levelId)) {
+      registerLevelLoader(registered.levelId, () => loader());
     }
+    if (registered?.levelId === id) return registered.config;
   }
   return null;
 }
 
-export async function loadLevelConfig(id = DEFAULT_LEVEL_ID, { forceReload = false } = {}) {
-  let base = forceReload ? null : registry.get(id);
-  if (!base) {
-    const modulePath = modulePathRegistry.get(id);
-    if (modulePath) {
-      base = await loadLevelModuleFromPath(modulePath, id, { cacheBust: forceReload });
-    }
-  }
+export async function loadLevelConfig(id = DEFAULT_LEVEL_ID) {
+  let base = registry.get(id);
   if (!base) {
     const loader = loaderRegistry.get(id);
     if (loader) {
@@ -247,7 +223,7 @@ export async function loadLevelConfig(id = DEFAULT_LEVEL_ID, { forceReload = fal
   }
 
   if (!base) {
-    base = await importBundledLevel(id, { forceReload });
+    base = await importBundledLevel(id);
   }
 
   if (!base) {
