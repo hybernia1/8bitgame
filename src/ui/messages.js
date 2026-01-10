@@ -2,6 +2,7 @@ export const messages = {
   'interaction.title': 'Interakce',
   'interaction.initialPrompt': 'Přibliž se ke starostce a stiskni E.',
   'prompt.talk': 'Mluvit',
+  'prompt.inspect': 'Prohlédnout',
   'prompt.switchOn': 'Zapnout',
   'prompt.switchOff': 'Vypnout',
   'prompt.gateLocked': 'Zamčeno',

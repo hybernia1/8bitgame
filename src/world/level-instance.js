@@ -226,6 +226,7 @@ export class LevelInstance {
     this.interactables = levelConfig.interactables ?? {};
     this.gateConfig = this.interactables.gate ?? null;
     this.pressureSwitchConfig = this.interactables.pressureSwitches ?? [];
+    this.decorInteractables = this.interactables.decor ?? [];
 
     this.lightingConfig = {
       ...(levelConfig.lighting ?? {}),
@@ -913,6 +914,10 @@ export class LevelInstance {
 
   getQuestConfigs() {
     return this.config.quests ?? [];
+  }
+
+  getDecorInteractables() {
+    return this.decorInteractables ?? [];
   }
 
   getObjectiveTotal() {
