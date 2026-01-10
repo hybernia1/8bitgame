@@ -39,7 +39,7 @@ const npcPackage = buildNpcPackage([
       ],
     },
   }),
-  placeNpc('caretaker', 10, 4, {
+  placeNpc('caretaker', 23, 4, {
     script: {
       defaultDialogue:
         'Správce nervózně kouká do stínu: „Tahle chodba bývala plná světla. Teď musíš rozsvítit, než se vydáš dál.“',
