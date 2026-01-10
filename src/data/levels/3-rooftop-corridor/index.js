@@ -2,17 +2,18 @@ import { TILE } from '../../../core/constants.js';
 import { buildTileLayersFromTokens } from '../map-utils.js';
 
 const BASE_WIDTH = 9;
-const baseLayoutTokens = [
-  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
-  'W1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1',
-  'W1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'W1',
-  'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1',
+const baseLayoutRows = [
+  ['W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1'],
+  ['W1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'W1'],
+  ['W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1'],
+  ['W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1'],
+  ['W1', 'F1', 'F1', 'F1', 'F2', 'F1', 'F1', 'F1', 'W1'],
+  ['W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1'],
+  ['W1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'F1', 'W1'],
+  ['W1', 'F2', 'F1', 'F1', 'F1', 'F1', 'F1', 'F2', 'W1'],
+  ['W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1', 'W1'],
 ];
+const baseLayoutTokens = baseLayoutRows.flat();
 const baseLayout = buildTileLayersFromTokens(baseLayoutTokens);
 const BASE_HEIGHT = baseLayout.collision.length / BASE_WIDTH;
 
