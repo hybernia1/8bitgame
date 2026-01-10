@@ -144,6 +144,7 @@ const MENU_SCREENS = {
   NEW_GAME: 'new-game',
   CONTINUE: 'continue',
   LEVELS: 'levels',
+  VIEWER: 'viewer',
   SETTINGS: 'settings',
 };
 
@@ -152,11 +153,13 @@ const MENU_TITLES = {
   [MENU_SCREENS.NEW_GAME]: 'Nová hra',
   [MENU_SCREENS.CONTINUE]: 'Pokračovat',
   [MENU_SCREENS.LEVELS]: 'Výběr levelu',
+  [MENU_SCREENS.VIEWER]: 'Prohlížeč map',
   [MENU_SCREENS.SETTINGS]: 'Nastavení',
 };
 
 const MENU_SUBTITLES = {
   [MENU_SCREENS.LEVELS]: 'Vyber úroveň a spusť novou hru.',
+  [MENU_SCREENS.VIEWER]: 'Rychlý náhled map bez hraní.',
   [MENU_SCREENS.SETTINGS]: 'Nastavení budou brzy dostupná.',
 };
 
@@ -217,8 +220,36 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     buttonRects: [],
     items: [],
   };
+  const viewerState = {
+    levelEntries: [],
+    levelIndex: 0,
+    levelId: null,
+    meta: null,
+    level: null,
+    spriteSheet: null,
+    mapMetrics: null,
+    camera: { x: 0, y: 0 },
+    scale: 1,
+    fitScale: 1,
+    showGrid: true,
+    showLighting: false,
+    showObjects: true,
+    pickups: [],
+    pushables: [],
+    safes: [],
+    npcs: [],
+    dragging: false,
+    dragAnchor: { x: 0, y: 0 },
+    keys: { up: false, down: false, left: false, right: false },
+  };
   let menuKeyHandler = null;
   let menuClickHandler = null;
+  let viewerKeyHandler = null;
+  let viewerKeyUpHandler = null;
+  let viewerWheelHandler = null;
+  let viewerMouseDownHandler = null;
+  let viewerMouseMoveHandler = null;
+  let viewerMouseUpHandler = null;
   let activeMenuMode = null;
 
   function resolveSlotId() {
@@ -251,7 +282,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     if (screenName === MENU_SCREENS.CONTINUE) {
       refreshSaveSlotList();
     }
-    if (screenName === MENU_SCREENS.LEVELS) {
+    if (screenName === MENU_SCREENS.LEVELS || screenName === MENU_SCREENS.VIEWER) {
       await refreshLevelList();
     }
   }
@@ -421,6 +452,34 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         });
         return items;
       }
+      case MENU_SCREENS.VIEWER: {
+        const items = [];
+        if (!menuState.levelEntries.length) {
+          items.push({
+            id: 'empty',
+            label: 'Žádné levely nejsou k dispozici.',
+            disabled: true,
+            variant: 'subtle',
+          });
+        } else {
+          menuState.levelEntries.forEach((entry, index) => {
+            items.push({
+              id: `viewer-${entry.id}`,
+              label: Number.isFinite(entry.levelNumber)
+                ? `Level ${entry.levelNumber}: ${entry.title}`
+                : entry.title,
+              action: () => setScene('viewer', { levelId: entry.id, levelIndex: index }),
+            });
+          });
+        }
+        items.push({
+          id: 'back',
+          label: '← Zpět',
+          variant: 'ghost',
+          action: () => showMenuScreen(MENU_SCREENS.MAIN),
+        });
+        return items;
+      }
       case MENU_SCREENS.SETTINGS:
         return [
           {
@@ -436,6 +495,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
           { id: 'new-game', label: 'Nová hra', action: () => showMenuScreen(MENU_SCREENS.NEW_GAME) },
           { id: 'continue', label: 'Pokračovat', action: () => showMenuScreen(MENU_SCREENS.CONTINUE) },
           { id: 'levels', label: 'Výběr levelu', action: () => showMenuScreen(MENU_SCREENS.LEVELS) },
+          { id: 'viewer', label: 'Prohlížeč map', action: () => showMenuScreen(MENU_SCREENS.VIEWER) },
           { id: 'settings', label: 'Nastavení', action: () => showMenuScreen(MENU_SCREENS.SETTINGS) },
         ];
     }
@@ -725,12 +785,427 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     menuState.editingSlot = false;
   }
 
-  function showMenuPanel() {
+  function getViewerCanvasPoint(event) {
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+    };
+  }
+
+  function getViewerMapMetrics(level) {
+    const dimensions = resolveLevelDimensions(level);
+    const width = dimensions.width ?? 0;
+    const height = dimensions.height ?? 0;
+    return {
+      width,
+      height,
+      widthPx: width * TILE,
+      heightPx: height * TILE,
+    };
+  }
+
+  function clampViewerCamera() {
+    if (!viewerState.mapMetrics) return;
+    const { widthPx, heightPx } = viewerState.mapMetrics;
+    const viewWidth = canvas.width / viewerState.scale;
+    const viewHeight = canvas.height / viewerState.scale;
+    const maxX = Math.max(0, widthPx - viewWidth);
+    const maxY = Math.max(0, heightPx - viewHeight);
+    viewerState.camera.x = Math.min(Math.max(0, viewerState.camera.x), maxX);
+    viewerState.camera.y = Math.min(Math.max(0, viewerState.camera.y), maxY);
+  }
+
+  function centerViewerCamera() {
+    if (!viewerState.mapMetrics) return;
+    const { widthPx, heightPx } = viewerState.mapMetrics;
+    const viewWidth = canvas.width / viewerState.scale;
+    const viewHeight = canvas.height / viewerState.scale;
+    viewerState.camera.x = Math.max(0, (widthPx - viewWidth) / 2);
+    viewerState.camera.y = Math.max(0, (heightPx - viewHeight) / 2);
+  }
+
+  function setViewerScale(nextScale, anchor = { x: canvas.width / 2, y: canvas.height / 2 }) {
+    if (!viewerState.mapMetrics) return;
+    const minScale = 0.2;
+    const maxScale = 4;
+    const clamped = Math.min(maxScale, Math.max(minScale, nextScale));
+    const mapX = viewerState.camera.x + anchor.x / viewerState.scale;
+    const mapY = viewerState.camera.y + anchor.y / viewerState.scale;
+    viewerState.scale = clamped;
+    viewerState.camera.x = mapX - anchor.x / viewerState.scale;
+    viewerState.camera.y = mapY - anchor.y / viewerState.scale;
+    clampViewerCamera();
+  }
+
+  function drawViewerGrid() {
+    if (!viewerState.mapMetrics || !viewerState.showGrid) return;
+    const { width, height } = viewerState.mapMetrics;
+    const visibleWidth = canvas.width / viewerState.scale;
+    const visibleHeight = canvas.height / viewerState.scale;
+    const startX = Math.max(0, Math.floor(viewerState.camera.x / TILE));
+    const startY = Math.max(0, Math.floor(viewerState.camera.y / TILE));
+    const endX = Math.min(width, Math.ceil((viewerState.camera.x + visibleWidth) / TILE));
+    const endY = Math.min(height, Math.ceil((viewerState.camera.y + visibleHeight) / TILE));
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+
+    for (let x = startX; x <= endX; x += 1) {
+      const px = (x * TILE - viewerState.camera.x) * viewerState.scale;
+      ctx.beginPath();
+      ctx.moveTo(px + 0.5, 0);
+      ctx.lineTo(px + 0.5, canvas.height);
+      ctx.stroke();
+    }
+
+    for (let y = startY; y <= endY; y += 1) {
+      const py = (y * TILE - viewerState.camera.y) * viewerState.scale;
+      ctx.beginPath();
+      ctx.moveTo(0, py + 0.5);
+      ctx.lineTo(canvas.width, py + 0.5);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawViewerOverlay() {
+    const title = viewerState.meta?.title ?? viewerState.meta?.name ?? viewerState.levelId ?? 'Neznámý level';
+    const levelIndexText =
+      viewerState.levelEntries.length > 0
+        ? `(${viewerState.levelIndex + 1}/${viewerState.levelEntries.length})`
+        : '';
+    const zoom = `${Math.round(viewerState.scale * 100)}%`;
+    const hints = [
+      'WASD/šipky: posun',
+      '+/-: zoom',
+      'F: přizpůsobit',
+      'G: mřížka',
+      'L: světla',
+      'O: objekty',
+      '[ ]: level',
+      'R: znovu načíst',
+      'Esc: zpět',
+    ];
+    const panelWidth = Math.min(canvas.width - 24, 420);
+    const panelHeight = 74 + hints.length * 14;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(12, 12, panelWidth, panelHeight);
+    ctx.fillStyle = '#f8e7cf';
+    ctx.font = '16px sans-serif';
+    ctx.fillText(`${title} ${levelIndexText}`.trim(), 24, 36);
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = 'rgba(248, 231, 207, 0.8)';
+    ctx.fillText(`Zoom: ${zoom}`, 24, 56);
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = 'rgba(248, 231, 207, 0.7)';
+    hints.forEach((line, index) => {
+      ctx.fillText(line, 24, 76 + index * 14);
+    });
+    ctx.restore();
+  }
+
+  async function loadViewerLevel(levelId, { keepCamera = false, levelIndex } = {}) {
+    viewerState.spriteSheet = await spriteSheetPromise;
+    const config = await loadLevelConfig(levelId);
+    viewerState.level = new LevelInstance(config);
+    viewerState.mapMetrics = getViewerMapMetrics(viewerState.level);
+    viewerState.fitScale = Math.min(
+      canvas.width / viewerState.mapMetrics.widthPx,
+      canvas.height / viewerState.mapMetrics.heightPx,
+    );
+    if (!keepCamera) {
+      viewerState.scale = Math.max(0.2, Math.min(4, viewerState.fitScale));
+      centerViewerCamera();
+    }
+    viewerState.levelId = config.meta?.id ?? levelId;
+    viewerState.meta = getLevelMeta(config);
+
+    const placements = viewerState.level.getActorPlacements();
+    viewerState.pickups = createPickups(viewerState.level.getPickupTemplates());
+    viewerState.pushables = createPushables(placements);
+    viewerState.safes = createSafes(viewerState.level.config?.interactables ?? {});
+    viewerState.npcs = createNpcs(viewerState.spriteSheet, placements);
+
+    if (Number.isInteger(levelIndex)) {
+      viewerState.levelIndex = levelIndex;
+    } else if (viewerState.levelEntries.length) {
+      const foundIndex = viewerState.levelEntries.findIndex((entry) => entry.id === viewerState.levelId);
+      viewerState.levelIndex = foundIndex >= 0 ? foundIndex : 0;
+    }
+
+    clampViewerCamera();
+  }
+
+  function renderViewerFrame() {
+    if (!viewerState.level || !viewerState.spriteSheet || !viewerState.mapMetrics) {
+      ctx.fillStyle = COLORS.gridBackground;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    const { widthPx, heightPx } = viewerState.mapMetrics;
+
+    ctx.fillStyle = COLORS.gridBackground;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    viewerState.level.ensureLayers(viewerState.spriteSheet);
+    const decorCanvas = viewerState.level.layers.decor?.canvas;
+    if (decorCanvas) {
+      ctx.drawImage(
+        decorCanvas,
+        0,
+        0,
+        widthPx,
+        heightPx,
+        -viewerState.camera.x * viewerState.scale,
+        -viewerState.camera.y * viewerState.scale,
+        widthPx * viewerState.scale,
+        heightPx * viewerState.scale,
+      );
+    }
+
+    drawViewerGrid();
+
+    ctx.save();
+    ctx.scale(viewerState.scale, viewerState.scale);
+    if (viewerState.showObjects) {
+      viewerState.level.drawPressureSwitches(ctx, viewerState.camera);
+      viewerState.level.drawLightSwitches(ctx, viewerState.camera);
+      drawPickups(ctx, viewerState.camera, viewerState.pickups, viewerState.spriteSheet);
+      drawPushables(ctx, viewerState.camera, viewerState.pushables, viewerState.spriteSheet);
+      drawSafes(ctx, viewerState.camera, viewerState.safes, viewerState.spriteSheet);
+      drawNpcs(ctx, viewerState.camera, viewerState.npcs);
+    }
+    ctx.restore();
+
+    if (viewerState.showLighting) {
+      viewerState.level.ensureLightingLayer();
+      const lightingCanvas = viewerState.level.lightingLayer?.canvas;
+      if (lightingCanvas) {
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.filter = 'blur(6px)';
+        ctx.drawImage(
+          lightingCanvas,
+          0,
+          0,
+          widthPx,
+          heightPx,
+          -viewerState.camera.x * viewerState.scale,
+          -viewerState.camera.y * viewerState.scale,
+          widthPx * viewerState.scale,
+          heightPx * viewerState.scale,
+        );
+        ctx.restore();
+      }
+    }
+
+    ctx.save();
+    ctx.strokeStyle = COLORS.gridBorder;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      -viewerState.camera.x * viewerState.scale + 1,
+      -viewerState.camera.y * viewerState.scale + 1,
+      widthPx * viewerState.scale - 2,
+      heightPx * viewerState.scale - 2,
+    );
+    ctx.restore();
+
+    drawViewerOverlay();
+  }
+
+  function selectViewerLevel(offset) {
+    if (!viewerState.levelEntries.length) return;
+    const count = viewerState.levelEntries.length;
+    const nextIndex = (viewerState.levelIndex + offset + count) % count;
+    const target = viewerState.levelEntries[nextIndex];
+    if (!target) return;
+    loadViewerLevel(target.id, { levelIndex: nextIndex });
+  }
+
+  function handleViewerKey(event, pressed) {
+    switch (event.key) {
+      case 'ArrowUp':
+      case 'w':
+      case 'W':
+        viewerState.keys.up = pressed;
+        event.preventDefault();
+        break;
+      case 'ArrowDown':
+      case 's':
+      case 'S':
+        viewerState.keys.down = pressed;
+        event.preventDefault();
+        break;
+      case 'ArrowLeft':
+      case 'a':
+      case 'A':
+        viewerState.keys.left = pressed;
+        event.preventDefault();
+        break;
+      case 'ArrowRight':
+      case 'd':
+      case 'D':
+        viewerState.keys.right = pressed;
+        event.preventDefault();
+        break;
+      case '+':
+      case '=':
+        if (pressed) {
+          setViewerScale(viewerState.scale * 1.1);
+        }
+        event.preventDefault();
+        break;
+      case '-':
+      case '_':
+        if (pressed) {
+          setViewerScale(viewerState.scale / 1.1);
+        }
+        event.preventDefault();
+        break;
+      case 'f':
+      case 'F':
+        if (pressed) {
+          setViewerScale(viewerState.fitScale);
+          centerViewerCamera();
+        }
+        event.preventDefault();
+        break;
+      case 'g':
+      case 'G':
+        if (pressed) {
+          viewerState.showGrid = !viewerState.showGrid;
+        }
+        event.preventDefault();
+        break;
+      case 'l':
+      case 'L':
+        if (pressed) {
+          viewerState.showLighting = !viewerState.showLighting;
+        }
+        event.preventDefault();
+        break;
+      case 'o':
+      case 'O':
+        if (pressed) {
+          viewerState.showObjects = !viewerState.showObjects;
+        }
+        event.preventDefault();
+        break;
+      case '[':
+      case 'PageUp':
+        if (pressed) {
+          selectViewerLevel(-1);
+        }
+        event.preventDefault();
+        break;
+      case ']':
+      case 'PageDown':
+        if (pressed) {
+          selectViewerLevel(1);
+        }
+        event.preventDefault();
+        break;
+      case 'r':
+      case 'R':
+        if (pressed && viewerState.levelId) {
+          loadViewerLevel(viewerState.levelId, { keepCamera: true, levelIndex: viewerState.levelIndex });
+        }
+        event.preventDefault();
+        break;
+      case 'Escape':
+        if (pressed) {
+          setScene('menu', { screen: MENU_SCREENS.VIEWER });
+        }
+        event.preventDefault();
+        break;
+      default:
+        break;
+    }
+  }
+
+  function enableViewerInput() {
+    const doc = documentRoot?.ownerDocument ?? document;
+    viewerKeyHandler = (event) => handleViewerKey(event, true);
+    viewerKeyUpHandler = (event) => handleViewerKey(event, false);
+    viewerWheelHandler = (event) => {
+      if (!viewerState.level) return;
+      const point = getViewerCanvasPoint(event);
+      const delta = event.deltaY ?? 0;
+      const factor = delta < 0 ? 1.1 : 1 / 1.1;
+      setViewerScale(viewerState.scale * factor, point);
+      event.preventDefault();
+    };
+    viewerMouseDownHandler = (event) => {
+      if (event.button !== 0) return;
+      viewerState.dragging = true;
+      viewerState.dragAnchor = getViewerCanvasPoint(event);
+    };
+    viewerMouseMoveHandler = (event) => {
+      if (!viewerState.dragging) return;
+      const point = getViewerCanvasPoint(event);
+      const dx = point.x - viewerState.dragAnchor.x;
+      const dy = point.y - viewerState.dragAnchor.y;
+      viewerState.camera.x -= dx / viewerState.scale;
+      viewerState.camera.y -= dy / viewerState.scale;
+      viewerState.dragAnchor = point;
+      clampViewerCamera();
+    };
+    viewerMouseUpHandler = () => {
+      viewerState.dragging = false;
+    };
+
+    doc?.addEventListener?.('keydown', viewerKeyHandler);
+    doc?.addEventListener?.('keyup', viewerKeyUpHandler);
+    canvas?.addEventListener?.('wheel', viewerWheelHandler, { passive: false });
+    canvas?.addEventListener?.('mousedown', viewerMouseDownHandler);
+    doc?.addEventListener?.('mousemove', viewerMouseMoveHandler);
+    doc?.addEventListener?.('mouseup', viewerMouseUpHandler);
+  }
+
+  function disableViewerInput() {
+    const doc = documentRoot?.ownerDocument ?? document;
+    if (viewerKeyHandler) {
+      doc?.removeEventListener?.('keydown', viewerKeyHandler);
+      viewerKeyHandler = null;
+    }
+    if (viewerKeyUpHandler) {
+      doc?.removeEventListener?.('keyup', viewerKeyUpHandler);
+      viewerKeyUpHandler = null;
+    }
+    if (viewerWheelHandler) {
+      canvas?.removeEventListener?.('wheel', viewerWheelHandler);
+      viewerWheelHandler = null;
+    }
+    if (viewerMouseDownHandler) {
+      canvas?.removeEventListener?.('mousedown', viewerMouseDownHandler);
+      viewerMouseDownHandler = null;
+    }
+    if (viewerMouseMoveHandler) {
+      doc?.removeEventListener?.('mousemove', viewerMouseMoveHandler);
+      viewerMouseMoveHandler = null;
+    }
+    if (viewerMouseUpHandler) {
+      doc?.removeEventListener?.('mouseup', viewerMouseUpHandler);
+      viewerMouseUpHandler = null;
+    }
+    viewerState.dragging = false;
+    viewerState.keys = { up: false, down: false, left: false, right: false };
+  }
+
+  async function showMenuPanel(initialScreen = MENU_SCREENS.MAIN) {
     setFullscreenAvailability(isFullscreenSupported);
     setGameUiVisible(gameShell, false);
     hideContinuePanel();
     refreshSaveSlotList();
-    showMenuScreen(MENU_SCREENS.MAIN);
+    await showMenuScreen(initialScreen);
     toggleVisibility(loadingPanel, false);
     enableMenuInput('menu');
   }
@@ -2142,10 +2617,10 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
   let currentInGameSession = null;
 
   registerScene('menu', {
-    async onEnter() {
+    async onEnter({ params }) {
       setFullscreenAvailability(isFullscreenSupported);
       await ensureMenuMapLevel();
-      showMenuPanel();
+      await showMenuPanel(params?.screen ?? MENU_SCREENS.MAIN);
     },
     onRender() {
       if (menuMapLevel && menuMapSpriteSheet) {
@@ -2162,6 +2637,41 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         state: menuState,
         showSlotHint: menuState.screen === MENU_SCREENS.NEW_GAME,
       });
+    },
+  });
+
+  registerScene('viewer', {
+    async onEnter({ params }) {
+      hideAllPanels();
+      disableMenuInput();
+      disableViewerInput();
+      setGameUiVisible(gameShell, false);
+      setFullscreenAvailability(true);
+      await refreshLevelList();
+      viewerState.levelEntries = menuState.levelEntries;
+      const requestedId = params?.levelId ?? viewerState.levelEntries[0]?.id ?? DEFAULT_LEVEL_ID;
+      const requestedIndex =
+        Number.isInteger(params?.levelIndex)
+          ? params.levelIndex
+          : viewerState.levelEntries.findIndex((entry) => entry.id === requestedId);
+      await loadViewerLevel(requestedId, { levelIndex: requestedIndex >= 0 ? requestedIndex : 0 });
+      enableViewerInput();
+    },
+    onUpdate(dt) {
+      const speed = 520 / viewerState.scale;
+      const dx = (viewerState.keys.right ? 1 : 0) - (viewerState.keys.left ? 1 : 0);
+      const dy = (viewerState.keys.down ? 1 : 0) - (viewerState.keys.up ? 1 : 0);
+      if (dx || dy) {
+        viewerState.camera.x += dx * speed * dt;
+        viewerState.camera.y += dy * speed * dt;
+        clampViewerCamera();
+      }
+    },
+    onRender() {
+      renderViewerFrame();
+    },
+    async onExit() {
+      disableViewerInput();
     },
   });
 
