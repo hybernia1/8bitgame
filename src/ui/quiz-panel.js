@@ -22,6 +22,7 @@ export function createQuizPanel({ documentRoot } = {}) {
     level: null,
     game: null,
     hud: null,
+    ammo: null,
     persistentState: null,
     sessionState: null,
     state: null,
@@ -78,6 +79,7 @@ export function createQuizPanel({ documentRoot } = {}) {
       {
         inventory: dependencies.inventory,
         renderInventory: dependencies.renderInventory,
+        ammo: dependencies.ammo,
         level: dependencies.level,
         game: dependencies.game,
         hud: dependencies.hud,
