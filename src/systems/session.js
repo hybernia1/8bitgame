@@ -911,9 +911,9 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.restore();
   }
 
-  async function loadViewerLevel(levelId, { keepCamera = false, levelIndex } = {}) {
+  async function loadViewerLevel(levelId, { keepCamera = false, levelIndex, forceReload = false } = {}) {
     viewerState.spriteSheet = await spriteSheetPromise;
-    const config = await loadLevelConfig(levelId);
+    const config = await loadLevelConfig(levelId, { forceReload });
     viewerState.level = new LevelInstance(config);
     viewerState.mapMetrics = getViewerMapMetrics(viewerState.level);
     viewerState.fitScale = Math.min(
@@ -1116,7 +1116,11 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       case 'r':
       case 'R':
         if (pressed && viewerState.levelId) {
-          loadViewerLevel(viewerState.levelId, { keepCamera: true, levelIndex: viewerState.levelIndex });
+          loadViewerLevel(viewerState.levelId, {
+            keepCamera: true,
+            levelIndex: viewerState.levelIndex,
+            forceReload: true,
+          });
         }
         event.preventDefault();
         break;
