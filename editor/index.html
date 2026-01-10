@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8-Bit Map Editor</title>
+    <link rel="stylesheet" href="./editor.css" />
+  </head>
+  <body>
+    <main class="editor-shell">
+      <header class="editor-header">
+        <div>
+          <h1>Komplexní map editor</h1>
+          <p>Interní nástroj pro rychlou správu map, světel, textur a destrukce.</p>
+        </div>
+        <div class="editor-controls">
+          <label class="field">
+            <span>Vybrat mapu</span>
+            <select data-level-select></select>
+          </label>
+          <div class="field">
+            <span>Režim úprav</span>
+            <div class="segmented" role="group" aria-label="Režim úprav">
+              <label><input type="radio" name="mode" value="collision" checked />Kolize</label>
+              <label><input type="radio" name="mode" value="decor" />Dekorace</label>
+              <label><input type="radio" name="mode" value="destruction" />Destrukce</label>
+              <label><input type="radio" name="mode" value="light" />Světla</label>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="editor-body">
+        <aside class="editor-panel">
+          <div class="panel-card">
+            <h2>Palette textur</h2>
+            <div class="palette" data-palette></div>
+          </div>
+          <div class="panel-card">
+            <h2>Nastavení destrukce</h2>
+            <label class="field">
+              <span>Overlay (rozbitelná vrstva)</span>
+              <select data-destroy-overlay></select>
+            </label>
+            <label class="field">
+              <span>Podklad po zničení</span>
+              <select data-destroy-floor></select>
+            </label>
+          </div>
+          <div class="panel-card">
+            <h2>NPC umístění</h2>
+            <div class="npc-list" data-npc-list></div>
+            <button type="button" class="ghost" data-add-npc>+ Přidat NPC</button>
+          </div>
+        </aside>
+
+        <section class="editor-canvas">
+          <div class="map-meta" data-map-meta></div>
+          <div class="grid" data-grid></div>
+        </section>
+      </section>
+
+      <section class="editor-output">
+        <div class="panel-card">
+          <h2>Kód mapy</h2>
+          <textarea readonly data-map-code></textarea>
+        </div>
+        <div class="panel-card">
+          <h2>Kód umístění NPC</h2>
+          <textarea readonly data-npc-code></textarea>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./editor.js"></script>
+  </body>
+</html>
