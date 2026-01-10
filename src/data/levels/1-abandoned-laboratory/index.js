@@ -1,6 +1,6 @@
 import { TILE } from '../../../core/constants.js';
 import { buildTileLayersFromTokens, resolveTileToken } from '../map-utils.js';
-import { placePickup } from '../../items/index.js';
+import { getItem, placePickup } from '../../items/index.js';
 import { abandonedLaboratoryNpcPackage } from './npcs.js';
 
 const BASE_WIDTH = 20;
@@ -116,6 +116,36 @@ export const abandonedLaboratoryLevel = {
       unlockLine: 'dialogue.gateUnlocked',
       consumeNote: 'note.gate.consumeKey',
     },
+    decor: [
+      {
+        id: 'lab-decor-trash',
+        tx: 1,
+        ty: 1,
+        dialogue: 'Jsou to jen odpadky.',
+      },
+      {
+        id: 'lab-decor-ammo',
+        tx: 7,
+        ty: 3,
+        dialogue: 'Jo tohle se bude hodit.',
+        flag: 'labDecorAmmoCollected',
+        actions: [
+          {
+            type: 'giveItem',
+            item: {
+              ...getItem('ammo'),
+              quantity: 3,
+            },
+          },
+        ],
+      },
+      {
+        id: 'lab-decor-schedule',
+        tx: 6,
+        ty: 7,
+        dialogue: 'Hmm rozpis směn z roku 1978, tady už opravdu dlouho nikdo nepracuje.',
+      },
+    ],
   },
   actors: {
     playerStart: { x: TILE * 2.5, y: TILE * 2.5 },

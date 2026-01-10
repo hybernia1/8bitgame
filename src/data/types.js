@@ -118,11 +118,29 @@
  */
 
 /**
+ * @typedef {Object} InteractableDecor
+ * @property {string} id
+ * @property {number} [tx]
+ * @property {number} [ty]
+ * @property {number} [x]
+ * @property {number} [y]
+ * @property {string} [dialogue]
+ * @property {string} [repeatDialogue]
+ * @property {string} [prompt]
+ * @property {string} [speaker]
+ * @property {string} [flag]
+ * @property {string} [rewardId]
+ * @property {Record<string, any>} [setState]
+ * @property {ActionDefinition[]} [actions]
+ */
+
+/**
  * @typedef {Object} Interactables
  * @property {InteractableGate} [gate]
  * @property {Array<{ id: string, name: string, tx: number, ty: number, timerSeconds?: number, lights?: Array<{ x: number, y: number, w: number, h: number }> }>} [switches]
  * @property {InteractablePressureSwitch[]} [pressureSwitches]
  * @property {InteractableSafe[]} [safes]
+ * @property {InteractableDecor[]} [decor]
  */
 
 /**

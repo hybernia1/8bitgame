@@ -39,6 +39,7 @@ export function createInteractionSystem({
   sessionState.activeLine ??= '';
   sessionState.dialogueMeta ??= null;
   sessionState.levelAdvanceQueued ??= false;
+  let activeDecor = null;
 
   function findNearestLightSwitch(player) {
     let best = null;
@@ -95,6 +96,7 @@ export function createInteractionSystem({
 
   function clearDialogue() {
     unlockNpcMovement();
+    activeDecor = null;
     state.activeSpeaker = '';
     state.activeLine = '';
     state.dialogueMeta = null;
@@ -167,6 +169,8 @@ export function createInteractionSystem({
     const nearSafe = nearestSafe ? safeDistance <= SAFE_INTERACT_DISTANCE : false;
     const { activeSwitch, switchDistance } = findNearestLightSwitch(player);
     const quizActive = Boolean(sessionState.activeQuiz);
+    const { nearestDecor, decorDistance } = findNearestDecor(player);
+    const nearDecor = nearestDecor ? decorDistance <= TILE : false;
 
     if (!quizActive && context.interactRequested && nearSafe) {
       onSafeInteract?.(nearestSafe);
@@ -235,6 +239,45 @@ export function createInteractionSystem({
         state.dialogueTime = Number.POSITIVE_INFINITY;
         hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
       }
+    } else if (!quizActive && context.interactRequested && nearDecor) {
+      const decor = nearestDecor.decor;
+      let dialogue = decor.dialogue ?? '';
+      let note = null;
+      let rewardBlocked = false;
+
+      state.activeSpeaker = decor.speaker ?? 'Ty';
+
+      if (decor.flag && flags[decor.flag]) {
+        dialogue = decor.repeatDialogue ?? dialogue;
+      } else {
+        if (decor.actions || decor.rewardId) {
+          const rewardResult = applyActions(decor);
+          rewardBlocked = rewardResult.success === false;
+          if (rewardBlocked) {
+            dialogue = rewardResult.blockedDialogue || dialogue;
+            note = rewardResult.blockedNote ?? note;
+          } else if (rewardResult.note) {
+            note = rewardResult.note;
+          }
+        }
+
+        if (!rewardBlocked && decor.setState) {
+          applyStateChanges(decor.setState);
+        }
+        if (!rewardBlocked && decor.flag && !flags[decor.flag]) {
+          applyStateChanges({ [decor.flag]: true });
+        }
+      }
+
+      if (note) {
+        showNote(note);
+      }
+
+      activeDecor = decor;
+      state.activeLine = dialogue;
+      state.dialogueMeta = { speakerType: 'player', source: 'decor' };
+      state.dialogueTime = Number.POSITIVE_INFINITY;
+      hud.showDialogue(state.activeSpeaker, state.activeLine, undefined, state.dialogueMeta);
     } else if (!quizActive && context.interactRequested && activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       const result = level.toggleLightSwitch(activeSwitch.id);
       if (result?.activated) {
@@ -307,13 +350,48 @@ export function createInteractionSystem({
       nearestNpc,
       nearestSafe,
       nearSafe,
+      nearestDecor,
+      nearDecor,
     };
   }
 
+  function findNearestDecor(player) {
+    const decorInteractables = level.getDecorInteractables?.() ?? [];
+    let best = null;
+    let bestDistance = Infinity;
+
+    decorInteractables.forEach((decor) => {
+      const { x, y } = resolveDecorPosition(decor);
+      if (x == null || y == null) return;
+      const dist = Math.hypot(player.x - x, player.y - y);
+      if (dist < bestDistance) {
+        bestDistance = dist;
+        best = { decor, x, y };
+      }
+    });
+
+    return { nearestDecor: best, decorDistance: bestDistance };
+  }
+
+  function resolveDecorPosition(decor) {
+    if (Number.isFinite(decor?.x) && Number.isFinite(decor?.y)) {
+      return { x: decor.x, y: decor.y };
+    }
+    if (Number.isFinite(decor?.tx) && Number.isFinite(decor?.ty)) {
+      return {
+        x: decor.tx * TILE + TILE / 2,
+        y: decor.ty * TILE + TILE / 2,
+      };
+    }
+    return { x: null, y: null };
+  }
+
   function updateInteractions(player, context) {
-    const { nearestNpc, nearestSafe, nearSafe, activeSwitch, switchDistance, nearGate } = context;
+    const { nearestNpc, nearestSafe, nearSafe, activeSwitch, switchDistance, nearGate, nearestDecor, nearDecor } =
+      context;
     let hasActiveDialogue = Boolean(state.activeLine);
     const npcDialogueActive = hasActiveDialogue && state.dialogueMeta?.speakerType === 'npc';
+    const decorDialogueActive = hasActiveDialogue && state.dialogueMeta?.source === 'decor';
     let promptType = null;
     let promptTextId = null;
     let promptWorldX = null;
@@ -326,6 +404,10 @@ export function createInteractionSystem({
     }
 
     if (npcDialogueActive && !nearestNpc?.nearby) {
+      clearDialogue();
+      hasActiveDialogue = false;
+    }
+    if (decorDialogueActive && (!nearDecor || activeDecor?.id !== nearestDecor?.decor?.id)) {
       clearDialogue();
       hasActiveDialogue = false;
     }
@@ -346,6 +428,11 @@ export function createInteractionSystem({
       promptParams = { name: nearestNpc.name };
       promptWorldX = nearestNpc.x;
       promptWorldY = nearestNpc.y - (nearestNpc.size ?? TILE) / 2;
+    } else if (nearDecor && nearestDecor) {
+      promptType = 'decor';
+      promptTextId = nearestDecor.decor.prompt || 'prompt.inspect';
+      promptWorldX = nearestDecor.x;
+      promptWorldY = nearestDecor.y - TILE / 2;
     } else if (activeSwitch && switchDistance <= SWITCH_INTERACT_DISTANCE) {
       promptType = 'switch';
       promptTextId = activeSwitch.activated ? 'prompt.switchOff' : 'prompt.switchOn';
