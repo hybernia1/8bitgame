@@ -1009,6 +1009,16 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
         heightPx * viewerState.scale,
       );
     }
+    if (viewerState.level.dynamicDecor?.length) {
+      const tileSize = TILE * viewerState.scale;
+      viewerState.level.dynamicDecor.forEach(({ image, x, y }) => {
+        if (!image) return;
+        const dx = (x - viewerState.camera.x) * viewerState.scale;
+        const dy = (y - viewerState.camera.y) * viewerState.scale;
+        if (dx > canvas.width || dy > canvas.height || dx + tileSize < 0 || dy + tileSize < 0) return;
+        ctx.drawImage(image, dx, dy, tileSize, tileSize);
+      });
+    }
 
     drawViewerGrid();
 
