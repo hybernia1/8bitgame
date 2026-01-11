@@ -1,6 +1,7 @@
 import { COLORS, TILE } from '../core/constants.js';
 import { INPUT_ACTIONS } from '../core/input-actions.js';
 import { formatBinding, formatControlsHint } from '../core/input-bindings.js';
+import { resolveWorldPosition } from '../core/positioning.js';
 import { createCombatSystem } from './combat.js';
 import { createHudSystem } from './hud.js';
 import { createInputSystem } from './input.js';
@@ -234,10 +235,12 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     showGrid: true,
     showLighting: false,
     showObjects: true,
+    showLegend: true,
     pickups: [],
     pushables: [],
     safes: [],
     npcs: [],
+    decorInteractables: [],
     dragging: false,
     dragAnchor: { x: 0, y: 0 },
     keys: { up: false, down: false, left: false, right: false },
@@ -873,7 +876,33 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     ctx.restore();
   }
 
+  function drawViewerDecorInteractables() {
+    const decorInteractables = viewerState.decorInteractables ?? [];
+    if (!decorInteractables.length) return;
+    const size = Math.max(6, Math.round(TILE * 0.28));
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 208, 96, 0.9)';
+    ctx.strokeStyle = 'rgba(12, 10, 18, 0.9)';
+    ctx.lineWidth = 2;
+    decorInteractables.forEach((decor) => {
+      const { x, y } = resolveWorldPosition(decor);
+      const px = x - viewerState.camera.x;
+      const py = y - viewerState.camera.y;
+      ctx.beginPath();
+      ctx.moveTo(px, py - size);
+      ctx.lineTo(px + size, py);
+      ctx.lineTo(px, py + size);
+      ctx.lineTo(px - size, py);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
   function drawViewerOverlay() {
+    if (!viewerState.showLegend) return;
     const title = viewerState.meta?.title ?? viewerState.meta?.name ?? viewerState.levelId ?? 'Neznámý level';
     const levelIndexText =
       viewerState.levelEntries.length > 0
@@ -885,6 +914,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       '+/-: zoom',
       'F: přizpůsobit',
       'G: mřížka',
+      'H: legenda',
       'L: světla',
       'O: objekty',
       'Q/E nebo [ ]: level',
@@ -940,6 +970,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     viewerState.pushables = createPushables(placements);
     viewerState.safes = createSafes(viewerState.level.config?.interactables ?? {});
     viewerState.npcs = createNpcs(viewerState.spriteSheet, placements);
+    viewerState.decorInteractables = viewerState.level.getDecorInteractables?.() ?? [];
 
     if (Number.isInteger(levelIndex)) {
       viewerState.levelIndex = levelIndex;
@@ -986,6 +1017,7 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
     if (viewerState.showObjects) {
       viewerState.level.drawPressureSwitches(ctx, viewerState.camera);
       viewerState.level.drawLightSwitches(ctx, viewerState.camera);
+      drawViewerDecorInteractables();
       drawPickups(ctx, viewerState.camera, viewerState.pickups, viewerState.spriteSheet);
       drawPushables(ctx, viewerState.camera, viewerState.pushables, viewerState.spriteSheet);
       drawSafes(ctx, viewerState.camera, viewerState.safes, viewerState.spriteSheet);
@@ -1090,6 +1122,13 @@ export function createSessionSystem({ canvas, ctx, game, inventory, spriteSheetP
       case 'G':
         if (pressed) {
           viewerState.showGrid = !viewerState.showGrid;
+        }
+        event.preventDefault();
+        break;
+      case 'h':
+      case 'H':
+        if (pressed) {
+          viewerState.showLegend = !viewerState.showLegend;
         }
         event.preventDefault();
         break;
